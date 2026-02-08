@@ -1,0 +1,67 @@
+{
+  "kind": "build_request",
+  "title": "Fix Earthquake Details dialog being hidden/overlapped by Leaflet map layers",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-13",
+      "text": "Fix the UI layering/z-index so that when the Earthquake Details dialog is opened (e.g., by clicking a Leaflet map marker), the dialog overlay and dialog content always render above the Leaflet map tiles/markers/controls in all view modes (Map and Split), matching expected modal behavior.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "can you fix this"
+        ]
+      },
+      "acceptanceCriteria": [
+        "In Map view, selecting an earthquake marker opens the Earthquake Details dialog and the dialog overlay/content are not visually covered by any part of the Leaflet map (tiles, markers, attribution, zoom controls).",
+        "In Split view, selecting an earthquake (via marker or table row) opens the Earthquake Details dialog and the dialog overlay/content are not visually covered by any part of the Leaflet map.",
+        "While the dialog is open, the user cannot interact with the map underneath (click/drag/zoom) through the dialog overlay.",
+        "Closing the dialog restores normal map interaction and visuals without layout shifts."
+      ]
+    },
+    {
+      "id": "REQ-14",
+      "text": "Add a regression-safe styling adjustment to ensure Leaflet’s internal panes/controls do not create unexpected stacking contexts that can overtake app modals, without editing any read-only shadcn/ui component source files under frontend/src/components/ui.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "can you fix this"
+        ]
+      },
+      "acceptanceCriteria": [
+        "No files under frontend/src/components/ui are modified.",
+        "Leaflet map remains fully functional (pan/zoom/markers/popups) after the styling change.",
+        "Dialog layering remains correct across light and dark themes."
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not modify files under frontend/src/components/ui (read-only); fix must be implemented via consumer className props and/or app-level styles (e.g., frontend/src/index.css) and/or Leaflet container styles.",
+    "Keep the backend unchanged (single-actor Motoko canister remains minimal)."
+  ],
+  "nonGoals": [
+    "Adding new earthquake data features or changing the USGS feed/query behavior.",
+    "Redesigning the Earthquake Details dialog content or adding new fields.",
+    "Changing the map provider or replacing Leaflet."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
+  }
+}

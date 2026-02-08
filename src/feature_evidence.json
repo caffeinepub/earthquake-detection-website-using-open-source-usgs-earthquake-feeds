@@ -1,0 +1,42 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-fix-the-ui-layering-z-index-so-that-when-the-earthquake-details-dialog-is-opened-e-g-by-clicking-a-leaflet-map-marker-the-dialog-overlay-and-dialog-content-always-render-above-the-leaflet-map-tiles-markers-controls-in-all-view-modes-map-and-split-matching-expected-modal-behavior",
+      "featureTitle": "Fix the UI layering/z-index so that when the Earthquake Details dialog is opened (e.g., by clicking a Leaflet map marker), the dialog overlay and dialog content always render above the Leaflet map tiles/markers/controls in all view modes (Map and Split), matching expected modal behavior.",
+      "files": [
+        "frontend/src/components/earthquake/EarthquakeDetailsDialog.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-13"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-regression-safe-styling-adjustment-to-ensure-leaflet-s-internal-panes-controls-do-not-create-unexpected-stacking-contexts-that-can-overtake-app-modals-without-editing-any-read-only-shadcn-ui-component-source-files-under-frontend-src-components-ui",
+      "featureTitle": "Add a regression-safe styling adjustment to ensure Leaflet’s internal panes/controls do not create unexpected stacking contexts that can overtake app modals, without editing any read-only shadcn/ui component source files under frontend/src/components/ui.",
+      "files": [
+        "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+        "frontend/src/index.css"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-14"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

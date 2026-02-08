@@ -1,0 +1,121 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --radius: 0.5rem;
+        /* Light mode - Earth tones inspired by seismic monitoring */
+        --background: 0.98 0.005 45;
+        --foreground: 0.25 0.02 30;
+        --card: 1 0 0;
+        --card-foreground: 0.25 0.02 30;
+        --popover: 1 0 0;
+        --popover-foreground: 0.25 0.02 30;
+        --primary: 0.55 0.18 35;
+        --primary-foreground: 0.98 0.005 45;
+        --secondary: 0.92 0.02 45;
+        --secondary-foreground: 0.25 0.02 30;
+        --muted: 0.95 0.01 45;
+        --muted-foreground: 0.50 0.02 30;
+        --accent: 0.70 0.20 40;
+        --accent-foreground: 0.98 0.005 45;
+        --destructive: 0.55 0.22 25;
+        --destructive-foreground: 0.98 0.005 45;
+        --border: 0.88 0.01 45;
+        --input: 0.88 0.01 45;
+        --ring: 0.55 0.18 35;
+        --chart-1: 0.65 0.20 35;
+        --chart-2: 0.70 0.18 50;
+        --chart-3: 0.55 0.15 25;
+        --chart-4: 0.60 0.22 40;
+        --chart-5: 0.75 0.16 45;
+        --warning: 0.75 0.20 50;
+        --warning-foreground: 0.25 0.02 30;
+        --success: 0.60 0.15 140;
+        --success-foreground: 0.98 0.005 45;
+    }
+
+    .dark {
+        /* Dark mode - Deep earth/monitoring station aesthetic */
+        --background: 0.18 0.02 30;
+        --foreground: 0.95 0.01 45;
+        --card: 0.22 0.02 30;
+        --card-foreground: 0.95 0.01 45;
+        --popover: 0.20 0.02 30;
+        --popover-foreground: 0.95 0.01 45;
+        --primary: 0.70 0.20 40;
+        --primary-foreground: 0.18 0.02 30;
+        --secondary: 0.28 0.02 30;
+        --secondary-foreground: 0.95 0.01 45;
+        --muted: 0.25 0.02 30;
+        --muted-foreground: 0.65 0.02 40;
+        --accent: 0.55 0.18 35;
+        --accent-foreground: 0.95 0.01 45;
+        --destructive: 0.60 0.22 25;
+        --destructive-foreground: 0.95 0.01 45;
+        --border: 0.30 0.02 30;
+        --input: 0.30 0.02 30;
+        --ring: 0.70 0.20 40;
+        --chart-1: 0.65 0.20 35;
+        --chart-2: 0.70 0.18 50;
+        --chart-3: 0.55 0.15 25;
+        --chart-4: 0.60 0.22 40;
+        --chart-5: 0.75 0.16 45;
+        --warning: 0.75 0.20 50;
+        --warning-foreground: 0.18 0.02 30;
+        --success: 0.65 0.15 140;
+        --success-foreground: 0.18 0.02 30;
+    }
+
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+        font-feature-settings: "rlig" 1, "calt" 1;
+    }
+}
+
+@layer components {
+    .seismic-gradient {
+        background: linear-gradient(135deg, oklch(var(--primary)) 0%, oklch(var(--accent)) 100%);
+    }
+    
+    .magnitude-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+}
+
+/* Leaflet z-index normalization - keep map layers below app modals */
+@layer base {
+    /* Leaflet container and all child panes */
+    .leaflet-container {
+        z-index: 0 !important;
+    }
+    
+    /* Leaflet map panes (tile, shadow, overlay, marker, tooltip, popup) */
+    .leaflet-pane {
+        z-index: auto !important;
+    }
+    
+    /* Leaflet controls (zoom, attribution, etc.) */
+    .leaflet-control {
+        z-index: 10 !important;
+    }
+    
+    /* Leaflet popups - keep them above markers but below dialogs */
+    .leaflet-popup-pane {
+        z-index: 20 !important;
+    }
+    
+    /* Leaflet tooltip pane */
+    .leaflet-tooltip-pane {
+        z-index: 15 !important;
+    }
+    
+    /* Ensure Leaflet doesn't create a higher stacking context than Radix dialogs */
+    .leaflet-map-pane {
+        z-index: auto !important;
+    }
+}

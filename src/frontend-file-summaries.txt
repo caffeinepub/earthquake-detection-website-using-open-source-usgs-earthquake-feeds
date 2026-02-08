@@ -1,0 +1,21 @@
+{
+  "frontend/src/index.css": "Global styles with earth-toned OKLCH color system and Leaflet z-index normalization rules that constrain all Leaflet layers/controls below app modal dialogs (z-index 0-20 for map, 9999+ for dialogs).",
+  "frontend/tailwind.config.js": "Tailwind configuration extended with custom earth-tone colors, seismic shadow effects, and monitoring-station typography using Inter and JetBrains Mono fonts.",
+  "frontend/src/App.tsx": "Root application component that wraps the earthquake dashboard with ThemeProvider for dark/light mode support.",
+  "frontend/src/lib/usgsTypes.ts": "TypeScript interfaces for USGS GeoJSON earthquake data including feature properties, geometry, and filter types.",
+  "frontend/src/lib/usgsFeeds.ts": "USGS feed URL builders and magnitude classification helpers for different time windows (hour/day/week/month).",
+  "frontend/src/lib/fetchJson.ts": "Generic JSON fetch utility with error handling for external API requests.",
+  "frontend/src/lib/earthquakeFilters.ts": "Pure filter functions for magnitude threshold and location search on earthquake feature arrays with whitespace-normalized search queries to prevent empty results from stale whitespace input.",
+  "frontend/src/lib/earthquakeStats.ts": "Statistics computation functions for total events, threshold counts, and largest magnitude detection.",
+  "frontend/src/lib/formatters.ts": "Formatting utilities for timestamps, magnitudes, depths, and coordinates with human-readable output.",
+  "frontend/src/hooks/useUsgsEarthquakes.ts": "React Query hook for fetching USGS earthquake data with automatic 60-second refresh and caching.",
+  "frontend/src/hooks/useQueries.ts": "Placeholder file for backend queries (intentionally minimal as app uses client-side USGS data).",
+  "frontend/src/components/earthquake/FeedAndFilterControls.tsx": "Control panel component with time window selector, magnitude slider, location search, and manual refresh button.",
+  "frontend/src/components/earthquake/DashboardSummary.tsx": "Summary cards displaying total events, above-threshold count, and largest magnitude event with icons and badges.",
+  "frontend/src/components/earthquake/EarthquakeResultsTable.tsx": "Responsive table component with optional controlled selection mode for split view integration, highlighting selected earthquake and supporting external selection handlers.",
+  "frontend/src/components/earthquake/EarthquakeDetailsDialog.tsx": "Modal dialog showing comprehensive earthquake details with explicit DialogPortal/DialogOverlay rendering at z-index 9999/10000 to ensure proper layering above Leaflet map in all views.",
+  "frontend/src/pages/EarthquakeDashboard.tsx": "Main dashboard orchestrating all components with view mode toggle (Table/Map/Split), shared earthquake selection state, and unified details dialog for both table and map interactions.",
+  "frontend/index.html": "HTML entry point with Leaflet CSS and JS library loaded from CDN for interactive map rendering.",
+  "frontend/src/lib/leafletTypes.ts": "TypeScript type definitions and helper functions for Leaflet map integration with corrected bindPopup signature accepting optional options parameter, supporting addTo() for both map and layer group, and fitBounds() method on LeafletMap.",
+  "frontend/src/components/earthquake/EarthquakeMapView.tsx": "Interactive Leaflet map component with explicit z-0 stacking context on Card and map container to establish predictable layering below app modals across Map and Split views."
+}

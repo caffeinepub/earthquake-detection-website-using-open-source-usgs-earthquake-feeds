@@ -1,0 +1,145 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 9,
+  "summary": "Build an earthquake detection web site using open-source internet data and modern web UI elements/libraries.",
+  "architectural_notes": [
+    "For map marker popups, disable Leaflet popup auto-pan (bindPopup options { autoPan: false }) to prevent map jumping/minimizing on marker click.",
+    "Normalize/trim filter inputs (e.g., search query) before applying client-side filtering so whitespace/empty strings do not hide results."
+  ],
+  "known_issues": [
+    "Interactive map marker popup causes the map to jump/minimize when clicking a marker (Leaflet popup autoPan behavior).",
+    "Past month USGS earthquake feed data not appearing in the table due to overly strict client-side filtering (e.g., whitespace in search query)."
+  ],
+  "isFixRequest": true,
+  "existing_features": [
+    {
+      "id": "feature-create-a-responsive-earthquake-detection-web-app-that-pulls-recent-earthquake-events-from-open-source-internet-data-usgs-earthquake-hazards-program-geojson-feeds-and-presents-them-in-a-modern-ui",
+      "title": "Create a responsive Earthquake Detection web app that pulls recent earthquake events from open-source internet data (USGS Earthquake Hazards Program GeoJSON feeds) and presents them in a modern UI.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-data-fetching-caching-and-loading-error-states-using-react-query-for-usgs-earthquake-feeds-including-automatic-refresh",
+      "title": "Implement data fetching, caching, and loading/error states using React Query for USGS earthquake feeds, including automatic refresh.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-provide-feed-selection-and-filtering-controls-for-earthquake-events-including-at-minimum-time-window-e-g-past-hour-day-week-minimum-magnitude-slider-input-and-a-text-search-over-place-region",
+      "title": "Provide feed selection and filtering controls for earthquake events, including at minimum: time window (e.g., past hour/day/week), minimum magnitude slider/input, and a text search over place/region.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-display-earthquake-events-in-a-modern-component-based-layout-using-shadcn-ui-elements-tables-cards-badges-dialogs-including-an-event-details-view-that-shows-magnitude-location-place-timestamp-depth-if-available-and-source-links",
+      "title": "Display earthquake events in a modern component-based layout using shadcn/ui elements (tables/cards/badges/dialogs), including an event details view that shows: magnitude, location/place, timestamp, depth (if available), and source links.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-simple-detection-indicator-dashboard-summary-total-events-in-the-selected-window-count-of-events-above-user-selected-magnitude-threshold-and-the-largest-magnitude-event-in-the-current-results",
+      "title": "Add a simple “detection” indicator/dashboard summary: total events in the selected window, count of events above user-selected magnitude threshold, and the largest magnitude event in the current results.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-coherent-distinctive-visual-theme-across-the-app-colors-typography-spacing-and-component-styling-suitable-for-an-earthquake-monitoring-dashboard-using-tailwind-and-existing-ui-components-avoid-blue-purple-as-the-primary-palette",
+      "title": "Apply a coherent, distinctive visual theme across the app (colors, typography, spacing, and component styling) suitable for an earthquake monitoring dashboard, using Tailwind and existing UI components; avoid blue/purple as the primary palette.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-the-required-generated-static-images-to-the-frontend-as-assets-and-render-them-in-the-ui-e-g-in-header-landing-area-from-frontend-public-assets-generated-without-routing-images-through-the-backend",
+      "title": "Add the required generated static images to the frontend as assets and render them in the UI (e.g., in header/landing area) from frontend/public/assets/generated without routing images through the backend.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-live-interactive-map-view-to-the-earthquake-dashboard-that-plots-the-currently-loaded-and-filtered-usgs-earthquake-events-by-latitude-longitude-as-clickable-markers",
+      "title": "Add a live/interactive map view to the Earthquake dashboard that plots the currently loaded and filtered USGS earthquake events by latitude/longitude as clickable markers.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-provide-a-clear-ui-control-on-the-dashboard-to-switch-between-viewing-results-as-a-table-as-a-map-or-as-a-split-view-showing-both-map-table-without-removing-existing-functionality",
+      "title": "Provide a clear UI control on the dashboard to switch between viewing results as a table, as a map, or as a split view showing both (map + table), without removing existing functionality.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enable-marker-interaction-so-that-selecting-a-marker-opens-the-existing-earthquake-details-view-for-that-event-consistent-with-selecting-a-row-in-the-results-table",
+      "title": "Enable marker interaction so that selecting a marker opens the existing earthquake details view for that event, consistent with selecting a row in the results table.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-prevent-the-interactive-leaflet-map-from-panning-zooming-jumping-minimize-when-the-user-clicks-an-earthquake-marker-by-disabling-leaflet-popup-auto-pan-behavior-for-marker-popups",
+      "title": "Prevent the interactive Leaflet map from panning/zooming/jumping (\"minimize\") when the user clicks an earthquake marker by disabling Leaflet popup auto-pan behavior for marker popups.",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-past-month-all-month-geojson-table-results-not-appearing-by-making-the-place-region-search-filter-robust-to-leading-trailing-whitespace-and-whitespace-only-input-so-that-past-month-results-are-not-accidentally-filtered-out-by-stale-or-malformed-search-input",
+      "title": "Fix the Past Month (all_month.geojson) table results not appearing by making the place/region search filter robust to leading/trailing whitespace and whitespace-only input, so that Past Month results are not accidentally filtered out by stale or malformed search input.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-ui-layering-z-index-so-that-when-the-earthquake-details-dialog-is-opened-e-g-by-clicking-a-leaflet-map-marker-the-dialog-overlay-and-dialog-content-always-render-above-the-leaflet-map-tiles-markers-controls-in-all-view-modes-map-and-split-matching-expected-modal-behavior",
+      "title": "Fix the UI layering/z-index so that when the Earthquake Details dialog is opened (e.g., by clicking a Leaflet map marker), the dialog overlay and dialog content always render above the Leaflet map tiles/markers/controls in all view modes (Map and Split), matching expected modal behavior.",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-regression-safe-styling-adjustment-to-ensure-leaflet-s-internal-panes-controls-do-not-create-unexpected-stacking-contexts-that-can-overtake-app-modals-without-editing-any-read-only-shadcn-ui-component-source-files-under-frontend-src-components-ui",
+      "title": "Add a regression-safe styling adjustment to ensure Leaflet’s internal panes/controls do not create unexpected stacking contexts that can overtake app modals, without editing any read-only shadcn/ui component source files under frontend/src/components/ui.",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Create an earthquake detection website that pulls and displays earthquake data from open-source internet sources using modern web UI elements and libraries.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Add a live/interactive map view that displays recent earthquake events geographically (pins/markers) and updates with the selected feed/filters.",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Earthquake detection website using open-source USGS earthquake feeds",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

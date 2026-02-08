@@ -1,0 +1,52 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-08T10:14:45.223Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 2,
+    "implemented": 2,
+    "items": [
+      {
+        "id": "REQ-13",
+        "summary": "Fix the UI layering/z-index so that when the Earthquake Details dialog is opened (e.g., by clicking a Leaflet map marker), the dialog overlay and dialog content always render above the Leaflet map tiles/markers/controls in all view modes (Map and Split), matching expected modal behavior.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/earthquake/EarthquakeDetailsDialog.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/earthquake/EarthquakeDetailsDialog.tsx"
+        ]
+      },
+      {
+        "id": "REQ-14",
+        "summary": "Add a regression-safe styling adjustment to ensure Leaflet’s internal panes/controls do not create unexpected stacking contexts that can overtake app modals, without editing any read-only shadcn/ui component source files under frontend/src/components/ui.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/index.css",
+          "frontend/src/components/earthquake/EarthquakeMapView.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/index.css",
+          "frontend/src/components/earthquake/EarthquakeMapView.tsx"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/components/earthquake/EarthquakeDetailsDialog.tsx",
+    "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+    "frontend/src/index.css",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

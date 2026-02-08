@@ -1,0 +1,24 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-08T10:14:45.221Z",
+  "summary": "The diff addresses the reported modal-over-Leaflet layering issue by explicitly raising the Radix Dialog overlay/content z-index in the consumer component and by adding global Leaflet z-index normalization rules in app-level CSS, without modifying any files under frontend/src/components/ui. No clear gaps against REQ-13/REQ-14 are evident from the provided diff summary, but some Leaflet popup behavior was also changed (autoPan disabled), which was not requested.",
+  "missing_requirements": [],
+  "hallucinated_features": [
+    {
+      "description": "Changed Leaflet marker popup behavior by disabling popup autoPan (\"autoPan: false\"), which alters map behavior and was not requested as part of the z-index/modal layering fix.",
+      "reason": "BuildRequest focuses on dialog/modal layering above Leaflet and preventing map interaction through the overlay; it explicitly lists non-goals around adding/changing data behavior and does not request popup behavior changes.",
+      "evidence": [
+        "frontend/src/components/earthquake/EarthquakeMapView.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.72,
+  "changed_files": [
+    "frontend-file-summaries.txt",
+    "frontend/src/components/earthquake/EarthquakeDetailsDialog.tsx",
+    "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+    "frontend/src/index.css",
+    "project_state.json"
+  ]
+}

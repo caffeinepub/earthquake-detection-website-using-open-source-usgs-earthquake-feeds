@@ -1,0 +1,45 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Fix modal layering over Leaflet map in all dashboard views",
+  "requirements": [
+    {
+      "id": "REQ-13",
+      "summary": "Ensure Earthquake Details dialog overlay/content always render above Leaflet map layers and block map interaction in Map and Split views.",
+      "acceptanceCriteria": [
+        "In Map view, selecting an earthquake marker opens the Earthquake Details dialog and the dialog overlay/content are not visually covered by any part of the Leaflet map (tiles, markers, attribution, zoom controls).",
+        "In Split view, selecting an earthquake (via marker or table row) opens the Earthquake Details dialog and the dialog overlay/content are not visually covered by any part of the Leaflet map.",
+        "While the dialog is open, the user cannot interact with the map underneath (click/drag/zoom) through the dialog overlay.",
+        "Closing the dialog restores normal map interaction and visuals without layout shifts."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/earthquake/EarthquakeDetailsDialog.tsx",
+          "operation": "modify",
+          "description": "Adjust the consumer implementation of the shadcn-ui Dialog to explicitly render/configure the dialog overlay and dialog content with a higher z-index than Leaflet layers/controls (e.g., via exported DialogOverlay/DialogPortal if available, or by applying appropriate consumer-level className). Ensure the overlay covers the viewport and captures pointer events so the map cannot be interacted with while the dialog is open. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-14",
+      "summary": "Add regression-safe global/consumer styling so Leaflet panes/controls cannot overtake app modals, without modifying read-only shadcn/ui sources.",
+      "acceptanceCriteria": [
+        "No files under frontend/src/components/ui are modified.",
+        "Leaflet map remains fully functional (pan/zoom/markers/popups) after the styling change.",
+        "Dialog layering remains correct across light and dark themes."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add app-level CSS overrides that keep Leaflet stacking contexts/panes/controls below the app modal layer (e.g., normalize Leaflet container/pane/control z-index values and avoid Leaflet creating a higher stacking context than Radix/shadcn dialogs). Ensure styles work in both light and dark themes and do not break Leaflet layout or interactions."
+        },
+        {
+          "path": "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+          "operation": "modify",
+          "description": "Add regression-safe consumer-level container styling (e.g., ensure the Leaflet host div/card establishes a predictable stacking context with a low z-index) so Leaflet layers/controls remain under app modals across Map and Split view layouts."
+        }
+      ]
+    }
+  ]
+}
