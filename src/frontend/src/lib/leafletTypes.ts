@@ -5,11 +5,22 @@ declare global {
   }
 }
 
+export interface LeafletLatLngBounds {
+  getNorth(): number;
+  getSouth(): number;
+  getEast(): number;
+  getWest(): number;
+  pad(bufferRatio: number): LeafletLatLngBounds;
+}
+
 export interface LeafletMap {
   setView(center: [number, number], zoom: number): LeafletMap;
   remove(): void;
   invalidateSize(): void;
   fitBounds(bounds: any, options?: any): LeafletMap;
+  getBounds(): LeafletLatLngBounds;
+  on(event: string, handler: () => void): void;
+  off(event: string, handler?: () => void): void;
 }
 
 export interface LeafletMarker {

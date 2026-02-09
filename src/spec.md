@@ -1,11 +1,10 @@
 # Specification
 
 ## Summary
-**Goal:** Ensure the Earthquake Details dialog always renders above Leaflet map layers and blocks map interaction while open.
+**Goal:** Make Past Week and Past Month views show only earthquakes within the selected time window and ensure all time windows are sorted by most recent event first.
 
 **Planned changes:**
-- Adjust app-level/modal and Leaflet container/pane/controls styling (e.g., z-index/stacking context) so the dialog overlay and content consistently appear above map tiles, markers, attribution, and zoom controls in both Map and Split views.
-- Ensure the dialog overlay captures pointer events so users cannot click/drag/zoom the map underneath while the dialog is open, and restore normal interaction when closed.
-- Implement the fix without modifying any read-only shadcn/ui component source files under `frontend/src/components/ui`, keeping Leaflet functionality and theme support intact.
+- Apply an explicit client-side time-window filter for Past Week (last 7 days) and Past Month (last 30 days) based on `properties.time`, and use the same filtered dataset across Table / Map / Split views, summary stats, and details selection.
+- After filtering (and any existing filters), sort earthquakes by event time descending for all time windows (Past Hour/Day/Week/Month) so the list consistently shows the newest events first.
 
-**User-visible outcome:** Opening Earthquake Details from a marker or table row shows a proper modal above the map (no overlap/hidden content) and the map cannot be interacted with until the dialog is closed.
+**User-visible outcome:** Selecting Past Week or Past Month shows only earthquakes from the last 7 or 30 days, and results are consistently ordered newest-to-oldest across the table, map, and summary cards.

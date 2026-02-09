@@ -1,14 +1,17 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 9,
+  "projectStateVersion": 21,
   "summary": "Build an earthquake detection web site using open-source internet data and modern web UI elements/libraries.",
   "architectural_notes": [
     "For map marker popups, disable Leaflet popup auto-pan (bindPopup options { autoPan: false }) to prevent map jumping/minimizing on marker click.",
-    "Normalize/trim filter inputs (e.g., search query) before applying client-side filtering so whitespace/empty strings do not hide results."
+    "Normalize/trim filter inputs (e.g., search query) before applying client-side filtering so whitespace/empty strings do not hide results.",
+    "To prevent UI lag with large datasets (e.g., Past Week), optimize rendering by (1) only rendering Leaflet markers within current visible map bounds and (2) virtualizing/limiting the number of table rows rendered at once."
   ],
   "known_issues": [
     "Interactive map marker popup causes the map to jump/minimize when clicking a marker (Leaflet popup autoPan behavior).",
-    "Past month USGS earthquake feed data not appearing in the table due to overly strict client-side filtering (e.g., whitespace in search query)."
+    "Past month USGS earthquake feed data not appearing in the table due to overly strict client-side filtering (e.g., whitespace in search query).",
+    "App becomes laggy when switching the time window from Past Hour to Past Week due to rendering too many table rows and Leaflet markers at once.",
+    "Selecting Past Week/Past Month appears to include events from smaller time windows (Past Hour/Day) instead of showing only events within the chosen window; needs correct time-window-only filtering/sorting."
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -123,6 +126,94 @@
         "REQ-14"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-update-the-top-left-header-branding-text-in-the-dashboard-to-replace-seismic-monitor-with-whofeelanearthquake",
+      "title": "Update the top-left header branding text in the dashboard to replace \"Seismic Monitor\" with \"WhoFeelAnEarthquake\".",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-website-document-title-to-use-whofeelanearthquake-so-the-browser-tab-title-matches-the-new-site-name",
+      "title": "Update the website/document title to use \"WhoFeelAnEarthquake\" so the browser tab title matches the new site name.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-any-relevant-accessibility-user-facing-alt-text-that-currently-says-seismic-monitor-to-match-the-new-site-name-whofeelanearthquake",
+      "title": "Update any relevant accessibility/user-facing alt text that currently says \"Seismic Monitor\" to match the new site name \"WhoFeelAnEarthquake\".",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-new-tsunami-column-to-the-earthquake-results-table-frontend-src-components-earthquake-earthquakeresultstable-tsx-that-displays-a-clear-warning-indicator-based-on-the-usgs-geojson-field-properties-tsunami-usgsfeature-properties-tsunami",
+      "title": "Add a new \"Tsunami\" column to the earthquake results table (frontend/src/components/earthquake/EarthquakeResultsTable.tsx) that displays a clear warning indicator based on the USGS GeoJSON field properties.tsunami (UsgsFeature.properties.tsunami).",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-favicon-assets-generated-from-the-uploaded-icon-eq-logo-dim-512x512-png-to-the-frontend-public-assets-and-update-the-html-head-to-reference-them-so-browsers-display-the-icon-in-the-tab-address-bar",
+      "title": "Add favicon assets generated from the uploaded icon (eq-logo.dim_512x512.png) to the frontend public assets, and update the HTML head to reference them so browsers display the icon in the tab/address bar.",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-the-earthquake-details-popup-frontend-src-components-earthquake-earthquakedetailsdialog-tsx-add-an-mmi-modified-mercalli-intensity-scale-status-line-directly-below-the-existing-status-line-using-the-usgs-geojson-field-properties-mmi-usgsfeature-properties-mmi",
+      "title": "In the earthquake details popup (frontend/src/components/earthquake/EarthquakeDetailsDialog.tsx), add an MMI (Modified Mercalli Intensity) scale status line directly below the existing “Status” line, using the USGS GeoJSON field properties.mmi (UsgsFeature.properties.mmi).",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-display-the-mmi-value-as-both-a-numeric-intensity-rounded-to-a-sensible-precision-and-a-clear-mercalli-category-label-based-on-standard-mmi-bands-e-g-i-ii-not-felt-iii-weak-iv-light-v-moderate-vi-strong-vii-very-strong-viii-severe-ix-violent-x-extreme-xi-xii-catastrophic",
+      "title": "Display the MMI value as both a numeric intensity (rounded to a sensible precision) and a clear Mercalli category label based on standard MMI bands (e.g., I–II Not felt, III Weak, IV Light, V Moderate, VI Strong, VII Very strong, VIII Severe, IX Violent, X Extreme, XI–XII Catastrophic).",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-optimize-the-leaflet-map-rendering-so-switching-from-smaller-to-larger-usgs-time-windows-e-g-past-hour-past-week-does-not-freeze-the-ui-by-rendering-only-earthquakes-that-are-within-the-current-visible-map-bounds-plus-a-small-optional-padding-and-updating-the-rendered-marker-set-when-the-user-pans-zooms-the-map",
+      "title": "Optimize the Leaflet map rendering so switching from smaller to larger USGS time windows (e.g., Past Hour → Past Week) does not freeze the UI by rendering only earthquakes that are within the current visible map bounds (plus a small optional padding), and updating the rendered marker set when the user pans/zooms the map.",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-optimize-the-earthquake-results-table-rendering-so-switching-from-smaller-to-larger-usgs-time-windows-e-g-past-hour-past-week-does-not-lag-by-virtualizing-or-otherwise-limiting-the-number-of-rendered-rows-at-once-while-preserving-table-columns-styling-row-selection-and-the-external-link-action",
+      "title": "Optimize the earthquake results table rendering so switching from smaller to larger USGS time windows (e.g., Past Hour → Past Week) does not lag by virtualizing or otherwise limiting the number of rendered rows at once while preserving table columns, styling, row selection, and the external link action.",
+      "reqIds": [
+        "REQ-23"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-when-the-user-selects-the-usgs-time-window-past-week-or-past-month-ensure-the-displayed-earthquake-list-table-map-stats-and-details-selection-is-restricted-to-only-events-whose-properties-time-falls-within-the-selected-window-week-last-7-days-month-last-30-days-so-results-are-not-effectively-treated-as-starting-from-smaller-windows-hour-day-or-containing-older-than-window-items",
+      "title": "When the user selects the USGS time window \"Past Week\" or \"Past Month\", ensure the displayed earthquake list (table, map, stats, and details selection) is restricted to only events whose properties.time falls within the selected window (week = last 7 days; month = last 30 days), so results are not effectively treated as starting from smaller windows (hour/day) or containing older-than-window items.",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-for-all-time-windows-past-hour-day-week-month-sort-the-displayed-earthquake-results-by-event-time-descending-most-recent-first-after-applying-the-time-window-restriction-and-other-filters-so-past-week-past-month-lists-do-not-appear-to-start-with-smaller-window-ordering-artifacts",
+      "title": "For all time windows (Past Hour/Day/Week/Month), sort the displayed earthquake results by event time descending (most recent first) after applying the time-window restriction and other filters, so Past Week/Past Month lists do not appear to \"start\" with smaller-window ordering artifacts.",
+      "reqIds": [
+        "REQ-25"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -135,6 +226,42 @@
     {
       "id": "AR-2",
       "summary": "Add a live/interactive map view that displays recent earthquake events geographically (pins/markers) and updates with the selected feed/filters.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Update app branding/header: change the left-corner label/title from \"Seismic Monitor\" to \"WhoFeelAnEarthquake\" (including the website title).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Include a tsunami warning indicator/field in the earthquake events table (where available from the data source).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Set the provided icon as the site favicon (add/update favicon assets and link tags so browsers display it).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Add an MMI (Modified Mercalli Intensity) scale status line below the existing status on the earthquake event popup/details view.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Fix performance lag when switching to larger time windows (e.g., Past Hour → Past Week) by optimizing map marker rendering (only render markers in visible bounds) and virtualizing/limiting rendered table rows.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Ensure Past Week and Past Month views show only events within the selected time window (not cumulatively including Past Hour/Day), and sort/display results appropriately for those windows.",
       "reqIds": [],
       "status": "pending"
     }

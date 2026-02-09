@@ -35,9 +35,9 @@ export default function EarthquakeDashboard() {
   // Fetch earthquake data
   const { data, isLoading, isError, error, isFetching } = useUsgsEarthquakes(timeWindow);
 
-  // Apply filters
+  // Apply filters with time window restriction and sorting
   const filteredEarthquakes = data
-    ? applyFilters(data.features, minMagnitude, searchQuery)
+    ? applyFilters(data.features, timeWindow, minMagnitude, searchQuery)
     : [];
 
   // Compute stats
@@ -62,12 +62,12 @@ export default function EarthquakeDashboard() {
             <div className="flex items-center gap-4">
               <img
                 src="/assets/generated/eq-logo.dim_512x512.png"
-                alt="Seismic Monitor"
+                alt="WhoFeelAnEarthquake"
                 className="h-10 w-10"
               />
               <div>
                 <h1 className="text-2xl font-bold tracking-tight">
-                  Seismic Monitor
+                  WhoFeelAnEarthquake
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   Real-time earthquake detection powered by USGS
@@ -192,15 +192,19 @@ export default function EarthquakeDashboard() {
 
             {viewMode === 'split' && (
               <div className="grid gap-6 lg:grid-cols-2">
-                <EarthquakeMapView
-                  earthquakes={filteredEarthquakes}
-                  onMarkerClick={handleEarthquakeSelect}
-                />
-                <EarthquakeResultsTable
-                  earthquakes={filteredEarthquakes}
-                  selectedEarthquake={selectedEarthquake}
-                  onEarthquakeSelect={handleEarthquakeSelect}
-                />
+                <div className="h-[600px] overflow-hidden">
+                  <EarthquakeMapView
+                    earthquakes={filteredEarthquakes}
+                    onMarkerClick={handleEarthquakeSelect}
+                  />
+                </div>
+                <div className="h-[600px] overflow-hidden">
+                  <EarthquakeResultsTable
+                    earthquakes={filteredEarthquakes}
+                    selectedEarthquake={selectedEarthquake}
+                    onEarthquakeSelect={handleEarthquakeSelect}
+                  />
+                </div>
               </div>
             )}
           </>

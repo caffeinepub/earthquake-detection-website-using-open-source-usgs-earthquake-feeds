@@ -19,6 +19,7 @@ import {
   formatCoordinates,
 } from '../../lib/formatters';
 import { getMagnitudeColor, getMagnitudeLabel } from '../../lib/usgsFeeds';
+import { formatMMI } from '../../lib/mmi';
 
 interface EarthquakeDetailsDialogProps {
   earthquake: UsgsFeature | null;
@@ -134,6 +135,10 @@ export function EarthquakeDetailsDialog({
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Status</p>
                 <Badge variant="outline">{properties.status}</Badge>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">MMI</p>
+                <Badge variant="outline">{formatMMI(properties.mmi)}</Badge>
               </div>
               {properties.tsunami === 1 && (
                 <div className="space-y-1">

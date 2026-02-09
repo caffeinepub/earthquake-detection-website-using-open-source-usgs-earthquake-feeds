@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UsgsFeature } from '../../lib/usgsTypes';
 import { formatMagnitude } from '../../lib/formatters';
 import { isLeafletLoaded, createEarthquakeMarker, LeafletMap, LeafletLayerGroup } from '../../lib/leafletTypes';
+import { filterEarthquakesInBounds } from '../../lib/earthquakeMapBounds';
 
 interface EarthquakeMapViewProps {
   earthquakes: UsgsFeature[];
@@ -14,49 +15,35 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick }: EarthquakeMapV
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<LeafletMap | null>(null);
   const markersLayerRef = useRef<LeafletLayerGroup | null>(null);
+  const allEarthquakesRef = useRef<UsgsFeature[]>([]);
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize map
-  useEffect(() => {
-    if (!mapRef.current || !isLeafletLoaded()) return;
+  // Store all earthquakes for bounds filtering
+  allEarthquakesRef.current = earthquakes;
 
-    const L = window.L;
-
-    // Create map instance
-    const map = L.map(mapRef.current).setView([20, 0], 2);
-
-    // Add tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 18,
-    }).addTo(map);
-
-    // Create markers layer group
-    const markersLayer = L.layerGroup().addTo(map);
-
-    mapInstanceRef.current = map;
-    markersLayerRef.current = markersLayer;
-
-    // Cleanup on unmount
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, []);
-
-  // Update markers when earthquakes change
-  useEffect(() => {
+  // Update visible markers based on current map bounds
+  const updateVisibleMarkers = useCallback(() => {
     if (!mapInstanceRef.current || !markersLayerRef.current || !isLeafletLoaded()) return;
 
-    const L = window.L;
+    const map = mapInstanceRef.current;
     const markersLayer = markersLayerRef.current;
+    const L = window.L;
+
+    // Get current map bounds
+    const bounds = map.getBounds();
+    
+    // Filter earthquakes to visible bounds (with 10% padding)
+    const visibleEarthquakes = filterEarthquakesInBounds(
+      allEarthquakesRef.current,
+      bounds,
+      0.1
+    );
 
     // Clear existing markers
     markersLayer.clearLayers();
 
-    // Add new markers
-    earthquakes.forEach((earthquake) => {
+    // Add markers only for visible earthquakes
+    visibleEarthquakes.forEach((earthquake) => {
       const [lon, lat] = earthquake.geometry.coordinates;
       const marker = createEarthquakeMarker(lat, lon, earthquake.properties.mag);
 
@@ -81,6 +68,62 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick }: EarthquakeMapV
         marker.addTo(markersLayer);
       }
     });
+  }, [onMarkerClick]);
+
+  // Debounced update for map move/zoom events
+  const handleMapMove = useCallback(() => {
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+    updateTimeoutRef.current = setTimeout(() => {
+      updateVisibleMarkers();
+    }, 150);
+  }, [updateVisibleMarkers]);
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapRef.current || !isLeafletLoaded()) return;
+
+    const L = window.L;
+
+    // Create map instance
+    const map = L.map(mapRef.current).setView([20, 0], 2);
+
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 18,
+    }).addTo(map);
+
+    // Create markers layer group
+    const markersLayer = L.layerGroup().addTo(map);
+
+    mapInstanceRef.current = map;
+    markersLayerRef.current = markersLayer;
+
+    // Listen to map move and zoom events
+    map.on('moveend', handleMapMove);
+    map.on('zoomend', handleMapMove);
+
+    // Cleanup on unmount
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.off('moveend', handleMapMove);
+        mapInstanceRef.current.off('zoomend', handleMapMove);
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [handleMapMove]);
+
+  // Update markers when earthquakes change
+  useEffect(() => {
+    if (!mapInstanceRef.current || !markersLayerRef.current || !isLeafletLoaded()) return;
+
+    const L = window.L;
 
     // Fit bounds if there are earthquakes
     if (earthquakes.length > 0) {
@@ -92,7 +135,10 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick }: EarthquakeMapV
       );
       mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 });
     }
-  }, [earthquakes, onMarkerClick]);
+
+    // Update visible markers (will be called after fitBounds triggers moveend)
+    updateVisibleMarkers();
+  }, [earthquakes, updateVisibleMarkers]);
 
   // Empty state
   if (earthquakes.length === 0) {

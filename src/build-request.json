@@ -1,54 +1,52 @@
 {
   "kind": "build_request",
-  "title": "Fix Earthquake Details dialog being hidden/overlapped by Leaflet map layers",
+  "title": "Ensure Past Week/Past Month views show only events within the selected window and are sorted correctly",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-13",
-      "text": "Fix the UI layering/z-index so that when the Earthquake Details dialog is opened (e.g., by clicking a Leaflet map marker), the dialog overlay and dialog content always render above the Leaflet map tiles/markers/controls in all view modes (Map and Split), matching expected modal behavior.",
+      "id": "REQ-24",
+      "text": "When the user selects the USGS time window \"Past Week\" or \"Past Month\", ensure the displayed earthquake list (table, map, stats, and details selection) is restricted to only events whose properties.time falls within the selected window (week = last 7 days; month = last 30 days), so results are not effectively treated as starting from smaller windows (hour/day) or containing older-than-window items.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "can you fix this"
+          "can you sort the past week & months data only that week & months not start from past hour day week or months"
         ]
       },
       "acceptanceCriteria": [
-        "In Map view, selecting an earthquake marker opens the Earthquake Details dialog and the dialog overlay/content are not visually covered by any part of the Leaflet map (tiles, markers, attribution, zoom controls).",
-        "In Split view, selecting an earthquake (via marker or table row) opens the Earthquake Details dialog and the dialog overlay/content are not visually covered by any part of the Leaflet map.",
-        "While the dialog is open, the user cannot interact with the map underneath (click/drag/zoom) through the dialog overlay.",
-        "Closing the dialog restores normal map interaction and visuals without layout shifts."
+        "With Time Window = Past Week, every displayed earthquake has (now - properties.time) <= 7 days.",
+        "With Time Window = Past Month, every displayed earthquake has (now - properties.time) <= 30 days.",
+        "The restriction applies consistently in all view modes (Table / Map / Split) and the summary cards reflect the same restricted set."
       ]
     },
     {
-      "id": "REQ-14",
-      "text": "Add a regression-safe styling adjustment to ensure Leaflet’s internal panes/controls do not create unexpected stacking contexts that can overtake app modals, without editing any read-only shadcn/ui component source files under frontend/src/components/ui.",
+      "id": "REQ-25",
+      "text": "For all time windows (Past Hour/Day/Week/Month), sort the displayed earthquake results by event time descending (most recent first) after applying the time-window restriction and other filters, so Past Week/Past Month lists do not appear to \"start\" with smaller-window ordering artifacts.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "can you fix this"
+          "can you sort the past week & months data only that week & months not start from past hour day week or months"
         ]
       },
       "acceptanceCriteria": [
-        "No files under frontend/src/components/ui are modified.",
-        "Leaflet map remains fully functional (pan/zoom/markers/popups) after the styling change.",
-        "Dialog layering remains correct across light and dark themes."
+        "In the results table, the first row is the most recent event and times are non-increasing as you scroll down.",
+        "Map rendering uses the same sorted+filtered dataset (even if markers are further reduced by visible map bounds optimization)."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/components/ui (read-only); fix must be implemented via consumer className props and/or app-level styles (e.g., frontend/src/index.css) and/or Leaflet container styles.",
-    "Keep the backend unchanged (single-actor Motoko canister remains minimal)."
+    "Do not edit any files under frontend/src/components/ui (read-only shadcn/ui components).",
+    "Keep the backend as-is (single Motoko actor; no backend changes required for this request)."
   ],
   "nonGoals": [
-    "Adding new earthquake data features or changing the USGS feed/query behavior.",
-    "Redesigning the Earthquake Details dialog content or adding new fields.",
-    "Changing the map provider or replacing Leaflet."
+    "Adding new time windows beyond Past Hour/Day/Week/Month.",
+    "Changing the USGS feed endpoints used (keep using https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_{timeWindow}.geojson).",
+    "Adding new UI controls for sorting (this request is about correct default behavior)."
   ],
   "imageRequirements": {
     "required": [],

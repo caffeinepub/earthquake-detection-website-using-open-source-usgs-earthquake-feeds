@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-ui-layering-z-index-so-that-when-the-earthquake-details-dialog-is-opened-e-g-by-clicking-a-leaflet-map-marker-the-dialog-overlay-and-dialog-content-always-render-above-the-leaflet-map-tiles-markers-controls-in-all-view-modes-map-and-split-matching-expected-modal-behavior",
-      "featureTitle": "Fix the UI layering/z-index so that when the Earthquake Details dialog is opened (e.g., by clicking a Leaflet map marker), the dialog overlay and dialog content always render above the Leaflet map tiles/markers/controls in all view modes (Map and Split), matching expected modal behavior.",
+      "featureId": "feature-when-the-user-selects-the-usgs-time-window-past-week-or-past-month-ensure-the-displayed-earthquake-list-table-map-stats-and-details-selection-is-restricted-to-only-events-whose-properties-time-falls-within-the-selected-window-week-last-7-days-month-last-30-days-so-results-are-not-effectively-treated-as-starting-from-smaller-windows-hour-day-or-containing-older-than-window-items",
+      "featureTitle": "When the user selects the USGS time window \"Past Week\" or \"Past Month\", ensure the displayed earthquake list (table, map, stats, and details selection) is restricted to only events whose properties.time falls within the selected window (week = last 7 days; month = last 30 days), so results are not effectively treated as starting from smaller windows (hour/day) or containing older-than-window items.",
       "files": [
-        "frontend/src/components/earthquake/EarthquakeDetailsDialog.tsx"
+        "frontend/src/lib/earthquakeFilters.ts",
+        "frontend/src/pages/EarthquakeDashboard.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -15,16 +16,16 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-13"
+        "REQ-24"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-regression-safe-styling-adjustment-to-ensure-leaflet-s-internal-panes-controls-do-not-create-unexpected-stacking-contexts-that-can-overtake-app-modals-without-editing-any-read-only-shadcn-ui-component-source-files-under-frontend-src-components-ui",
-      "featureTitle": "Add a regression-safe styling adjustment to ensure Leaflet’s internal panes/controls do not create unexpected stacking contexts that can overtake app modals, without editing any read-only shadcn/ui component source files under frontend/src/components/ui.",
+      "featureId": "feature-for-all-time-windows-past-hour-day-week-month-sort-the-displayed-earthquake-results-by-event-time-descending-most-recent-first-after-applying-the-time-window-restriction-and-other-filters-so-past-week-past-month-lists-do-not-appear-to-start-with-smaller-window-ordering-artifacts",
+      "featureTitle": "For all time windows (Past Hour/Day/Week/Month), sort the displayed earthquake results by event time descending (most recent first) after applying the time-window restriction and other filters, so Past Week/Past Month lists do not appear to \"start\" with smaller-window ordering artifacts.",
       "files": [
-        "frontend/src/components/earthquake/EarthquakeMapView.tsx",
-        "frontend/src/index.css"
+        "frontend/src/lib/earthquakeFilters.ts",
+        "frontend/src/pages/EarthquakeDashboard.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -34,7 +35,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-14"
+        "REQ-25"
       ],
       "confidence": "high"
     }
