@@ -1,59 +1,48 @@
 {
   "kind": "build_request",
-  "title": "Improve Split view table responsiveness across device sizes",
+  "title": "Add subtitle text under hero title on dashboard",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-34",
-      "text": "Make the Dashboard Split view layout responsive across mobile, tablet, and desktop so the Map card and the Earthquake Results table card are usable without clipping, forced fixed heights, or awkward scrolling.",
+      "id": "REQ-31",
+      "text": "On the dashboard hero section (frontend/src/pages/EarthquakeDashboard.tsx), add a new subtitle line directly below the existing centered hero title \"Real - Time Earthquake Detection Around The World\". The subtitle must be rendered as an H2 and must read exactly: \"Latest real-time earthquake information around the world\". Keep the subtitle centered and visually secondary to the main hero title (smaller size and/or muted color), without changing the existing hero title wording, alignment, or layout.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-5"
         ],
         "quotes": [
-          "can you make the split table more responsible to all type of device"
+          "now add h2 text below the title text : Latest real-time earthquake information around the world"
         ]
       },
       "acceptanceCriteria": [
-        "On small screens (mobile widths), Split view stacks the Map and Table vertically (single column) and both remain fully visible/usable without content being cut off.",
-        "On medium and large screens, Split view uses an appropriate two-column layout (or equivalent) where both cards fit within the viewport area without vertical clipping.",
-        "No fixed hard-coded Split view container height forces content to be inaccessible on short viewports; the layout adapts to viewport height using responsive CSS sizing.",
-        "The Table section remains scrollable (with its sticky header still working) when it needs to scroll, and the Map remains visible with a reasonable minimum height.",
-        "No regressions in the existing Table-only and Map-only view modes."
-      ]
-    },
-    {
-      "id": "REQ-35",
-      "text": "Improve the Earthquake Results table responsiveness within Split view so it works well on narrow widths (e.g., mobile portrait) while preserving all existing columns and interactions.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "can you make the split table more responsible to all type of device"
-        ]
-      },
-      "acceptanceCriteria": [
-        "In narrow layouts, the table does not overflow the page in a way that breaks the layout; if necessary, the table region provides horizontal scrolling within its own container.",
-        "All existing table interactions still work: row selection opens the details dialog, selected row styling remains visible, and the external link action button works without triggering row selection.",
-        "Sticky header remains aligned with the table content while scrolling vertically within the table container.",
-        "Virtualization behavior remains functional (no blank gaps or incorrect row positioning) after responsive layout changes."
+        "The hero section shows the existing title text unchanged: \"Real - Time Earthquake Detection Around The World\".",
+        "A second line appears immediately below the title and is rendered as an H2 with exact text: \"Latest real-time earthquake information around the world\".",
+        "The new subtitle is center-aligned and clearly styled as secondary (e.g., smaller font size and/or muted foreground) across breakpoints.",
+        "No other dashboard sections (controls, summary, table/map/split views, footer) change behavior or content."
       ]
     }
   ],
   "constraints": [
-    "Do not edit any files under frontend/src/components/ui (read-only shadcn/ui components).",
-    "Keep the app’s existing view modes (Table / Map / Split) and existing filtering, selection, and details dialog behavior intact."
+    "Do not edit any files under frontend/src/components/ui (read-only shadcn/ui sources).",
+    "Keep the existing hero title text and its centered layout unchanged; only add the requested subtitle beneath it."
   ],
   "nonGoals": [
-    "Adding new data sources or changing USGS feed/filtering logic.",
-    "Changing the visual theme, branding text, or hero section wording.",
-    "Backend/canister changes (no Motoko changes expected for this request)."
+    "Do not change USGS data fetching, filtering, sorting, map behavior, or table rendering.",
+    "Do not change global theming, branding, document title, or favicon assets."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

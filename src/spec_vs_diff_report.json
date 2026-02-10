@@ -1,32 +1,31 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-10T02:36:35.552Z",
-  "summary": "The diff clearly improves the Results table’s narrow-width behavior by containing horizontal overflow inside the table region and preserving sticky headers/virtualized scrolling structure. However, Split view responsiveness (REQ-34) appears to rely on hard-coded height breakpoints per the provided file summary, which conflicts with the requirement to avoid fixed heights that can clip content on short viewports. Additionally, the map component includes new bounds-based marker filtering/debouncing behavior that was not requested.",
+  "generatedAt": "2026-02-10T02:00:33.905Z",
+  "summary": "REQ-31 cannot be fully verified from the provided diff summary because the relevant portion of `EarthquakeDashboard.tsx` is truncated right at the hero title, and the subtitle line is not visible. There are also unrelated modified metadata/summary files not requested by the BuildRequest.",
   "missing_requirements": [
     {
-      "id": "REQ-34",
-      "requirement": "No fixed hard-coded Split view container height forces content to be inaccessible on short viewports; the layout adapts to viewport height using responsive CSS sizing.",
-      "reason": "The diff evidence indicates Split view uses hard-coded height values by breakpoint (e.g., 400/500/600/700), which does not demonstrate adapting to viewport height and risks clipping on short viewports.",
+      "id": "REQ-31",
+      "requirement": "Add a new subtitle line directly below the existing centered hero title, rendered as an H2 with exact text: \"Latest real-time earthquake information around the world\", styled as visually secondary, without changing the existing hero title text/alignment/layout.",
+      "reason": "The diff snippet shows the hero section and a hero title element starting with \"Real - Time Earthqua...\" but is truncated before confirming the full unchanged title text and before any subtitle H2 is visible. Therefore the required subtitle presence, exact text, and placement cannot be confirmed from the provided diff summary.",
       "evidence": [
-        "frontend-file-summaries.txt (EarthquakeDashboard.tsx summary mentions: \"adaptive heights (400px on mobile, 500px on small screens, 600px on large, 700px on xl)\")"
+        "frontend/src/pages/EarthquakeDashboard.tsx (truncated at hero title: \"Real - Time Earthqua...\")"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Map marker rendering optimized to only show earthquakes within current map bounds (with padding) and debounced updates on move/zoom events.",
-      "reason": "REQ-34/REQ-35 focus on Split view/table responsiveness and preserving existing behavior; implementing bounds-based filtering and debounced marker updates changes map behavior/performance characteristics and was not requested.",
+      "description": "Updated/modified repository metadata/summary files not requested by the BuildRequest (e.g., project state and file summaries).",
+      "reason": "BuildRequest only asks for a UI text change in `frontend/src/pages/EarthquakeDashboard.tsx` and explicitly limits scope; modifications to these meta files are not part of REQ-31.",
       "evidence": [
-        "frontend/src/components/earthquake/EarthquakeMapView.tsx (imports filterEarthquakesInBounds; adds updateVisibleMarkers(), handleMapMove() debounce, and clears/adds markers based on map bounds)"
+        "frontend-file-summaries.txt",
+        "project_state.json"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.48,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/components/earthquake/EarthquakeMapView.tsx",
-    "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
     "frontend/src/pages/EarthquakeDashboard.tsx",
     "project_state.json"
   ]

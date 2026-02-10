@@ -1,38 +1,23 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-10T02:36:35.555Z",
+  "generatedAt": "2026-02-10T02:00:33.908Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 1,
+    "implemented": 1,
     "items": [
       {
-        "id": "REQ-34",
-        "summary": "Make the Dashboard Split view layout responsive across mobile, tablet, and desktop so the Map card and the Earthquake Results table card are usable without clipping, forced fixed heights, or awkward scrolling.",
+        "id": "REQ-31",
+        "summary": "On the dashboard hero section (frontend/src/pages/EarthquakeDashboard.tsx), add a new subtitle line directly below the existing centered hero title \"Real - Time Earthquake Detection Around The World\". The subtitle must be rendered as an H2 and must read exactly: \"Latest real-time earthquake information around the world\". Keep the subtitle centered and visually secondary to the main hero title (smaller size and/or muted color), without changing the existing hero title wording, alignment, or layout.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/EarthquakeDashboard.tsx",
-          "frontend/src/components/earthquake/EarthquakeMapView.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/EarthquakeDashboard.tsx",
-          "frontend/src/components/earthquake/EarthquakeMapView.tsx"
-        ]
-      },
-      {
-        "id": "REQ-35",
-        "summary": "Improve the Earthquake Results table responsiveness within Split view so it works well on narrow widths (e.g., mobile portrait) while preserving all existing columns and interactions.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
           "frontend/src/pages/EarthquakeDashboard.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
           "frontend/src/pages/EarthquakeDashboard.tsx"
         ]
       }
@@ -43,8 +28,6 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/earthquake/EarthquakeMapView.tsx",
-    "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
     "frontend/src/pages/EarthquakeDashboard.tsx",
     "project_state.json",
     "scratch/component-selection.json",

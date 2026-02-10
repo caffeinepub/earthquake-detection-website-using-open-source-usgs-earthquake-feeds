@@ -191,22 +191,18 @@ export default function EarthquakeDashboard() {
             )}
 
             {viewMode === 'split' && (
-              <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 min-h-0">
-                {/* Map Panel */}
-                <div className="flex flex-col min-h-0 h-[400px] sm:h-[500px] lg:h-[600px] xl:h-[700px]">
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div className="h-[600px] overflow-hidden">
                   <EarthquakeMapView
                     earthquakes={filteredEarthquakes}
                     onMarkerClick={handleEarthquakeSelect}
-                    fillHeight={true}
                   />
                 </div>
-                {/* Table Panel */}
-                <div className="flex flex-col min-h-0 min-w-0 h-[400px] sm:h-[500px] lg:h-[600px] xl:h-[700px]">
+                <div className="h-[600px] overflow-hidden">
                   <EarthquakeResultsTable
                     earthquakes={filteredEarthquakes}
                     selectedEarthquake={selectedEarthquake}
                     onEarthquakeSelect={handleEarthquakeSelect}
-                    fillHeight={true}
                   />
                 </div>
               </div>
@@ -231,9 +227,9 @@ export default function EarthquakeDashboard() {
               </a>
             </p>
             <p>
-              © {new Date().getFullYear()}. Built with love using{' '}
+              © 2026. Built with love using{' '}
               <a
-                href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
+                href="https://caffeine.ai"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"

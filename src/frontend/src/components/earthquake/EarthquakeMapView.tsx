@@ -9,10 +9,9 @@ import { filterEarthquakesInBounds } from '../../lib/earthquakeMapBounds';
 interface EarthquakeMapViewProps {
   earthquakes: UsgsFeature[];
   onMarkerClick?: (earthquake: UsgsFeature) => void;
-  fillHeight?: boolean;
 }
 
-export function EarthquakeMapView({ earthquakes, onMarkerClick, fillHeight = false }: EarthquakeMapViewProps) {
+export function EarthquakeMapView({ earthquakes, onMarkerClick }: EarthquakeMapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<LeafletMap | null>(null);
   const markersLayerRef = useRef<LeafletLayerGroup | null>(null);
@@ -106,13 +105,6 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, fillHeight = fal
     map.on('moveend', handleMapMove);
     map.on('zoomend', handleMapMove);
 
-    // Invalidate size after a short delay to ensure proper rendering
-    setTimeout(() => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.invalidateSize();
-      }
-    }, 100);
-
     // Cleanup on unmount
     return () => {
       if (updateTimeoutRef.current) {
@@ -148,25 +140,14 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, fillHeight = fal
     updateVisibleMarkers();
   }, [earthquakes, updateVisibleMarkers]);
 
-  // Invalidate map size when fillHeight changes
-  useEffect(() => {
-    if (mapInstanceRef.current && fillHeight) {
-      setTimeout(() => {
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.invalidateSize();
-        }
-      }, 100);
-    }
-  }, [fillHeight]);
-
   // Empty state
   if (earthquakes.length === 0) {
     return (
-      <Card className={`border-border/50 ${fillHeight ? 'h-full flex flex-col' : ''}`}>
-        <CardHeader className="flex-shrink-0">
+      <Card className="border-border/50">
+        <CardHeader>
           <CardTitle>Map View</CardTitle>
         </CardHeader>
-        <CardContent className={`flex flex-col items-center justify-center ${fillHeight ? 'flex-1 min-h-0' : 'py-12'}`}>
+        <CardContent className="flex flex-col items-center justify-center py-12">
           <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground text-center">
             No earthquakes found matching your filters.
@@ -180,15 +161,15 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, fillHeight = fal
   }
 
   return (
-    <Card className={`border-border/50 relative z-0 ${fillHeight ? 'h-full flex flex-col' : ''}`}>
-      <CardHeader className="flex-shrink-0">
+    <Card className="border-border/50 relative z-0">
+      <CardHeader>
         <CardTitle>Map View ({earthquakes.length} events)</CardTitle>
       </CardHeader>
-      <CardContent className={`p-0 ${fillHeight ? 'flex-1 min-h-0 flex flex-col' : ''}`}>
+      <CardContent className="p-0">
         <div 
           ref={mapRef} 
-          className={`w-full rounded-b-lg overflow-hidden relative z-0 ${fillHeight ? 'flex-1 min-h-0' : 'h-[600px]'}`}
-          style={{ minHeight: fillHeight ? '300px' : '400px' }}
+          className="w-full h-[600px] rounded-b-lg overflow-hidden relative z-0"
+          style={{ minHeight: '400px' }}
         />
       </CardContent>
     </Card>

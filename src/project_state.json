@@ -1,21 +1,19 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 35,
+  "projectStateVersion": 29,
   "summary": "Build an earthquake detection web site using open-source internet data and modern web UI elements/libraries.",
   "architectural_notes": [
     "For map marker popups, disable Leaflet popup auto-pan (bindPopup options { autoPan: false }) to prevent map jumping/minimizing on marker click.",
     "Normalize/trim filter inputs (e.g., search query) before applying client-side filtering so whitespace/empty strings do not hide results.",
-    "To prevent UI lag with large datasets (e.g., Past Week), optimize rendering by (1) only rendering Leaflet markers within current visible map bounds and (2) virtualizing/limiting the number of table rows rendered at once.",
-    "Ensure results table container uses a proper height/overflow strategy (e.g., flex layout with min-h-0 and overflow-auto) so the bottom rows aren’t clipped on smaller viewports."
+    "To prevent UI lag with large datasets (e.g., Past Week), optimize rendering by (1) only rendering Leaflet markers within current visible map bounds and (2) virtualizing/limiting the number of table rows rendered at once."
   ],
   "known_issues": [
     "Interactive map marker popup causes the map to jump/minimize when clicking a marker (Leaflet popup autoPan behavior).",
     "Past month USGS earthquake feed data not appearing in the table due to overly strict client-side filtering (e.g., whitespace in search query).",
     "App becomes laggy when switching the time window from Past Hour to Past Week due to rendering too many table rows and Leaflet markers at once.",
-    "Selecting Past Week/Past Month appears to include events from smaller time windows (Past Hour/Day) instead of showing only events within the chosen window; needs correct time-window-only filtering/sorting.",
-    "Earthquake results table/list appears cropped at the bottom (likely container height/overflow/layout issue)."
+    "Selecting Past Week/Past Month appears to include events from smaller time windows (Past Hour/Day) instead of showing only events within the chosen window; needs correct time-window-only filtering/sorting."
   ],
-  "isFixRequest": true,
+  "isFixRequest": false,
   "existing_features": [
     {
       "id": "feature-create-a-responsive-earthquake-detection-web-app-that-pulls-recent-earthquake-events-from-open-source-internet-data-usgs-earthquake-hazards-program-geojson-feeds-and-presents-them-in-a-modern-ui",
@@ -264,38 +262,6 @@
         "REQ-31"
       ],
       "version": 1
-    },
-    {
-      "id": "feature-fix-the-layout-scrolling-of-the-earthquake-results-table-so-the-bottom-of-the-table-list-is-not-visually-cropped-and-the-last-row-can-be-fully-viewed-in-all-view-modes-table-and-split-address-the-height-interaction-between-the-fixed-600px-table-scroll-container-in-frontend-src-components-earthquake-earthquakeresultstable-tsx-and-the-h-600px-overflow-hidden-wrapper-used-in-split-view-in-frontend-src-pages-earthquakedashboard-tsx",
-      "title": "Fix the layout/scrolling of the earthquake results table so the bottom of the table list is not visually cropped and the last row can be fully viewed in all view modes (Table and Split). Address the height interaction between the fixed 600px table scroll container in `frontend/src/components/earthquake/EarthquakeResultsTable.tsx` and the `h-[600px] overflow-hidden` wrapper used in Split view in `frontend/src/pages/EarthquakeDashboard.tsx`.",
-      "reqIds": [
-        "REQ-32"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-fix-the-split-view-layout-so-the-map-card-and-the-table-card-do-not-get-vertically-clipped-due-to-nested-fixed-heights-e-g-a-fixed-height-wrapper-in-frontend-src-pages-earthquakedashboard-tsx-combined-with-the-fixed-h-600px-map-container-in-frontend-src-components-earthquake-earthquakemapview-tsx-update-the-layout-so-that-in-split-view-both-cards-fit-cleanly-within-their-containers-and-the-table-body-remains-scrollable-with-the-sticky-header-staying-visible-matching-expected-behavior-shown-in-the-uploaded-screenshot",
-      "title": "Fix the Split view layout so the Map card and the Table card do not get vertically clipped due to nested fixed heights (e.g., a fixed-height wrapper in `frontend/src/pages/EarthquakeDashboard.tsx` combined with the fixed `h-[600px]` map container in `frontend/src/components/earthquake/EarthquakeMapView.tsx`). Update the layout so that, in Split view, both cards fit cleanly within their containers and the table body remains scrollable with the sticky header staying visible, matching expected behavior shown in the uploaded screenshot.",
-      "reqIds": [
-        "REQ-33"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-make-the-dashboard-split-view-layout-responsive-across-mobile-tablet-and-desktop-so-the-map-card-and-the-earthquake-results-table-card-are-usable-without-clipping-forced-fixed-heights-or-awkward-scrolling",
-      "title": "Make the Dashboard Split view layout responsive across mobile, tablet, and desktop so the Map card and the Earthquake Results table card are usable without clipping, forced fixed heights, or awkward scrolling.",
-      "reqIds": [
-        "REQ-34"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-improve-the-earthquake-results-table-responsiveness-within-split-view-so-it-works-well-on-narrow-widths-e-g-mobile-portrait-while-preserving-all-existing-columns-and-interactions",
-      "title": "Improve the Earthquake Results table responsiveness within Split view so it works well on narrow widths (e.g., mobile portrait) while preserving all existing columns and interactions.",
-      "reqIds": [
-        "REQ-35"
-      ],
-      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -368,18 +334,6 @@
     {
       "id": "AR-12",
       "summary": "Add an H2 subtitle text below the main hero title: \"Latest real-time earthquake information around the world\".",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-13",
-      "summary": "Fix UI layout issue where the earthquake results table/list is cropped at the bottom (ensure full table height/scrolling is visible).",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-14",
-      "summary": "Improve Split view table responsiveness so it adapts well across device sizes/breakpoints (mobile/tablet/desktop) without clipping or layout issues.",
       "reqIds": [],
       "status": "pending"
     }

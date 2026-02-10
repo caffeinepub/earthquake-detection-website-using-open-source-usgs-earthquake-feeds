@@ -2,10 +2,9 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-make-the-dashboard-split-view-layout-responsive-across-mobile-tablet-and-desktop-so-the-map-card-and-the-earthquake-results-table-card-are-usable-without-clipping-forced-fixed-heights-or-awkward-scrolling",
-      "featureTitle": "Make the Dashboard Split view layout responsive across mobile, tablet, and desktop so the Map card and the Earthquake Results table card are usable without clipping, forced fixed heights, or awkward scrolling.",
+      "featureId": "feature-on-the-dashboard-hero-section-frontend-src-pages-earthquakedashboard-tsx-add-a-new-subtitle-line-directly-below-the-existing-centered-hero-title-real-time-earthquake-detection-around-the-world-the-subtitle-must-be-rendered-as-an-h2-and-must-read-exactly-latest-real-time-earthquake-information-around-the-world-keep-the-subtitle-centered-and-visually-secondary-to-the-main-hero-title-smaller-size-and-or-muted-color-without-changing-the-existing-hero-title-wording-alignment-or-layout",
+      "featureTitle": "On the dashboard hero section (frontend/src/pages/EarthquakeDashboard.tsx), add a new subtitle line directly below the existing centered hero title \"Real - Time Earthquake Detection Around The World\". The subtitle must be rendered as an H2 and must read exactly: \"Latest real-time earthquake information around the world\". Keep the subtitle centered and visually secondary to the main hero title (smaller size and/or muted color), without changing the existing hero title wording, alignment, or layout.",
       "files": [
-        "frontend/src/components/earthquake/EarthquakeMapView.tsx",
         "frontend/src/pages/EarthquakeDashboard.tsx"
       ],
       "components": [
@@ -16,26 +15,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-34"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-improve-the-earthquake-results-table-responsiveness-within-split-view-so-it-works-well-on-narrow-widths-e-g-mobile-portrait-while-preserving-all-existing-columns-and-interactions",
-      "featureTitle": "Improve the Earthquake Results table responsiveness within Split view so it works well on narrow widths (e.g., mobile portrait) while preserving all existing columns and interactions.",
-      "files": [
-        "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
-        "frontend/src/pages/EarthquakeDashboard.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-35"
+        "REQ-31"
       ],
       "confidence": "high"
     }
