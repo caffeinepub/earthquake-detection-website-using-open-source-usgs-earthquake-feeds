@@ -19,12 +19,24 @@ interface EarthquakeResultsTableProps {
   earthquakes: UsgsFeature[];
   selectedEarthquake?: UsgsFeature | null;
   onEarthquakeSelect?: (earthquake: UsgsFeature) => void;
+  fillHeight?: boolean;
+}
+
+/**
+ * Check if an earthquake has moment tensor data available.
+ * Parses the comma-separated types string and looks for "moment-tensor" (case-insensitive).
+ */
+function hasMomentTensor(types: string): boolean {
+  if (!types) return false;
+  const typesList = types.split(',').map(t => t.trim().toLowerCase());
+  return typesList.includes('moment-tensor');
 }
 
 export function EarthquakeResultsTable({
   earthquakes,
   selectedEarthquake,
   onEarthquakeSelect,
+  fillHeight = false,
 }: EarthquakeResultsTableProps) {
   const handleRowClick = (earthquake: UsgsFeature) => {
     if (onEarthquakeSelect) {
@@ -58,17 +70,17 @@ export function EarthquakeResultsTable({
   );
 
   return (
-    <Card className="border-border/50">
-      <CardHeader>
+    <Card className={`border-border/50 ${fillHeight ? 'h-full flex flex-col' : ''}`}>
+      <CardHeader className="flex-shrink-0">
         <CardTitle>Earthquake Events ({earthquakes.length})</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="rounded-md border border-border/50">
+      <CardContent className={fillHeight ? 'flex-1 min-h-0 flex flex-col' : ''}>
+        <div className={`rounded-md border border-border/50 ${fillHeight ? 'flex-1 min-h-0 flex flex-col' : ''}`}>
           <div
             ref={containerRef}
             onScroll={onScroll}
-            className="overflow-auto"
-            style={{ maxHeight: '600px' }}
+            className={`overflow-auto ${fillHeight ? 'flex-1 min-h-0' : ''}`}
+            style={fillHeight ? undefined : { maxHeight: '600px' }}
           >
             <Table>
               <TableHeader className="sticky top-0 bg-card z-10">
@@ -78,6 +90,7 @@ export function EarthquakeResultsTable({
                   <TableHead>Time</TableHead>
                   <TableHead>Depth</TableHead>
                   <TableHead>Tsunami</TableHead>
+                  <TableHead>Moment Tensor</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -85,7 +98,7 @@ export function EarthquakeResultsTable({
                 {/* Top spacer for virtualization */}
                 {virtualWindow.offsetTop > 0 && (
                   <TableRow style={{ height: `${virtualWindow.offsetTop}px` }}>
-                    <TableCell colSpan={6} />
+                    <TableCell colSpan={7} />
                   </TableRow>
                 )}
                 
@@ -131,6 +144,15 @@ export function EarthquakeResultsTable({
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
+                    <TableCell>
+                      {hasMomentTensor(earthquake.properties.types) ? (
+                        <Badge variant="secondary" className="w-fit">
+                          Available
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
@@ -149,7 +171,7 @@ export function EarthquakeResultsTable({
                 {/* Bottom spacer for virtualization */}
                 {virtualWindow.offsetBottom > 0 && (
                   <TableRow style={{ height: `${virtualWindow.offsetBottom}px` }}>
-                    <TableCell colSpan={6} />
+                    <TableCell colSpan={7} />
                   </TableRow>
                 )}
               </TableBody>

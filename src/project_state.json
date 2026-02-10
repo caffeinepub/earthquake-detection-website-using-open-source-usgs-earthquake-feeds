@@ -1,17 +1,19 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 21,
+  "projectStateVersion": 31,
   "summary": "Build an earthquake detection web site using open-source internet data and modern web UI elements/libraries.",
   "architectural_notes": [
     "For map marker popups, disable Leaflet popup auto-pan (bindPopup options { autoPan: false }) to prevent map jumping/minimizing on marker click.",
     "Normalize/trim filter inputs (e.g., search query) before applying client-side filtering so whitespace/empty strings do not hide results.",
-    "To prevent UI lag with large datasets (e.g., Past Week), optimize rendering by (1) only rendering Leaflet markers within current visible map bounds and (2) virtualizing/limiting the number of table rows rendered at once."
+    "To prevent UI lag with large datasets (e.g., Past Week), optimize rendering by (1) only rendering Leaflet markers within current visible map bounds and (2) virtualizing/limiting the number of table rows rendered at once.",
+    "Ensure results table container uses a proper height/overflow strategy (e.g., flex layout with min-h-0 and overflow-auto) so the bottom rows aren’t clipped on smaller viewports."
   ],
   "known_issues": [
     "Interactive map marker popup causes the map to jump/minimize when clicking a marker (Leaflet popup autoPan behavior).",
     "Past month USGS earthquake feed data not appearing in the table due to overly strict client-side filtering (e.g., whitespace in search query).",
     "App becomes laggy when switching the time window from Past Hour to Past Week due to rendering too many table rows and Leaflet markers at once.",
-    "Selecting Past Week/Past Month appears to include events from smaller time windows (Past Hour/Day) instead of showing only events within the chosen window; needs correct time-window-only filtering/sorting."
+    "Selecting Past Week/Past Month appears to include events from smaller time windows (Past Hour/Day) instead of showing only events within the chosen window; needs correct time-window-only filtering/sorting.",
+    "Earthquake results table/list appears cropped at the bottom (likely container height/overflow/layout issue)."
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -214,6 +216,62 @@
         "REQ-25"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-add-a-new-moment-tensor-column-to-the-earthquake-results-table-frontend-src-components-earthquake-earthquakeresultstable-tsx-that-indicates-whether-moment-tensor-data-is-available-for-each-event-using-the-existing-usgs-feed-field-usgsfeature-properties-types-comma-separated-product-list",
+      "title": "Add a new \"Moment Tensor\" column to the earthquake results table (frontend/src/components/earthquake/EarthquakeResultsTable.tsx) that indicates whether moment tensor data is available for each event, using the existing USGS feed field UsgsFeature.properties.types (comma-separated product list).",
+      "reqIds": [
+        "REQ-26"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enhance-the-earthquake-details-dialog-frontend-src-components-earthquake-earthquakedetailsdialog-tsx-to-fetch-the-usgs-event-detail-json-from-the-selected-event-s-properties-detail-url-and-display-a-moment-tensor-section-in-the-popup-when-the-detail-response-contains-moment-tensor-product-data",
+      "title": "Enhance the earthquake details dialog (frontend/src/components/earthquake/EarthquakeDetailsDialog.tsx) to fetch the USGS event detail JSON from the selected event’s properties.detail URL and display a \"Moment Tensor\" section in the popup when the detail response contains moment tensor product data.",
+      "reqIds": [
+        "REQ-27"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-extend-the-typescript-typing-layer-to-support-parsing-the-usgs-event-detail-response-needed-for-moment-tensor-display-without-breaking-existing-usgs-feed-typing-frontend-src-lib-usgstypes-ts-and-or-a-new-dedicated-type-module-under-frontend-src-lib",
+      "title": "Extend the TypeScript typing layer to support parsing the USGS event detail response needed for moment tensor display, without breaking existing USGS feed typing (frontend/src/lib/usgsTypes.ts and/or a new dedicated type module under frontend/src/lib).",
+      "reqIds": [
+        "REQ-28"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-dashboard-hero-section-in-frontend-src-pages-earthquakedashboard-tsx-to-remove-the-current-hero-banner-image-and-replace-it-with-a-centered-title-text-that-reads-exactly-real-time-earthquake-detection-around-the-world",
+      "title": "Update the dashboard Hero Section (in frontend/src/pages/EarthquakeDashboard.tsx) to remove the current hero/banner image and replace it with a centered title text that reads exactly: \"Real - Time Earthquake Detection Around The World\".",
+      "reqIds": [
+        "REQ-29"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-reduce-the-font-size-of-the-centered-hero-section-title-text-real-time-earthquake-detection-around-the-world-on-the-dashboard-page-so-it-appears-a-little-smaller-across-breakpoints-without-changing-the-title-wording-alignment-or-layout",
+      "title": "Reduce the font size of the centered Hero Section title text \"Real - Time Earthquake Detection Around The World\" on the dashboard page so it appears a little smaller across breakpoints, without changing the title wording, alignment, or layout.",
+      "reqIds": [
+        "REQ-30"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-on-the-dashboard-hero-section-frontend-src-pages-earthquakedashboard-tsx-add-a-new-subtitle-line-directly-below-the-existing-centered-hero-title-real-time-earthquake-detection-around-the-world-the-subtitle-must-be-rendered-as-an-h2-and-must-read-exactly-latest-real-time-earthquake-information-around-the-world-keep-the-subtitle-centered-and-visually-secondary-to-the-main-hero-title-smaller-size-and-or-muted-color-without-changing-the-existing-hero-title-wording-alignment-or-layout",
+      "title": "On the dashboard hero section (frontend/src/pages/EarthquakeDashboard.tsx), add a new subtitle line directly below the existing centered hero title \"Real - Time Earthquake Detection Around The World\". The subtitle must be rendered as an H2 and must read exactly: \"Latest real-time earthquake information around the world\". Keep the subtitle centered and visually secondary to the main hero title (smaller size and/or muted color), without changing the existing hero title wording, alignment, or layout.",
+      "reqIds": [
+        "REQ-31"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-layout-scrolling-of-the-earthquake-results-table-so-the-bottom-of-the-table-list-is-not-visually-cropped-and-the-last-row-can-be-fully-viewed-in-all-view-modes-table-and-split-address-the-height-interaction-between-the-fixed-600px-table-scroll-container-in-frontend-src-components-earthquake-earthquakeresultstable-tsx-and-the-h-600px-overflow-hidden-wrapper-used-in-split-view-in-frontend-src-pages-earthquakedashboard-tsx",
+      "title": "Fix the layout/scrolling of the earthquake results table so the bottom of the table list is not visually cropped and the last row can be fully viewed in all view modes (Table and Split). Address the height interaction between the fixed 600px table scroll container in `frontend/src/components/earthquake/EarthquakeResultsTable.tsx` and the `h-[600px] overflow-hidden` wrapper used in Split view in `frontend/src/pages/EarthquakeDashboard.tsx`.",
+      "reqIds": [
+        "REQ-32"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -262,6 +320,36 @@
     {
       "id": "AR-8",
       "summary": "Ensure Past Week and Past Month views show only events within the selected time window (not cumulatively including Past Hour/Day), and sort/display results appropriately for those windows.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Add moment tensor information to the earthquake results table and to the earthquake details/description popup (where available from USGS data).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Replace the homepage/hero banner image with centered title text: \"Real - Time Earthquake Detection Around The World\".",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Adjust the dashboard header/title text styling to be slightly smaller (reduce font size).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Add an H2 subtitle text below the main hero title: \"Latest real-time earthquake information around the world\".",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Fix UI layout issue where the earthquake results table/list is cropped at the bottom (ensure full table height/scrolling is visible).",
       "reqIds": [],
       "status": "pending"
     }

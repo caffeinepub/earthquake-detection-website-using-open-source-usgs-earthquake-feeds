@@ -1,10 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Make Past Week and Past Month views show only earthquakes within the selected time window and ensure all time windows are sorted by most recent event first.
+**Goal:** Fix the earthquake results table layout so the last row is fully visible (no bottom cropping) in both Table and Split views.
 
 **Planned changes:**
-- Apply an explicit client-side time-window filter for Past Week (last 7 days) and Past Month (last 30 days) based on `properties.time`, and use the same filtered dataset across Table / Map / Split views, summary stats, and details selection.
-- After filtering (and any existing filters), sort earthquakes by event time descending for all time windows (Past Hour/Day/Week/Month) so the list consistently shows the newest events first.
+- Adjust `EarthquakeResultsTable` container sizing/overflow so the table’s scroll area accounts for header/row height and does not clip the last row while preserving virtualization and the sticky header.
+- Update Split view layout in `EarthquakeDashboard` to remove/replace the current `h-[600px] overflow-hidden` wrapper behavior that clips the table, ensuring the table region is the element that scrolls.
+- Verify consistent behavior across view modes (Table and Split) without modifying read-only shadcn/ui component source files.
 
-**User-visible outcome:** Selecting Past Week or Past Month shows only earthquakes from the last 7 or 30 days, and results are consistently ordered newest-to-oldest across the table, map, and summary cards.
+**User-visible outcome:** In both Table and Split views, users can scroll to the end of the earthquake list and see the final row completely (no clipped bottom), with the header behavior unchanged.

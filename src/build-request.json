@@ -1,65 +1,38 @@
 {
   "kind": "build_request",
-  "title": "Ensure Past Week/Past Month views show only events within the selected window and are sorted correctly",
+  "title": "Fix cropped bottom of earthquake results table list",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-24",
-      "text": "When the user selects the USGS time window \"Past Week\" or \"Past Month\", ensure the displayed earthquake list (table, map, stats, and details selection) is restricted to only events whose properties.time falls within the selected window (week = last 7 days; month = last 30 days), so results are not effectively treated as starting from smaller windows (hour/day) or containing older-than-window items.",
+      "id": "REQ-32",
+      "text": "Fix the layout/scrolling of the earthquake results table so the bottom of the table list is not visually cropped and the last row can be fully viewed in all view modes (Table and Split). Address the height interaction between the fixed 600px table scroll container in `frontend/src/components/earthquake/EarthquakeResultsTable.tsx` and the `h-[600px] overflow-hidden` wrapper used in Split view in `frontend/src/pages/EarthquakeDashboard.tsx`.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-6"
         ],
         "quotes": [
-          "can you sort the past week & months data only that week & months not start from past hour day week or months"
+          "can you fix the cropped bottom of this table list"
         ]
       },
       "acceptanceCriteria": [
-        "With Time Window = Past Week, every displayed earthquake has (now - properties.time) <= 7 days.",
-        "With Time Window = Past Month, every displayed earthquake has (now - properties.time) <= 30 days.",
-        "The restriction applies consistently in all view modes (Table / Map / Split) and the summary cards reflect the same restricted set."
-      ]
-    },
-    {
-      "id": "REQ-25",
-      "text": "For all time windows (Past Hour/Day/Week/Month), sort the displayed earthquake results by event time descending (most recent first) after applying the time-window restriction and other filters, so Past Week/Past Month lists do not appear to \"start\" with smaller-window ordering artifacts.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "can you sort the past week & months data only that week & months not start from past hour day week or months"
-        ]
-      },
-      "acceptanceCriteria": [
-        "In the results table, the first row is the most recent event and times are non-increasing as you scroll down.",
-        "Map rendering uses the same sorted+filtered dataset (even if markers are further reduced by visible map bounds optimization)."
+        "In Table view, scrolling to the end of the list shows the last row fully (no bottom clipping/cropping).",
+        "In Split view, the EarthquakeResultsTable is not clipped by its parent container; the table area is scrollable and the last row is fully visible.",
+        "The table header remains usable/visible (no regressions to the existing sticky header behavior).",
+        "No changes are made to read-only shadcn/ui component source files under `frontend/src/components/ui`."
       ]
     }
   ],
   "constraints": [
-    "Do not edit any files under frontend/src/components/ui (read-only shadcn/ui components).",
-    "Keep the backend as-is (single Motoko actor; no backend changes required for this request)."
+    "Frontend immutable paths must not be edited: `frontend/src/hooks/useInternetIdentity.ts`, `frontend/src/hooks/useInternetIdentity.tsx`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`, and all files under `frontend/src/components/ui`.",
+    "Keep the existing virtualized rendering behavior in `frontend/src/components/earthquake/EarthquakeResultsTable.tsx` (do not remove virtualization)."
   ],
   "nonGoals": [
-    "Adding new time windows beyond Past Hour/Day/Week/Month.",
-    "Changing the USGS feed endpoints used (keep using https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_{timeWindow}.geojson).",
-    "Adding new UI controls for sorting (this request is about correct default behavior)."
+    "Backend changes (Motoko) are not required for this UI layout fix.",
+    "Do not redesign table columns, filters, or sorting as part of this fix."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

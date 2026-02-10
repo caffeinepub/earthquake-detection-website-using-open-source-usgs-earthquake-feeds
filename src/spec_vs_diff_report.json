@@ -1,14 +1,23 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T22:21:56.165Z",
-  "summary": "Implemented explicit client-side time-window filtering (including correct 7-day and 30-day cutoffs) and time-descending sorting via shared filter utilities, and updated the dashboard to apply these filters before computing stats and rendering results.",
+  "generatedAt": "2026-02-10T02:17:44.475Z",
+  "summary": "The diff appears to address the table cropping issue by making EarthquakeResultsTable support a parent-constrained “fill height” layout (flex + min-h-0 + overflow-auto) while preserving the existing virtualized rendering, which should prevent bottom clipping in both Table and Split views. No edits to shadcn/ui source files are shown in the modified-file list. However, the diff also appears to introduce/expand Moment Tensor-related UI/logic that was not requested by REQ-32.",
   "missing_requirements": [],
-  "hallucinated_features": [],
-  "confidence": 0.74,
+  "hallucinated_features": [
+    {
+      "description": "Added/expanded Moment Tensor availability logic and a dedicated \"Moment Tensor\" column in the results table (and related UI mentions).",
+      "reason": "REQ-32 is strictly about fixing table layout/scrolling and explicitly lists non-goals like not redesigning columns; Moment Tensor-related UI/logic is not requested for the cropping fix.",
+      "evidence": [
+        "frontend/src/components/earthquake/EarthquakeResultsTable.tsx (hasMomentTensor helper; \"Moment Tensor\" table column)",
+        "frontend-file-summaries.txt (mentions new Moment Tensor section in EarthquakeDetailsDialog and Moment Tensor display in table summary)"
+      ]
+    }
+  ],
+  "confidence": 0.66,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/lib/earthquakeFilters.ts",
+    "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
     "frontend/src/pages/EarthquakeDashboard.tsx",
     "project_state.json"
   ]

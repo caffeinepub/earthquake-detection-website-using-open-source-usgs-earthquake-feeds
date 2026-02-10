@@ -91,14 +91,14 @@ export default function EarthquakeDashboard() {
 
       {/* Hero Section */}
       <section className="border-b border-border/50 bg-gradient-to-b from-card/50 to-background">
-        <div className="container mx-auto px-4 py-8">
-          <div className="relative overflow-hidden rounded-lg">
-            <img
-              src="/assets/generated/eq-hero.dim_1600x600.png"
-              alt="Seismic Activity"
-              className="w-full h-48 object-cover opacity-80"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
+        <div className="container mx-auto px-4 py-12 md:py-16">
+          <div className="flex flex-col items-center justify-center gap-3">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center tracking-tight">
+              Real - Time Earthquake Detection Around The World
+            </h2>
+            <h2 className="text-lg md:text-xl lg:text-2xl text-center text-muted-foreground">
+              Latest real-time earthquake information around the world
+            </h2>
           </div>
         </div>
       </section>
@@ -192,17 +192,18 @@ export default function EarthquakeDashboard() {
 
             {viewMode === 'split' && (
               <div className="grid gap-6 lg:grid-cols-2">
-                <div className="h-[600px] overflow-hidden">
+                <div className="h-[600px]">
                   <EarthquakeMapView
                     earthquakes={filteredEarthquakes}
                     onMarkerClick={handleEarthquakeSelect}
                   />
                 </div>
-                <div className="h-[600px] overflow-hidden">
+                <div className="h-[600px] flex flex-col min-h-0">
                   <EarthquakeResultsTable
                     earthquakes={filteredEarthquakes}
                     selectedEarthquake={selectedEarthquake}
                     onEarthquakeSelect={handleEarthquakeSelect}
+                    fillHeight={true}
                   />
                 </div>
               </div>

@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-when-the-user-selects-the-usgs-time-window-past-week-or-past-month-ensure-the-displayed-earthquake-list-table-map-stats-and-details-selection-is-restricted-to-only-events-whose-properties-time-falls-within-the-selected-window-week-last-7-days-month-last-30-days-so-results-are-not-effectively-treated-as-starting-from-smaller-windows-hour-day-or-containing-older-than-window-items",
-      "featureTitle": "When the user selects the USGS time window \"Past Week\" or \"Past Month\", ensure the displayed earthquake list (table, map, stats, and details selection) is restricted to only events whose properties.time falls within the selected window (week = last 7 days; month = last 30 days), so results are not effectively treated as starting from smaller windows (hour/day) or containing older-than-window items.",
+      "featureId": "feature-fix-the-layout-scrolling-of-the-earthquake-results-table-so-the-bottom-of-the-table-list-is-not-visually-cropped-and-the-last-row-can-be-fully-viewed-in-all-view-modes-table-and-split-address-the-height-interaction-between-the-fixed-600px-table-scroll-container-in-frontend-src-components-earthquake-earthquakeresultstable-tsx-and-the-h-600px-overflow-hidden-wrapper-used-in-split-view-in-frontend-src-pages-earthquakedashboard-tsx",
+      "featureTitle": "Fix the layout/scrolling of the earthquake results table so the bottom of the table list is not visually cropped and the last row can be fully viewed in all view modes (Table and Split). Address the height interaction between the fixed 600px table scroll container in `frontend/src/components/earthquake/EarthquakeResultsTable.tsx` and the `h-[600px] overflow-hidden` wrapper used in Split view in `frontend/src/pages/EarthquakeDashboard.tsx`.",
       "files": [
-        "frontend/src/lib/earthquakeFilters.ts",
+        "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
         "frontend/src/pages/EarthquakeDashboard.tsx"
       ],
       "components": [
@@ -16,26 +16,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-24"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-for-all-time-windows-past-hour-day-week-month-sort-the-displayed-earthquake-results-by-event-time-descending-most-recent-first-after-applying-the-time-window-restriction-and-other-filters-so-past-week-past-month-lists-do-not-appear-to-start-with-smaller-window-ordering-artifacts",
-      "featureTitle": "For all time windows (Past Hour/Day/Week/Month), sort the displayed earthquake results by event time descending (most recent first) after applying the time-window restriction and other filters, so Past Week/Past Month lists do not appear to \"start\" with smaller-window ordering artifacts.",
-      "files": [
-        "frontend/src/lib/earthquakeFilters.ts",
-        "frontend/src/pages/EarthquakeDashboard.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-25"
+        "REQ-32"
       ],
       "confidence": "high"
     }

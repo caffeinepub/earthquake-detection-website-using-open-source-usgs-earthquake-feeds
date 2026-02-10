@@ -1,38 +1,25 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T22:21:56.168Z",
+  "generatedAt": "2026-02-10T02:17:44.478Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 1,
+    "implemented": 1,
     "items": [
       {
-        "id": "REQ-24",
-        "summary": "When the user selects the USGS time window \"Past Week\" or \"Past Month\", ensure the displayed earthquake list (table, map, stats, and details selection) is restricted to only events whose properties.time falls within the selected window (week = last 7 days; month = last 30 days), so results are not effectively treated as starting from smaller windows (hour/day) or containing older-than-window items.",
+        "id": "REQ-32",
+        "summary": "Fix the layout/scrolling of the earthquake results table so the bottom of the table list is not visually cropped and the last row can be fully viewed in all view modes (Table and Split). Address the height interaction between the fixed 600px table scroll container in `frontend/src/components/earthquake/EarthquakeResultsTable.tsx` and the `h-[600px] overflow-hidden` wrapper used in Split view in `frontend/src/pages/EarthquakeDashboard.tsx`.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/lib/earthquakeFilters.ts",
+          "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
           "frontend/src/pages/EarthquakeDashboard.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/lib/earthquakeFilters.ts",
-          "frontend/src/pages/EarthquakeDashboard.tsx"
-        ]
-      },
-      {
-        "id": "REQ-25",
-        "summary": "For all time windows (Past Hour/Day/Week/Month), sort the displayed earthquake results by event time descending (most recent first) after applying the time-window restriction and other filters, so Past Week/Past Month lists do not appear to \"start\" with smaller-window ordering artifacts.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/lib/earthquakeFilters.ts",
-          "frontend/src/pages/EarthquakeDashboard.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/lib/earthquakeFilters.ts",
+          "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
           "frontend/src/pages/EarthquakeDashboard.tsx"
         ]
       }
@@ -43,7 +30,7 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/lib/earthquakeFilters.ts",
+    "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
     "frontend/src/pages/EarthquakeDashboard.tsx",
     "project_state.json",
     "scratch/component-selection.json",

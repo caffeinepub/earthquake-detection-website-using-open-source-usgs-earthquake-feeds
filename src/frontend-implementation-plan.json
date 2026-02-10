@@ -1,46 +1,27 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix USGS Past Week/Month time-window restriction and ensure consistent most-recent-first sorting",
+  "title": "Fix Earthquake results table cropping in Table and Split views",
   "requirements": [
     {
-      "id": "REQ-24",
-      "summary": "Apply an explicit client-side time-window cutoff for Past Week (7d) and Past Month (30d) so all views/stats/details only use events within the selected window.",
+      "id": "REQ-32",
+      "summary": "Adjust EarthquakeResultsTable and Split view container sizing so the scrollable table content is not clipped and the last row remains fully visible while preserving the sticky header and virtualization.",
       "acceptanceCriteria": [
-        "With Time Window = Past Week, every displayed earthquake has (now - properties.time) <= 7 days.",
-        "With Time Window = Past Month, every displayed earthquake has (now - properties.time) <= 30 days.",
-        "The restriction applies consistently in all view modes (Table / Map / Split) and the summary cards reflect the same restricted set."
+        "In Table view, scrolling to the end of the list shows the last row fully (no bottom clipping/cropping).",
+        "In Split view, the EarthquakeResultsTable is not clipped by its parent container; the table area is scrollable and the last row is fully visible.",
+        "The table header remains usable/visible (no regressions to the existing sticky header behavior).",
+        "No changes are made to read-only shadcn/ui component source files under `frontend/src/components/ui`."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/lib/earthquakeFilters.ts",
+          "path": "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
           "operation": "modify",
-          "description": "Extend filtering utilities to support time-window restriction based on feature.properties.time (hour/day/week/month => last 1h/24h/7d/30d). Ensure the restriction is applied before other filters and is reusable from the dashboard."
+          "description": "Refactor the results table layout to support both a fixed-height (Table view) and a parent-constrained (Split view) mode without changing virtualization: make the Card and CardContent capable of `h-full` + `flex` + `min-h-0`, move the scroll container to use `flex-1 min-h-0 overflow-auto` (instead of a hardcoded 600px maxHeight when in fill mode), and ensure there is no bottom clipping at the end of scroll (e.g., by ensuring the scroll container owns the height and has appropriate inner padding/space for the last row). Preserve existing sticky header behavior within the scrolling container."
         },
         {
           "path": "frontend/src/pages/EarthquakeDashboard.tsx",
           "operation": "modify",
-          "description": "Update the dashboard’s filtered dataset derivation to include the selected timeWindow in the filtering pipeline so the table/map/split views, summary stats, and details selection all operate on the same time-window-restricted set."
-        }
-      ]
-    },
-    {
-      "id": "REQ-25",
-      "summary": "Sort earthquakes by event time descending (most recent first) after applying time-window restriction and other filters, and pass this same sorted dataset to table and map.",
-      "acceptanceCriteria": [
-        "In the results table, the first row is the most recent event and times are non-increasing as you scroll down.",
-        "Map rendering uses the same sorted+filtered dataset (even if markers are further reduced by visible map bounds optimization)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/lib/earthquakeFilters.ts",
-          "operation": "modify",
-          "description": "Add a shared sorting step (or utility) that orders the filtered features by properties.time descending, applied after time-window restriction and other filters."
-        },
-        {
-          "path": "frontend/src/pages/EarthquakeDashboard.tsx",
-          "operation": "modify",
-          "description": "Ensure the dataset passed into DashboardSummary, EarthquakeResultsTable, and EarthquakeMapView is the same filtered+time-window-restricted+time-desc-sorted array for all time windows (hour/day/week/month)."
+          "description": "Update Split view wrappers so the table can fully use the available 600px height without being clipped by an `overflow-hidden` parent: change the table-side wrapper to a flex column container with `h-[600px] min-h-0` and avoid overflow rules that clip the Card; pass a prop/config to EarthquakeResultsTable to use parent-fill sizing in Split view while keeping the existing 600px-scrolling behavior in Table view."
         }
       ]
     }
