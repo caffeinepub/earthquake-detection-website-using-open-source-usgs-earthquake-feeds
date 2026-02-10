@@ -191,14 +191,17 @@ export default function EarthquakeDashboard() {
             )}
 
             {viewMode === 'split' && (
-              <div className="grid gap-6 lg:grid-cols-2">
-                <div className="h-[600px]">
+              <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 min-h-0">
+                {/* Map Panel */}
+                <div className="flex flex-col min-h-0 h-[400px] sm:h-[500px] lg:h-[600px] xl:h-[700px]">
                   <EarthquakeMapView
                     earthquakes={filteredEarthquakes}
                     onMarkerClick={handleEarthquakeSelect}
+                    fillHeight={true}
                   />
                 </div>
-                <div className="h-[600px] flex flex-col min-h-0">
+                {/* Table Panel */}
+                <div className="flex flex-col min-h-0 min-w-0 h-[400px] sm:h-[500px] lg:h-[600px] xl:h-[700px]">
                   <EarthquakeResultsTable
                     earthquakes={filteredEarthquakes}
                     selectedEarthquake={selectedEarthquake}
@@ -228,9 +231,9 @@ export default function EarthquakeDashboard() {
               </a>
             </p>
             <p>
-              © 2026. Built with love using{' '}
+              © {new Date().getFullYear()}. Built with love using{' '}
               <a
-                href="https://caffeine.ai"
+                href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"

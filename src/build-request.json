@@ -1,35 +1,56 @@
 {
   "kind": "build_request",
-  "title": "Fix cropped bottom of earthquake results table list",
+  "title": "Improve Split view table responsiveness across device sizes",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-32",
-      "text": "Fix the layout/scrolling of the earthquake results table so the bottom of the table list is not visually cropped and the last row can be fully viewed in all view modes (Table and Split). Address the height interaction between the fixed 600px table scroll container in `frontend/src/components/earthquake/EarthquakeResultsTable.tsx` and the `h-[600px] overflow-hidden` wrapper used in Split view in `frontend/src/pages/EarthquakeDashboard.tsx`.",
+      "id": "REQ-34",
+      "text": "Make the Dashboard Split view layout responsive across mobile, tablet, and desktop so the Map card and the Earthquake Results table card are usable without clipping, forced fixed heights, or awkward scrolling.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-4"
         ],
         "quotes": [
-          "can you fix the cropped bottom of this table list"
+          "can you make the split table more responsible to all type of device"
         ]
       },
       "acceptanceCriteria": [
-        "In Table view, scrolling to the end of the list shows the last row fully (no bottom clipping/cropping).",
-        "In Split view, the EarthquakeResultsTable is not clipped by its parent container; the table area is scrollable and the last row is fully visible.",
-        "The table header remains usable/visible (no regressions to the existing sticky header behavior).",
-        "No changes are made to read-only shadcn/ui component source files under `frontend/src/components/ui`."
+        "On small screens (mobile widths), Split view stacks the Map and Table vertically (single column) and both remain fully visible/usable without content being cut off.",
+        "On medium and large screens, Split view uses an appropriate two-column layout (or equivalent) where both cards fit within the viewport area without vertical clipping.",
+        "No fixed hard-coded Split view container height forces content to be inaccessible on short viewports; the layout adapts to viewport height using responsive CSS sizing.",
+        "The Table section remains scrollable (with its sticky header still working) when it needs to scroll, and the Map remains visible with a reasonable minimum height.",
+        "No regressions in the existing Table-only and Map-only view modes."
+      ]
+    },
+    {
+      "id": "REQ-35",
+      "text": "Improve the Earthquake Results table responsiveness within Split view so it works well on narrow widths (e.g., mobile portrait) while preserving all existing columns and interactions.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "can you make the split table more responsible to all type of device"
+        ]
+      },
+      "acceptanceCriteria": [
+        "In narrow layouts, the table does not overflow the page in a way that breaks the layout; if necessary, the table region provides horizontal scrolling within its own container.",
+        "All existing table interactions still work: row selection opens the details dialog, selected row styling remains visible, and the external link action button works without triggering row selection.",
+        "Sticky header remains aligned with the table content while scrolling vertically within the table container.",
+        "Virtualization behavior remains functional (no blank gaps or incorrect row positioning) after responsive layout changes."
       ]
     }
   ],
   "constraints": [
-    "Frontend immutable paths must not be edited: `frontend/src/hooks/useInternetIdentity.ts`, `frontend/src/hooks/useInternetIdentity.tsx`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`, and all files under `frontend/src/components/ui`.",
-    "Keep the existing virtualized rendering behavior in `frontend/src/components/earthquake/EarthquakeResultsTable.tsx` (do not remove virtualization)."
+    "Do not edit any files under frontend/src/components/ui (read-only shadcn/ui components).",
+    "Keep the app’s existing view modes (Table / Map / Split) and existing filtering, selection, and details dialog behavior intact."
   ],
   "nonGoals": [
-    "Backend changes (Motoko) are not required for this UI layout fix.",
-    "Do not redesign table columns, filters, or sorting as part of this fix."
+    "Adding new data sources or changing USGS feed/filtering logic.",
+    "Changing the visual theme, branding text, or hero section wording.",
+    "Backend/canister changes (no Motoko changes expected for this request)."
   ],
   "imageRequirements": {
     "required": [],

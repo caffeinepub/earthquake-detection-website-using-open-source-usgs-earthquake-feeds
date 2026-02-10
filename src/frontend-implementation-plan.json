@@ -1,27 +1,50 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix Earthquake results table cropping in Table and Split views",
+  "title": "Responsive Split view layout and table behavior across device sizes",
   "requirements": [
     {
-      "id": "REQ-32",
-      "summary": "Adjust EarthquakeResultsTable and Split view container sizing so the scrollable table content is not clipped and the last row remains fully visible while preserving the sticky header and virtualization.",
+      "id": "REQ-34",
+      "summary": "Make Split view responsive so Map and Results cards remain usable on mobile/tablet/desktop without fixed-height clipping and without regressing Table-only/Map-only modes.",
       "acceptanceCriteria": [
-        "In Table view, scrolling to the end of the list shows the last row fully (no bottom clipping/cropping).",
-        "In Split view, the EarthquakeResultsTable is not clipped by its parent container; the table area is scrollable and the last row is fully visible.",
-        "The table header remains usable/visible (no regressions to the existing sticky header behavior).",
-        "No changes are made to read-only shadcn/ui component source files under `frontend/src/components/ui`."
+        "On small screens (mobile widths), Split view stacks the Map and Table vertically (single column) and both remain fully visible/usable without content being cut off.",
+        "On medium and large screens, Split view uses an appropriate two-column layout (or equivalent) where both cards fit within the viewport area without vertical clipping.",
+        "No fixed hard-coded Split view container height forces content to be inaccessible on short viewports; the layout adapts to viewport height using responsive CSS sizing.",
+        "The Table section remains scrollable (with its sticky header still working) when it needs to scroll, and the Map remains visible with a reasonable minimum height.",
+        "No regressions in the existing Table-only and Map-only view modes."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/EarthquakeDashboard.tsx",
+          "operation": "modify",
+          "description": "Replace the Split view fixed height layout (currently using a hard-coded height) with a responsive layout that stacks on small screens and uses a two-column layout on larger screens; ensure parent containers use min-h-0/min-w-0 and appropriate flex/grid sizing so Map/Table can grow and their internal scroll areas work. Keep existing Table-only and Map-only rendering unchanged. Uses existing shadcn-ui Card-based components without editing frontend/src/components/ui; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+          "operation": "modify",
+          "description": "Adjust fillHeight behavior to ensure the map region retains a reasonable minimum height in Split view (especially on short/narrow viewports) while still allowing the card to flex within its container; keep Map-only mode height behavior intact. Uses existing shadcn-ui Card component without editing frontend/src/components/ui; verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-35",
+      "summary": "Improve Results table responsiveness in Split view (narrow widths) while preserving all columns, sticky header alignment, row interactions, and virtualization.",
+      "acceptanceCriteria": [
+        "In narrow layouts, the table does not overflow the page in a way that breaks the layout; if necessary, the table region provides horizontal scrolling within its own container.",
+        "All existing table interactions still work: row selection opens the details dialog, selected row styling remains visible, and the external link action button works without triggering row selection.",
+        "Sticky header remains aligned with the table content while scrolling vertically within the table container.",
+        "Virtualization behavior remains functional (no blank gaps or incorrect row positioning) after responsive layout changes."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
           "operation": "modify",
-          "description": "Refactor the results table layout to support both a fixed-height (Table view) and a parent-constrained (Split view) mode without changing virtualization: make the Card and CardContent capable of `h-full` + `flex` + `min-h-0`, move the scroll container to use `flex-1 min-h-0 overflow-auto` (instead of a hardcoded 600px maxHeight when in fill mode), and ensure there is no bottom clipping at the end of scroll (e.g., by ensuring the scroll container owns the height and has appropriate inner padding/space for the last row). Preserve existing sticky header behavior within the scrolling container."
+          "description": "Within the table's scroll container, add responsive containment so narrow widths do not force the overall page/card to overflow; ensure horizontal scrolling is confined to the table region (e.g., via an inner wrapper/min-width strategy) while maintaining vertical scrolling for virtualization and keeping the sticky header aligned. Preserve existing row click selection, selected styling, and action button stopPropagation behavior. Uses existing shadcn-ui Table/Card components without editing frontend/src/components/ui; verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/pages/EarthquakeDashboard.tsx",
           "operation": "modify",
-          "description": "Update Split view wrappers so the table can fully use the available 600px height without being clipped by an `overflow-hidden` parent: change the table-side wrapper to a flex column container with `h-[600px] min-h-0` and avoid overflow rules that clip the Card; pass a prop/config to EarthquakeResultsTable to use parent-fill sizing in Split view while keeping the existing 600px-scrolling behavior in Table view."
+          "description": "Ensure the Split view table panel container provides the correct sizing constraints (min-w-0/min-h-0 and flex behavior) so the table can introduce internal horizontal scroll when needed without pushing the Split layout wider than the viewport. Uses existing shadcn-ui layout patterns without editing frontend/src/components/ui; verify the component's usage instructions before implementing."
         }
       ]
     }

@@ -2,8 +2,27 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-layout-scrolling-of-the-earthquake-results-table-so-the-bottom-of-the-table-list-is-not-visually-cropped-and-the-last-row-can-be-fully-viewed-in-all-view-modes-table-and-split-address-the-height-interaction-between-the-fixed-600px-table-scroll-container-in-frontend-src-components-earthquake-earthquakeresultstable-tsx-and-the-h-600px-overflow-hidden-wrapper-used-in-split-view-in-frontend-src-pages-earthquakedashboard-tsx",
-      "featureTitle": "Fix the layout/scrolling of the earthquake results table so the bottom of the table list is not visually cropped and the last row can be fully viewed in all view modes (Table and Split). Address the height interaction between the fixed 600px table scroll container in `frontend/src/components/earthquake/EarthquakeResultsTable.tsx` and the `h-[600px] overflow-hidden` wrapper used in Split view in `frontend/src/pages/EarthquakeDashboard.tsx`.",
+      "featureId": "feature-make-the-dashboard-split-view-layout-responsive-across-mobile-tablet-and-desktop-so-the-map-card-and-the-earthquake-results-table-card-are-usable-without-clipping-forced-fixed-heights-or-awkward-scrolling",
+      "featureTitle": "Make the Dashboard Split view layout responsive across mobile, tablet, and desktop so the Map card and the Earthquake Results table card are usable without clipping, forced fixed heights, or awkward scrolling.",
+      "files": [
+        "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+        "frontend/src/pages/EarthquakeDashboard.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-34"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-improve-the-earthquake-results-table-responsiveness-within-split-view-so-it-works-well-on-narrow-widths-e-g-mobile-portrait-while-preserving-all-existing-columns-and-interactions",
+      "featureTitle": "Improve the Earthquake Results table responsiveness within Split view so it works well on narrow widths (e.g., mobile portrait) while preserving all existing columns and interactions.",
       "files": [
         "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
         "frontend/src/pages/EarthquakeDashboard.tsx"
@@ -16,7 +35,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-32"
+        "REQ-35"
       ],
       "confidence": "high"
     }

@@ -1,18 +1,31 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-10T02:17:44.478Z",
+  "generatedAt": "2026-02-10T02:36:35.555Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
-    "implemented": 1,
+    "total": 2,
+    "implemented": 2,
     "items": [
       {
-        "id": "REQ-32",
-        "summary": "Fix the layout/scrolling of the earthquake results table so the bottom of the table list is not visually cropped and the last row can be fully viewed in all view modes (Table and Split). Address the height interaction between the fixed 600px table scroll container in `frontend/src/components/earthquake/EarthquakeResultsTable.tsx` and the `h-[600px] overflow-hidden` wrapper used in Split view in `frontend/src/pages/EarthquakeDashboard.tsx`.",
+        "id": "REQ-34",
+        "summary": "Make the Dashboard Split view layout responsive across mobile, tablet, and desktop so the Map card and the Earthquake Results table card are usable without clipping, forced fixed heights, or awkward scrolling.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/EarthquakeDashboard.tsx",
+          "frontend/src/components/earthquake/EarthquakeMapView.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/EarthquakeDashboard.tsx",
+          "frontend/src/components/earthquake/EarthquakeMapView.tsx"
+        ]
+      },
+      {
+        "id": "REQ-35",
+        "summary": "Improve the Earthquake Results table responsiveness within Split view so it works well on narrow widths (e.g., mobile portrait) while preserving all existing columns and interactions.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
@@ -30,6 +43,7 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/components/earthquake/EarthquakeMapView.tsx",
     "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
     "frontend/src/pages/EarthquakeDashboard.tsx",
     "project_state.json",
