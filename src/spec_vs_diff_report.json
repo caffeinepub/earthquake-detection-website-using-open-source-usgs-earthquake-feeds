@@ -1,34 +1,14 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-13T12:37:24.431Z",
-  "summary": "REQ-1 appears implemented by simplifying the EarthquakeDashboard to remove the decorative hero/banner while keeping the \"Global Earthquake Activity\" title. REQ-2 shows partial implementation evidence (fullscreen state + CSS for fullscreen overlay and a custom Leaflet fullscreen control style), but the diff summary is truncated and does not provide clear evidence that the control is inserted directly below Leaflet zoom controls with accessible text.",
-  "missing_requirements": [
-    {
-      "id": "REQ-2",
-      "requirement": "Add a Leaflet full-screen toggle button to the map UI positioned directly below the existing zoom in/out controls, with accessible text (e.g., aria-label/sr-only) such as \"Toggle full screen\".",
-      "reason": "While fullscreen-related state and CSS exist, the provided (truncated) EarthquakeMapView diff does not show the Leaflet control being created/added beneath the zoom controls, nor any aria-label/sr-only accessible text for the control.",
-      "evidence": [
-        "frontend/src/components/earthquake/EarthquakeMapView.tsx (truncated)",
-        "frontend/src/index.css"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "requirement": "Fullscreen behavior must work in both Map View and Split View without breaking marker rendering or map interactions, and exiting fullscreen restores normal page scrolling/interaction.",
-      "reason": "The diff shows body overflow toggling and map.invalidateSize(), but does not include enough visible code to confirm integration across view modes (Map vs Split) or confirm the control is present/functional in both contexts.",
-      "evidence": [
-        "frontend/src/components/earthquake/EarthquakeMapView.tsx (truncated)",
-        "frontend/src/pages/EarthquakeDashboard.tsx (truncated)"
-      ]
-    }
-  ],
+  "generatedAt": "2026-02-13T13:44:17.391Z",
+  "summary": "Diff adds explicit manual-refresh state to the dashboard (isManualRefreshing, lastManualRefreshAt) and wires the Refresh action to React Query’s refetch() for the currently selected timeWindow, plus passes manual refresh state/timestamp into the controls for user-visible feedback. No backend or immutable/ui-component-path changes are evidenced.",
+  "missing_requirements": [],
   "hallucinated_features": [],
-  "confidence": 0.62,
+  "confidence": 0.74,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/components/earthquake/EarthquakeMapView.tsx",
-    "frontend/src/index.css",
+    "frontend/src/components/earthquake/FeedAndFilterControls.tsx",
     "frontend/src/pages/EarthquakeDashboard.tsx",
     "project_state.json"
   ]

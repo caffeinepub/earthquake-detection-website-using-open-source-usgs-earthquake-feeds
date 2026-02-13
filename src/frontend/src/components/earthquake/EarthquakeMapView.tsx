@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { MapPin, Maximize2, Minimize2 } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { PanelCard } from './PanelCard';
 import { UsgsFeature } from '../../lib/usgsTypes';
 import { formatMagnitude } from '../../lib/formatters';
@@ -17,7 +17,8 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
   const mapInstanceRef = useRef<LeafletMap | null>(null);
   const markersLayerRef = useRef<LeafletLayerGroup | null>(null);
   const allEarthquakesRef = useRef<UsgsFeature[]>([]);
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const updateTimeoutRef = useRef<number | null>(null);
+  const fullscreenControlRef = useRef<HTMLButtonElement | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
   // Store all earthquakes for bounds filtering
@@ -29,7 +30,6 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
 
     const map = mapInstanceRef.current;
     const markersLayer = markersLayerRef.current;
-    const L = window.L;
 
     // Get current map bounds
     const bounds = map.getBounds();
@@ -77,7 +77,7 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current);
     }
-    updateTimeoutRef.current = setTimeout(() => {
+    updateTimeoutRef.current = window.setTimeout(() => {
       updateVisibleMarkers();
     }, 150);
   }, [updateVisibleMarkers]);
@@ -94,12 +94,27 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
         document.body.style.overflow = '';
       }
       
-      // Invalidate map size after state change
+      // Update control button attributes
+      if (fullscreenControlRef.current) {
+        const label = newState ? 'Exit full screen' : 'Enter full screen';
+        fullscreenControlRef.current.setAttribute('aria-label', label);
+        fullscreenControlRef.current.setAttribute('title', label);
+        fullscreenControlRef.current.setAttribute('data-fullscreen', newState ? 'true' : 'false');
+      }
+      
+      // Invalidate map size after state change and after layout settles
       setTimeout(() => {
         if (mapInstanceRef.current) {
           mapInstanceRef.current.invalidateSize();
         }
       }, 100);
+      
+      // Additional invalidation after animation completes
+      setTimeout(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      }, 350);
       
       return newState;
     });
@@ -137,52 +152,47 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
       },
       onAdd: function() {
         const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-fullscreen');
-        const link = L.DomUtil.create('a', 'leaflet-control-fullscreen-button', container);
-        link.href = '#';
-        link.title = 'Toggle full screen';
-        link.setAttribute('role', 'button');
-        link.setAttribute('aria-label', 'Toggle full screen');
-        link.innerHTML = '<span class="sr-only">Toggle full screen</span>';
+        const button = L.DomUtil.create('button', 'leaflet-control-fullscreen-button', container);
+        button.type = 'button';
+        button.title = 'Enter full screen';
+        button.setAttribute('role', 'button');
+        button.setAttribute('aria-label', 'Enter full screen');
+        button.setAttribute('data-fullscreen', 'false');
         
-        L.DomEvent.on(link, 'click', function(e: Event) {
+        // Store reference for state updates
+        fullscreenControlRef.current = button;
+        
+        // Prevent default behavior and stop propagation
+        L.DomEvent.disableClickPropagation(button);
+        L.DomEvent.disableScrollPropagation(button);
+        
+        L.DomEvent.on(button, 'click', function(e: Event) {
           L.DomEvent.stopPropagation(e);
           L.DomEvent.preventDefault(e);
           toggleFullScreen();
+        });
+        
+        // Keyboard support
+        L.DomEvent.on(button, 'keydown', function(e: KeyboardEvent) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            L.DomEvent.stopPropagation(e);
+            L.DomEvent.preventDefault(e);
+            toggleFullScreen();
+          }
         });
         
         return container;
       }
     });
 
-    // Add the full-screen control after a short delay to ensure it appears below zoom controls
-    setTimeout(() => {
-      map.addControl(new FullScreenControl());
-    }, 50);
+    // Add the full-screen control (it will naturally appear below zoom controls)
+    map.addControl(new FullScreenControl());
 
-    // Prevent map interactions from bubbling and causing navigation
+    // Prevent map interactions from bubbling
     const mapContainer = mapRef.current;
     if (mapContainer) {
-      // Use Leaflet's DOM utilities to disable click propagation
       L.DomEvent.disableClickPropagation(mapContainer);
       L.DomEvent.disableScrollPropagation(mapContainer);
-
-      // Additional fix: prevent default on all anchor clicks within the map
-      // This handles zoom control links with href="#"
-      const handleAnchorClick = (e: Event) => {
-        const target = e.target as HTMLElement;
-        if (target.tagName === 'A' && target.getAttribute('href') === '#') {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      };
-
-      // Wait for controls to be added, then attach handlers
-      setTimeout(() => {
-        const anchors = mapContainer.querySelectorAll('a[href="#"]');
-        anchors.forEach((anchor) => {
-          anchor.addEventListener('click', handleAnchorClick);
-        });
-      }, 100);
     }
 
     // Cleanup on unmount
@@ -198,6 +208,7 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
       }
       // Restore body scroll on unmount
       document.body.style.overflow = '';
+      fullscreenControlRef.current = null;
     };
   }, [handleMapMove, toggleFullScreen]);
 

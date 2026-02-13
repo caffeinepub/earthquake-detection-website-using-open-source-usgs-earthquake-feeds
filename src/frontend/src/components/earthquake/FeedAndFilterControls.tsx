@@ -23,6 +23,7 @@ interface FeedAndFilterControlsProps {
   onSearchQueryChange: (value: string) => void;
   onRefresh: () => void;
   isRefreshing: boolean;
+  lastManualRefreshAt: Date | null;
 }
 
 export function FeedAndFilterControls({
@@ -34,7 +35,26 @@ export function FeedAndFilterControls({
   onSearchQueryChange,
   onRefresh,
   isRefreshing,
+  lastManualRefreshAt,
 }: FeedAndFilterControlsProps) {
+  const formatRefreshTime = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+
+    if (diffSecs < 60) {
+      return 'just now';
+    } else if (diffMins < 60) {
+      return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    } else {
+      return date.toLocaleTimeString(undefined, {
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+    }
+  };
+
   return (
     <Card className="border-border/40 shadow-soft overflow-hidden">
       <CardContent className="pt-6 pb-6">
@@ -98,8 +118,14 @@ export function FeedAndFilterControls({
 
           {/* Refresh */}
           <div className="space-y-3">
-            <Label className="text-sm font-semibold text-foreground opacity-0 pointer-events-none">
-              Actions
+            <Label className="text-sm font-semibold text-foreground">
+              {lastManualRefreshAt ? (
+                <span className="text-muted-foreground font-normal">
+                  Last refreshed: {formatRefreshTime(lastManualRefreshAt)}
+                </span>
+              ) : (
+                <span className="opacity-0 pointer-events-none">Actions</span>
+              )}
             </Label>
             <Button
               onClick={onRefresh}

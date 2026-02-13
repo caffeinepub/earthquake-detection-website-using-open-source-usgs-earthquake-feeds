@@ -2,8 +2,8 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-remove-the-current-hero-banner-section-on-the-earthquake-dashboard-background-image-gradient-badge-and-description-text-and-keep-only-the-hero-title-text-as-a-simple-heading-in-the-main-content-area",
-      "featureTitle": "Remove the current Hero/Banner section on the Earthquake Dashboard (background image/gradient, badge, and description text) and keep only the hero title text as a simple heading in the main content area.",
+      "featureId": "feature-make-the-refresh-data-button-reliably-trigger-an-immediate-refetch-of-the-currently-selected-usgs-earthquake-feed-even-when-the-react-query-cache-is-still-fresh",
+      "featureTitle": "Make the \"Refresh Data\" button reliably trigger an immediate refetch of the currently selected USGS earthquake feed, even when the React Query cache is still fresh.",
       "files": [
         "frontend/src/pages/EarthquakeDashboard.tsx"
       ],
@@ -20,11 +20,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-leaflet-full-screen-toggle-button-to-the-map-ui-positioned-directly-below-the-existing-zoom-in-out-controls-the-button-must-toggle-the-map-container-into-a-full-screen-overlay-and-allow-exiting-full-screen-to-return-to-the-prior-layout",
-      "featureTitle": "Add a Leaflet full-screen toggle button to the map UI, positioned directly below the existing zoom in/out controls. The button must toggle the map container into a full-screen overlay and allow exiting full-screen to return to the prior layout.",
+      "featureId": "feature-fix-the-refresh-button-loading-disabled-behavior-so-it-is-not-stuck-in-a-disabled-state-due-to-background-fetching-only-disable-and-show-the-spinner-refreshing-while-a-user-initiated-refresh-is-in-progress",
+      "featureTitle": "Fix the refresh button loading/disabled behavior so it is not stuck in a disabled state due to background fetching; only disable (and show the spinner/\"Refreshing...\") while a user-initiated refresh is in progress.",
       "files": [
-        "frontend/src/components/earthquake/EarthquakeMapView.tsx",
-        "frontend/src/index.css"
+        "frontend/src/components/earthquake/FeedAndFilterControls.tsx",
+        "frontend/src/pages/EarthquakeDashboard.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -35,6 +35,25 @@
       ],
       "testIds": [
         "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-small-user-facing-confirmation-signal-that-a-manual-refresh-occurred-e-g-last-refreshed-time-near-the-controls-using-english-ui-text",
+      "featureTitle": "Add a small, user-facing confirmation signal that a manual refresh occurred (e.g., \"Last refreshed: <time>\" near the controls), using English UI text.",
+      "files": [
+        "frontend/src/components/earthquake/FeedAndFilterControls.tsx",
+        "frontend/src/pages/EarthquakeDashboard.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
       ],
       "confidence": "high"
     }

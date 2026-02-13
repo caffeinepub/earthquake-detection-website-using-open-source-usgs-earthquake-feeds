@@ -32,8 +32,12 @@ export default function EarthquakeDashboard() {
   // Selected earthquake for details dialog
   const [selectedEarthquake, setSelectedEarthquake] = useState<UsgsFeature | null>(null);
 
+  // Manual refresh state
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const [lastManualRefreshAt, setLastManualRefreshAt] = useState<Date | null>(null);
+
   // Fetch earthquake data
-  const { data, isLoading, isError, error, isFetching } = useUsgsEarthquakes(timeWindow);
+  const { data, isLoading, isError, error, refetch } = useUsgsEarthquakes(timeWindow);
 
   // Apply filters with time window restriction and sorting
   const filteredEarthquakes = data
@@ -43,9 +47,18 @@ export default function EarthquakeDashboard() {
   // Compute stats
   const stats = computeStats(filteredEarthquakes, 5.0);
 
-  // Manual refresh
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['earthquakes', timeWindow] });
+  // Manual refresh - force refetch regardless of staleTime
+  const handleRefresh = async () => {
+    setIsManualRefreshing(true);
+    try {
+      await refetch();
+      setLastManualRefreshAt(new Date());
+    } catch (err) {
+      // Error is already handled by React Query
+      console.error('Manual refresh failed:', err);
+    } finally {
+      setIsManualRefreshing(false);
+    }
   };
 
   // Handle earthquake selection from table or map
@@ -57,52 +70,56 @@ export default function EarthquakeDashboard() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/40 glass-effect shadow-soft">
-        <div className="container mx-auto px-4 sm:px-6 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-              <div className="relative">
+        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-5">
+          <div className="grid grid-cols-[1fr_auto] items-start gap-4 sm:gap-6">
+            {/* Brand block with logo and text */}
+            <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+              <div className="relative flex-shrink-0 mt-1">
                 <img
                   src="/assets/generated/eq-logo.dim_512x512.png"
                   alt="WhoFeelAnEarthquake"
-                  className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 drop-shadow-md"
+                  className="h-10 w-10 sm:h-12 sm:w-12 drop-shadow-md"
                 />
                 <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full -z-10" />
               </div>
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight truncate bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight leading-tight break-words">
                   WhoFeelAnEarthquake
                 </h1>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate font-medium">
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium leading-relaxed mt-1 break-words">
                   Real-time earthquake detection powered by USGS
                 </p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="flex-shrink-0 hover:bg-accent/50 transition-all duration-200"
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-5 w-5 text-warning" />
-              ) : (
-                <Moon className="h-5 w-5 text-primary" />
-              )}
-              <span className="sr-only">Toggle theme</span>
-            </Button>
+            
+            {/* Theme toggle - fixed width to prevent layout shift */}
+            <div className="flex-shrink-0 pt-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="hover:bg-accent/50 transition-all duration-200 w-10 h-10"
+              >
+                {theme === 'dark' ? (
+                  <Sun className="h-5 w-5 text-warning" />
+                ) : (
+                  <Moon className="h-5 w-5 text-primary" />
+                )}
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-8 sm:space-y-10">
         {/* Title Section */}
-        <section className="text-center space-y-2">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-            <span className="bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
-              Global Earthquake Activity
-            </span>
+        <section className="text-center space-y-3 py-4 sm:py-6">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight px-4">
+            Recent Earthquake Around The World
           </h2>
+          <div className="h-1 w-24 mx-auto bg-gradient-to-r from-primary/50 via-primary to-primary/50 rounded-full" />
         </section>
 
         {/* Filters and Controls */}
@@ -115,7 +132,8 @@ export default function EarthquakeDashboard() {
             onMinMagnitudeChange={setMinMagnitude}
             onSearchQueryChange={setSearchQuery}
             onRefresh={handleRefresh}
-            isRefreshing={isFetching}
+            isRefreshing={isManualRefreshing}
+            lastManualRefreshAt={lastManualRefreshAt}
           />
         </div>
 
@@ -226,7 +244,7 @@ export default function EarthquakeDashboard() {
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <p className="font-medium">
-              © {new Date().getFullYear()} WhoFeelAnEarthquake. Data provided by USGS.
+              © 2026 WhoFeelAnEarthquake. Powered by USGS.
             </p>
             <p className="font-medium">
               Built with ❤️ using{' '}

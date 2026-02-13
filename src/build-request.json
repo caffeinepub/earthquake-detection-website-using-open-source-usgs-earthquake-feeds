@@ -1,54 +1,71 @@
 {
   "kind": "build_request",
-  "title": "Remove hero banner, keep title text only, and add full-screen map control",
-  "priority": "normal",
+  "title": "Fix Refresh Data button not triggering an immediate USGS refetch",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Remove the current Hero/Banner section on the Earthquake Dashboard (background image/gradient, badge, and description text) and keep only the hero title text as a simple heading in the main content area.",
+      "text": "Make the \"Refresh Data\" button reliably trigger an immediate refetch of the currently selected USGS earthquake feed, even when the React Query cache is still fresh.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "remove the banner but keep the text title only"
+          "fix the refresh data button not responding"
         ]
       },
       "acceptanceCriteria": [
-        "On the dashboard page, the previous hero/banner background and its decorative elements are no longer visible (no background image, no gradient overlay, no 'Live Monitoring' pill, no descriptive paragraph).",
-        "The text title \"Global Earthquake Activity\" remains visible as a plain heading above the filters/controls.",
-        "No backend changes are introduced."
+        "Clicking \"Refresh Data\" triggers a new network request for the current time window feed (same query key used by the dashboard).",
+        "The refresh action works repeatedly (e.g., multiple clicks separated by completion) and updates UI state based on the newest response.",
+        "If the user changes the time window and then clicks refresh, the refetch targets the newly selected time window feed."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add a Leaflet full-screen toggle button to the map UI, positioned directly below the existing zoom in/out controls. The button must toggle the map container into a full-screen overlay and allow exiting full-screen to return to the prior layout.",
+      "text": "Fix the refresh button loading/disabled behavior so it is not stuck in a disabled state due to background fetching; only disable (and show the spinner/\"Refreshing...\") while a user-initiated refresh is in progress.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "add below the zoom in zoom out button of full screen map button"
+          "fix the refresh data button not responding"
         ]
       },
       "acceptanceCriteria": [
-        "A new control button appears in the map controls stack directly below the Leaflet zoom controls (same corner/cluster).",
-        "Clicking the button expands the map to full-screen (covering the viewport above other content) and clicking again exits full-screen, restoring the previous size and layout.",
-        "The button includes accessible text (e.g., via aria-label and/or sr-only) in English such as \"Toggle full screen\".",
-        "The full-screen behavior works in both Map View and Split View without breaking marker rendering or map interactions.",
-        "Exiting full-screen restores normal page scrolling/interaction."
+        "The \"Refresh Data\" button is clickable during normal idle state after data has loaded.",
+        "Background auto-refetching (interval or window focus) does not permanently disable the button.",
+        "While a manual refresh is in progress, the button shows \"Refreshing...\" with the spinning icon and is temporarily disabled to prevent duplicate manual refreshes."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Add a small, user-facing confirmation signal that a manual refresh occurred (e.g., \"Last refreshed: <time>\" near the controls), using English UI text.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "fix the refresh data button not responding"
+        ]
+      },
+      "acceptanceCriteria": [
+        "After a successful manual refresh, a timestamp/confirmation is visible and updates to the latest refresh time.",
+        "The confirmation UI does not appear to update when only background refetching occurs (unless the manual refresh also ran)."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/components/ui or any other frontend immutablePaths listed in SYSTEM_CONTEXT.",
-    "Keep the backend as a single Motoko actor; no backend changes are required for this request."
+    "Do not modify any files under frontend/src/components/ui (read-only components must be composed, not edited).",
+    "Do not edit frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx (immutable paths).",
+    "Keep the backend as a single Motoko actor; no backend changes are required for this fix."
   ],
   "nonGoals": [
-    "Changing earthquake data fetching, filtering, or marker rendering behavior.",
-    "Adding new authentication or backend persistence features."
+    "Changing the USGS feed URLs or the filtering/sorting logic.",
+    "Adding real-time websocket updates or any external backend/database integration.",
+    "Redesigning the overall dashboard layout beyond what is necessary to show refresh feedback."
   ],
   "imageRequirements": {
     "required": [],

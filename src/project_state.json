@@ -3,41 +3,38 @@
   "projectStateVersion": 3,
   "summary": "New project",
   "architectural_notes": [],
-  "known_issues": [],
-  "isFixRequest": false,
+  "known_issues": [
+    "Refresh data button is not responding (no action on click)."
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-remove-the-current-hero-banner-section-on-the-earthquake-dashboard-background-image-gradient-badge-and-description-text-and-keep-only-the-hero-title-text-as-a-simple-heading-in-the-main-content-area",
-      "title": "Remove the current Hero/Banner section on the Earthquake Dashboard (background image/gradient, badge, and description text) and keep only the hero title text as a simple heading in the main content area.",
+      "id": "feature-make-the-refresh-data-button-reliably-trigger-an-immediate-refetch-of-the-currently-selected-usgs-earthquake-feed-even-when-the-react-query-cache-is-still-fresh",
+      "title": "Make the \"Refresh Data\" button reliably trigger an immediate refetch of the currently selected USGS earthquake feed, even when the React Query cache is still fresh.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-leaflet-full-screen-toggle-button-to-the-map-ui-positioned-directly-below-the-existing-zoom-in-out-controls-the-button-must-toggle-the-map-container-into-a-full-screen-overlay-and-allow-exiting-full-screen-to-return-to-the-prior-layout",
-      "title": "Add a Leaflet full-screen toggle button to the map UI, positioned directly below the existing zoom in/out controls. The button must toggle the map container into a full-screen overlay and allow exiting full-screen to return to the prior layout.",
+      "id": "feature-fix-the-refresh-button-loading-disabled-behavior-so-it-is-not-stuck-in-a-disabled-state-due-to-background-fetching-only-disable-and-show-the-spinner-refreshing-while-a-user-initiated-refresh-is-in-progress",
+      "title": "Fix the refresh button loading/disabled behavior so it is not stuck in a disabled state due to background fetching; only disable (and show the spinner/\"Refreshing...\") while a user-initiated refresh is in progress.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
-    }
-  ],
-  "new_feature_requests": [
-    {
-      "id": "AR-1",
-      "summary": "Remove the banner, keep only the text title",
-      "reqIds": [],
-      "status": "pending"
     },
     {
-      "id": "AR-2",
-      "summary": "Add a full-screen map button positioned below the zoom in/out controls",
-      "reqIds": [],
-      "status": "pending"
+      "id": "feature-add-a-small-user-facing-confirmation-signal-that-a-manual-refresh-occurred-e-g-last-refreshed-time-near-the-controls-using-english-ui-text",
+      "title": "Add a small, user-facing confirmation signal that a manual refresh occurred (e.g., \"Last refreshed: <time>\" near the controls), using English UI text.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
     }
   ],
-  "projectName": "Remove hero banner, keep title text only, and add full-screen map control",
+  "new_feature_requests": [],
+  "projectName": "Fix Refresh Data button not triggering an immediate USGS refetch",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

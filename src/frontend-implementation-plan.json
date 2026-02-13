@@ -1,44 +1,67 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Simplify dashboard header and add Leaflet full-screen map toggle",
+  "title": "Make manual USGS feed refresh immediate, correctly disabled, and user-confirmed",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Remove the dashboard hero/banner visuals and keep only the \"Global Earthquake Activity\" title as a plain heading above the filters.",
+      "summary": "Ensure the Refresh Data button always forces an immediate refetch of the currently selected USGS feed, even when React Query data is still fresh.",
       "acceptanceCriteria": [
-        "On the dashboard page, the previous hero/banner background and its decorative elements are no longer visible (no background image, no gradient overlay, no 'Live Monitoring' pill, no descriptive paragraph).",
-        "The text title \"Global Earthquake Activity\" remains visible as a plain heading above the filters/controls.",
-        "No backend changes are introduced."
+        "Clicking \"Refresh Data\" triggers a new network request for the current time window feed (same query key used by the dashboard).",
+        "The refresh action works repeatedly (e.g., multiple clicks separated by completion) and updates UI state based on the newest response.",
+        "If the user changes the time window and then clicks refresh, the refetch targets the newly selected time window feed."
       ],
       "file_operations": [
         {
           "path": "frontend/src/pages/EarthquakeDashboard.tsx",
           "operation": "modify",
-          "description": "Remove the existing Hero Section markup (background image/gradient, badge, and description), and render \"Global Earthquake Activity\" as a simple heading within the main content area directly above the existing FeedAndFilterControls."
+          "description": "Replace the current invalidate-only refresh behavior with a true user-initiated force refetch for the active React Query key (['earthquakes', timeWindow]) by using the hook's refetch (or queryClient refetchQueries) so a network request is issued even when data is fresh; ensure the refresh uses the latest selected timeWindow and updates the dashboard from the returned data."
+        },
+        {
+          "path": "frontend/src/hooks/useUsgsEarthquakes.ts",
+          "operation": "modify",
+          "description": "Confirm the queryKey is stable and consistent with the dashboard usage and, if needed, expose/enable a refetch behavior that can be invoked from the UI to force a network call regardless of staleTime (without changing feed URLs or filtering/sorting logic)."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Add a custom Leaflet control that toggles the map into and out of a full-screen overlay, placed directly below the default zoom controls.",
+      "summary": "Make the refresh button disabled/spinner state track only user-initiated refreshes (not background fetching) and avoid getting stuck disabled.",
       "acceptanceCriteria": [
-        "A new control button appears in the map controls stack directly below the Leaflet zoom controls (same corner/cluster).",
-        "Clicking the button expands the map to full-screen (covering the viewport above other content) and clicking again exits full-screen, restoring the previous size and layout.",
-        "The button includes accessible text (e.g., via aria-label and/or sr-only) in English such as \"Toggle full screen\".",
-        "The full-screen behavior works in both Map View and Split View without breaking marker rendering or map interactions.",
-        "Exiting full-screen restores normal page scrolling/interaction."
+        "The \"Refresh Data\" button is clickable during normal idle state after data has loaded.",
+        "Background auto-refetching (interval or window focus) does not permanently disable the button.",
+        "While a manual refresh is in progress, the button shows \"Refreshing...\" with the spinning icon and is temporarily disabled to prevent duplicate manual refreshes."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+          "path": "frontend/src/pages/EarthquakeDashboard.tsx",
           "operation": "modify",
-          "description": "Implement a Leaflet custom control (positioned in the same corner as zoom controls) that is added after map creation so it renders directly below the zoom control, toggles a full-screen overlay mode for the map container, includes accessible text via aria-label, calls map.invalidateSize() when toggling to preserve rendering, and disables/enables page scrolling appropriately while in full-screen for both Map View and Split View."
+          "description": "Introduce explicit manual-refresh UI state (e.g., a local boolean) that is set only when the user clicks Refresh and cleared when that specific refetch completes/fails; keep background isFetching/isRefetching from React Query out of the button disabled logic so interval/window-focus refetches do not disable the button."
         },
         {
-          "path": "frontend/src/index.css",
+          "path": "frontend/src/components/earthquake/FeedAndFilterControls.tsx",
           "operation": "modify",
-          "description": "Add global CSS classes used by EarthquakeMapView full-screen mode (e.g., fixed positioning to cover the viewport, high z-index above page content, and height/width overrides to ignore inline size constraints), plus any minimal styling for the custom Leaflet control to visually match the existing control stack."
+          "description": "Keep using shadcn/ui Button to present the refresh action, but wire its disabled state, label (\"Refreshing...\"), and spinning RefreshCw icon strictly to the manual-refresh flag passed from the dashboard (not general query fetching). Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Show a user-facing confirmation that a manual refresh occurred by displaying an English 'Last refreshed' timestamp near the controls and update it only after manual refreshes.",
+      "acceptanceCriteria": [
+        "After a successful manual refresh, a timestamp/confirmation is visible and updates to the latest refresh time.",
+        "The confirmation UI does not appear to update when only background refetching occurs (unless the manual refresh also ran)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/EarthquakeDashboard.tsx",
+          "operation": "modify",
+          "description": "Track a 'lastManualRefreshAt' timestamp in state and update it only on successful completion of the user-initiated refresh; pass this value down to the controls so it is not affected by background refetches."
+        },
+        {
+          "path": "frontend/src/components/earthquake/FeedAndFilterControls.tsx",
+          "operation": "modify",
+          "description": "Render a small English confirmation line near the refresh controls (e.g., \"Last refreshed: <time>\") when lastManualRefreshAt is present, using existing app styling and shadcn/ui typography primitives as needed (compose only; do not edit files under frontend/src/components/ui). Verify the component's usage instructions before implementing."
         }
       ]
     }
