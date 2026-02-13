@@ -1,6 +1,6 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { MapPin } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useRef, useCallback, useState } from 'react';
+import { MapPin, Maximize2, Minimize2 } from 'lucide-react';
+import { PanelCard } from './PanelCard';
 import { UsgsFeature } from '../../lib/usgsTypes';
 import { formatMagnitude } from '../../lib/formatters';
 import { isLeafletLoaded, createEarthquakeMarker, LeafletMap, LeafletLayerGroup } from '../../lib/leafletTypes';
@@ -18,6 +18,7 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
   const markersLayerRef = useRef<LeafletLayerGroup | null>(null);
   const allEarthquakesRef = useRef<UsgsFeature[]>([]);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   // Store all earthquakes for bounds filtering
   allEarthquakesRef.current = earthquakes;
@@ -81,6 +82,29 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
     }, 150);
   }, [updateVisibleMarkers]);
 
+  // Toggle full-screen mode
+  const toggleFullScreen = useCallback(() => {
+    setIsFullScreen((prev) => {
+      const newState = !prev;
+      
+      // Toggle body scroll
+      if (newState) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+      
+      // Invalidate map size after state change
+      setTimeout(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      }, 100);
+      
+      return newState;
+    });
+  }, []);
+
   // Initialize map
   useEffect(() => {
     if (!mapRef.current || !isLeafletLoaded()) return;
@@ -106,6 +130,61 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
     map.on('moveend', handleMapMove);
     map.on('zoomend', handleMapMove);
 
+    // Create custom full-screen control
+    const FullScreenControl = L.Control.extend({
+      options: {
+        position: 'topleft'
+      },
+      onAdd: function() {
+        const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-fullscreen');
+        const link = L.DomUtil.create('a', 'leaflet-control-fullscreen-button', container);
+        link.href = '#';
+        link.title = 'Toggle full screen';
+        link.setAttribute('role', 'button');
+        link.setAttribute('aria-label', 'Toggle full screen');
+        link.innerHTML = '<span class="sr-only">Toggle full screen</span>';
+        
+        L.DomEvent.on(link, 'click', function(e: Event) {
+          L.DomEvent.stopPropagation(e);
+          L.DomEvent.preventDefault(e);
+          toggleFullScreen();
+        });
+        
+        return container;
+      }
+    });
+
+    // Add the full-screen control after a short delay to ensure it appears below zoom controls
+    setTimeout(() => {
+      map.addControl(new FullScreenControl());
+    }, 50);
+
+    // Prevent map interactions from bubbling and causing navigation
+    const mapContainer = mapRef.current;
+    if (mapContainer) {
+      // Use Leaflet's DOM utilities to disable click propagation
+      L.DomEvent.disableClickPropagation(mapContainer);
+      L.DomEvent.disableScrollPropagation(mapContainer);
+
+      // Additional fix: prevent default on all anchor clicks within the map
+      // This handles zoom control links with href="#"
+      const handleAnchorClick = (e: Event) => {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'A' && target.getAttribute('href') === '#') {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      };
+
+      // Wait for controls to be added, then attach handlers
+      setTimeout(() => {
+        const anchors = mapContainer.querySelectorAll('a[href="#"]');
+        anchors.forEach((anchor) => {
+          anchor.addEventListener('click', handleAnchorClick);
+        });
+      }, 100);
+    }
+
     // Cleanup on unmount
     return () => {
       if (updateTimeoutRef.current) {
@@ -117,8 +196,10 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
+      // Restore body scroll on unmount
+      document.body.style.overflow = '';
     };
-  }, [handleMapMove]);
+  }, [handleMapMove, toggleFullScreen]);
 
   // Update markers when earthquakes change
   useEffect(() => {
@@ -141,41 +222,45 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
     updateVisibleMarkers();
   }, [earthquakes, updateVisibleMarkers]);
 
-  // Calculate map height based on whether we're in constrained mode
-  const mapHeight = constrainedHeight ? constrainedHeight - 120 : 600;
+  // Calculate map height
+  const mapHeight = constrainedHeight 
+    ? Math.min(constrainedHeight - 100, 520) 
+    : 600;
+  
+  const minHeight = constrainedHeight ? 300 : 400;
 
   // Empty state
   if (earthquakes.length === 0) {
     return (
-      <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle>Map View</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground text-center">
+      <PanelCard title="Map View" subtitle="No results">
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="p-4 rounded-full bg-muted/50 mb-4">
+            <MapPin className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground text-center font-medium">
             No earthquakes found matching your filters.
           </p>
           <p className="text-sm text-muted-foreground text-center mt-2">
             Try adjusting your time window or magnitude threshold.
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </PanelCard>
     );
   }
 
   return (
-    <Card className="border-border/50 relative z-0">
-      <CardHeader>
-        <CardTitle>Map View ({earthquakes.length} events)</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
+    <div className={isFullScreen ? 'map-fullscreen' : ''}>
+      <PanelCard
+        title="Map View"
+        subtitle={`${earthquakes.length} ${earthquakes.length === 1 ? 'event' : 'events'}`}
+        noPadding
+      >
         <div 
           ref={mapRef} 
-          className="w-full rounded-b-lg overflow-hidden relative z-0"
-          style={{ height: `${mapHeight}px`, minHeight: '400px' }}
+          className="w-full border-t border-border/30 relative z-0 rounded-b-lg overflow-hidden"
+          style={{ height: `${mapHeight}px`, minHeight: `${minHeight}px` }}
         />
-      </CardContent>
-    </Card>
+      </PanelCard>
+    </div>
   );
 }

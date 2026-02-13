@@ -36,14 +36,19 @@ export function FeedAndFilterControls({
   isRefreshing,
 }: FeedAndFilterControlsProps) {
   return (
-    <Card className="border-border/50">
-      <CardContent className="pt-6">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <Card className="border-border/40 shadow-soft overflow-hidden">
+      <CardContent className="pt-6 pb-6">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {/* Time Window */}
-          <div className="space-y-2">
-            <Label htmlFor="time-window">Time Window</Label>
+          <div className="space-y-3">
+            <Label htmlFor="time-window" className="text-sm font-semibold text-foreground">
+              Time Window
+            </Label>
             <Select value={timeWindow} onValueChange={onTimeWindowChange}>
-              <SelectTrigger id="time-window">
+              <SelectTrigger 
+                id="time-window" 
+                className="h-11 border-border/60 hover:border-primary/50 transition-colors"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -57,11 +62,11 @@ export function FeedAndFilterControls({
           </div>
 
           {/* Minimum Magnitude */}
-          <div className="space-y-2">
-            <Label htmlFor="min-magnitude">
-              Min Magnitude: {minMagnitude.toFixed(1)}
+          <div className="space-y-3">
+            <Label htmlFor="min-magnitude" className="text-sm font-semibold text-foreground">
+              Min Magnitude: <span className="text-primary font-mono">{minMagnitude.toFixed(1)}</span>
             </Label>
-            <div className="pt-2">
+            <div className="pt-3">
               <Slider
                 id="min-magnitude"
                 min={0}
@@ -75,33 +80,37 @@ export function FeedAndFilterControls({
           </div>
 
           {/* Search */}
-          <div className="space-y-2">
-            <Label htmlFor="search">Search Location</Label>
+          <div className="space-y-3">
+            <Label htmlFor="search" className="text-sm font-semibold text-foreground">
+              Search Location
+            </Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <Input
                 id="search"
                 placeholder="e.g., California, Japan..."
                 value={searchQuery}
                 onChange={(e) => onSearchQueryChange(e.target.value)}
-                className="pl-9"
+                className="pl-10 h-11 border-border/60 hover:border-primary/50 focus:border-primary transition-colors"
               />
             </div>
           </div>
 
           {/* Refresh */}
-          <div className="space-y-2">
-            <Label>&nbsp;</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold text-foreground opacity-0 pointer-events-none">
+              Actions
+            </Label>
             <Button
               onClick={onRefresh}
               disabled={isRefreshing}
-              className="w-full"
-              variant="outline"
+              className="w-full h-11 gap-2 font-semibold shadow-soft hover:shadow-medium transition-all duration-200"
+              variant="default"
             >
               <RefreshCw
-                className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
+                className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
               />
-              Refresh Data
+              {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
             </Button>
           </div>
         </div>

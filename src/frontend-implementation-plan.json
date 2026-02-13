@@ -1,47 +1,44 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix split-view card border clipping for Map and Table panels",
+  "title": "Simplify dashboard header and add Leaflet full-screen map toggle",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Ensure Map and Table cards render a continuous, unclipped bottom border and rounded corners in Split view, while remaining correct in Map-only and Table-only views.",
+      "summary": "Remove the dashboard hero/banner visuals and keep only the \"Global Earthquake Activity\" title as a plain heading above the filters.",
       "acceptanceCriteria": [
-        "In Split view, neither the Map card nor the Table card has its bottom border (or rounded corners) clipped/cut off.",
-        "The fix works at common breakpoints (mobile, tablet, desktop) without introducing new overflow/scrollbar artifacts.",
-        "Map-only view still shows a correct, continuous border around the Map card (including the bottom edge).",
-        "Table-only view still shows a correct, continuous border around the Table card and its inner bordered container."
+        "On the dashboard page, the previous hero/banner background and its decorative elements are no longer visible (no background image, no gradient overlay, no 'Live Monitoring' pill, no descriptive paragraph).",
+        "The text title \"Global Earthquake Activity\" remains visible as a plain heading above the filters/controls.",
+        "No backend changes are introduced."
       ],
       "file_operations": [
         {
           "path": "frontend/src/pages/EarthquakeDashboard.tsx",
           "operation": "modify",
-          "description": "Adjust Split view panel wrappers so the card borders/rounded corners remain visible (remove clipping/overflow behavior) while still constraining each panel to ~600px height. Ensure both panels use a layout that lets inner content scroll/fit without cutting off the Card border. Leverage the existing shadcn-ui Card composition already used by Map/Table; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/earthquake/EarthquakeMapView.tsx",
-          "operation": "modify",
-          "description": "Update the Map card internal sizing so it can fill a parent-constrained panel height (e.g., Split view) without forcing a fixed inner height that contributes to outer clipping. Keep Map-only view visually unchanged (still ~600px tall), and preserve correct rounded bottom corners and border visibility. Uses shadcn-ui Card; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
-          "operation": "modify",
-          "description": "Update the Table card layout so the scroll container can either use the existing 600px max height (Table-only) or fill a parent-constrained panel height (Split view) without overflowing and causing border clipping. Ensure the inner bordered container remains intact and visible. Uses shadcn-ui Card/Table; verify the component's usage instructions before implementing."
+          "description": "Remove the existing Hero Section markup (background image/gradient, badge, and description), and render \"Global Earthquake Activity\" as a simple heading within the main content area directly above the existing FeedAndFilterControls."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Refine Split view container styling in EarthquakeDashboard to avoid any wrapper overflow/fixed-height combinations that clip card borders while keeping ~600px panel height and usability.",
+      "summary": "Add a custom Leaflet control that toggles the map into and out of a full-screen overlay, placed directly below the default zoom controls.",
       "acceptanceCriteria": [
-        "In `frontend/src/pages/EarthquakeDashboard.tsx`, Split view no longer uses wrapper styles that visually cut off the Card border.",
-        "Both panels remain the intended height (approximately 600px) and content remains usable (map visible, table scrollable)."
+        "A new control button appears in the map controls stack directly below the Leaflet zoom controls (same corner/cluster).",
+        "Clicking the button expands the map to full-screen (covering the viewport above other content) and clicking again exits full-screen, restoring the previous size and layout.",
+        "The button includes accessible text (e.g., via aria-label and/or sr-only) in English such as \"Toggle full screen\".",
+        "The full-screen behavior works in both Map View and Split View without breaking marker rendering or map interactions.",
+        "Exiting full-screen restores normal page scrolling/interaction."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/EarthquakeDashboard.tsx",
+          "path": "frontend/src/components/earthquake/EarthquakeMapView.tsx",
           "operation": "modify",
-          "description": "Replace the current Split view `h-[600px] overflow-hidden` wrappers with a non-clipping panel container approach (still ~600px tall) and wire any new optional sizing props into EarthquakeMapView/EarthquakeResultsTable so map/table content remains usable without cutting off card borders. Leverage existing shadcn-ui Card-based panels; verify the component's usage instructions before implementing."
+          "description": "Implement a Leaflet custom control (positioned in the same corner as zoom controls) that is added after map creation so it renders directly below the zoom control, toggles a full-screen overlay mode for the map container, includes accessible text via aria-label, calls map.invalidateSize() when toggling to preserve rendering, and disables/enables page scrolling appropriately while in full-screen for both Map View and Split View."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add global CSS classes used by EarthquakeMapView full-screen mode (e.g., fixed positioning to cover the viewport, high z-index above page content, and height/width overrides to ignore inline size constraints), plus any minimal styling for the custom Leaflet control to visually match the existing control stack."
         }
       ]
     }

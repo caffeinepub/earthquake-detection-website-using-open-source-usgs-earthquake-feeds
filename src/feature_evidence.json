@@ -2,11 +2,9 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-ui-so-the-bottom-border-of-the-map-and-table-border-box-cards-is-fully-visible-and-not-clipped-misaligned-in-split-view-and-remains-correct-in-map-only-and-table-only-views-matching-the-expected-rounded-card-border-shown-in-the-screenshot",
-      "featureTitle": "Fix the UI so the bottom border of the Map and Table “border box” cards is fully visible and not clipped/misaligned in Split view (and remains correct in Map-only and Table-only views), matching the expected rounded card border shown in the screenshot.",
+      "featureId": "feature-remove-the-current-hero-banner-section-on-the-earthquake-dashboard-background-image-gradient-badge-and-description-text-and-keep-only-the-hero-title-text-as-a-simple-heading-in-the-main-content-area",
+      "featureTitle": "Remove the current Hero/Banner section on the Earthquake Dashboard (background image/gradient, badge, and description text) and keep only the hero title text as a simple heading in the main content area.",
       "files": [
-        "frontend/src/components/earthquake/EarthquakeMapView.tsx",
-        "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
         "frontend/src/pages/EarthquakeDashboard.tsx"
       ],
       "components": [
@@ -22,10 +20,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-split-view-layout-container-styling-to-avoid-clipping-card-borders-e-g-remove-or-adjust-any-parent-overflow-hidden-fixed-height-wrappers-that-cut-off-the-card-s-bottom-border-while-keeping-the-intended-600px-panel-height-behavior",
-      "featureTitle": "Update the Split view layout container styling to avoid clipping card borders (e.g., remove or adjust any parent `overflow-hidden` / fixed-height wrappers that cut off the Card’s bottom border) while keeping the intended 600px panel height behavior.",
+      "featureId": "feature-add-a-leaflet-full-screen-toggle-button-to-the-map-ui-positioned-directly-below-the-existing-zoom-in-out-controls-the-button-must-toggle-the-map-container-into-a-full-screen-overlay-and-allow-exiting-full-screen-to-return-to-the-prior-layout",
+      "featureTitle": "Add a Leaflet full-screen toggle button to the map UI, positioned directly below the existing zoom in/out controls. The button must toggle the map container into a full-screen overlay and allow exiting full-screen to return to the prior layout.",
       "files": [
-        "frontend/src/pages/EarthquakeDashboard.tsx"
+        "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+        "frontend/src/index.css"
       ],
       "components": [
         "core-infrastructure@1.0.2",

@@ -4,118 +4,201 @@
 
 @layer base {
     :root {
-        --radius: 0.5rem;
-        /* Light mode - Earth tones inspired by seismic monitoring */
-        --background: 0.98 0.005 45;
-        --foreground: 0.25 0.02 30;
+        --radius: 0.75rem;
+        /* Light mode - Modern vibrant palette */
+        --background: 0.99 0.002 264;
+        --foreground: 0.15 0.015 264;
         --card: 1 0 0;
-        --card-foreground: 0.25 0.02 30;
+        --card-foreground: 0.15 0.015 264;
         --popover: 1 0 0;
-        --popover-foreground: 0.25 0.02 30;
-        --primary: 0.55 0.18 35;
-        --primary-foreground: 0.98 0.005 45;
-        --secondary: 0.92 0.02 45;
-        --secondary-foreground: 0.25 0.02 30;
-        --muted: 0.95 0.01 45;
-        --muted-foreground: 0.50 0.02 30;
-        --accent: 0.70 0.20 40;
-        --accent-foreground: 0.98 0.005 45;
-        --destructive: 0.55 0.22 25;
-        --destructive-foreground: 0.98 0.005 45;
-        --border: 0.88 0.01 45;
-        --input: 0.88 0.01 45;
-        --ring: 0.55 0.18 35;
-        --chart-1: 0.65 0.20 35;
-        --chart-2: 0.70 0.18 50;
-        --chart-3: 0.55 0.15 25;
-        --chart-4: 0.60 0.22 40;
-        --chart-5: 0.75 0.16 45;
-        --warning: 0.75 0.20 50;
-        --warning-foreground: 0.25 0.02 30;
-        --success: 0.60 0.15 140;
-        --success-foreground: 0.98 0.005 45;
+        --popover-foreground: 0.15 0.015 264;
+        --primary: 0.55 0.22 264;
+        --primary-foreground: 0.98 0.005 264;
+        --secondary: 0.96 0.01 264;
+        --secondary-foreground: 0.15 0.015 264;
+        --muted: 0.96 0.01 264;
+        --muted-foreground: 0.45 0.01 264;
+        --accent: 0.94 0.02 264;
+        --accent-foreground: 0.15 0.015 264;
+        --destructive: 0.58 0.22 25;
+        --destructive-foreground: 0.98 0.005 25;
+        --border: 0.92 0.01 264;
+        --input: 0.92 0.01 264;
+        --ring: 0.55 0.22 264;
+        --success: 0.65 0.18 145;
+        --success-foreground: 0.98 0.005 145;
+        --warning: 0.75 0.18 65;
+        --warning-foreground: 0.15 0.015 65;
     }
 
     .dark {
-        /* Dark mode - Deep earth/monitoring station aesthetic */
-        --background: 0.18 0.02 30;
-        --foreground: 0.95 0.01 45;
-        --card: 0.22 0.02 30;
-        --card-foreground: 0.95 0.01 45;
-        --popover: 0.20 0.02 30;
-        --popover-foreground: 0.95 0.01 45;
-        --primary: 0.70 0.20 40;
-        --primary-foreground: 0.18 0.02 30;
-        --secondary: 0.28 0.02 30;
-        --secondary-foreground: 0.95 0.01 45;
-        --muted: 0.25 0.02 30;
-        --muted-foreground: 0.65 0.02 40;
-        --accent: 0.55 0.18 35;
-        --accent-foreground: 0.95 0.01 45;
-        --destructive: 0.60 0.22 25;
-        --destructive-foreground: 0.95 0.01 45;
-        --border: 0.30 0.02 30;
-        --input: 0.30 0.02 30;
-        --ring: 0.70 0.20 40;
-        --chart-1: 0.65 0.20 35;
-        --chart-2: 0.70 0.18 50;
-        --chart-3: 0.55 0.15 25;
-        --chart-4: 0.60 0.22 40;
-        --chart-5: 0.75 0.16 45;
-        --warning: 0.75 0.20 50;
-        --warning-foreground: 0.18 0.02 30;
-        --success: 0.65 0.15 140;
-        --success-foreground: 0.18 0.02 30;
+        /* Dark mode - Modern vibrant palette */
+        --background: 0.12 0.015 264;
+        --foreground: 0.95 0.005 264;
+        --card: 0.15 0.018 264;
+        --card-foreground: 0.95 0.005 264;
+        --popover: 0.15 0.018 264;
+        --popover-foreground: 0.95 0.005 264;
+        --primary: 0.65 0.24 264;
+        --primary-foreground: 0.98 0.005 264;
+        --secondary: 0.20 0.02 264;
+        --secondary-foreground: 0.95 0.005 264;
+        --muted: 0.20 0.02 264;
+        --muted-foreground: 0.60 0.01 264;
+        --accent: 0.25 0.025 264;
+        --accent-foreground: 0.95 0.005 264;
+        --destructive: 0.60 0.24 25;
+        --destructive-foreground: 0.98 0.005 25;
+        --border: 0.25 0.02 264;
+        --input: 0.25 0.02 264;
+        --ring: 0.65 0.24 264;
+        --success: 0.68 0.20 145;
+        --success-foreground: 0.98 0.005 145;
+        --warning: 0.78 0.20 65;
+        --warning-foreground: 0.15 0.015 65;
     }
+}
 
+@layer base {
     * {
         @apply border-border;
     }
+    html,
     body {
-        @apply bg-background text-foreground;
-        font-feature-settings: "rlig" 1, "calt" 1;
+        @apply bg-background text-foreground overflow-x-hidden;
+    }
+    html {
+        font-feature-settings: "cv11", "ss01";
+        font-variation-settings: "opsz" auto;
     }
 }
 
-@layer components {
-    .seismic-gradient {
-        background: linear-gradient(135deg, oklch(var(--primary)) 0%, oklch(var(--accent)) 100%);
+/* Leaflet z-index normalization - keep dialogs above map */
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 0 !important;
+}
+
+.leaflet-control {
+    z-index: 1 !important;
+}
+
+/* Full-screen map styles */
+.map-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    background: oklch(var(--background));
+    overflow: hidden;
+}
+
+.map-fullscreen > div {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+}
+
+.map-fullscreen .leaflet-container {
+    height: 100vh !important;
+}
+
+/* Custom full-screen control button styling */
+.leaflet-control-fullscreen-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: white;
+    color: #333;
+    text-decoration: none;
+    font-size: 18px;
+    line-height: 30px;
+    text-align: center;
+}
+
+.leaflet-control-fullscreen-button::before {
+    content: '⛶';
+    font-size: 18px;
+}
+
+.dark .leaflet-control-fullscreen-button {
+    background: oklch(var(--card));
+    color: oklch(var(--foreground));
+}
+
+.leaflet-control-fullscreen-button:hover {
+    background: oklch(var(--accent));
+}
+
+/* Magnitude pulse animation */
+@keyframes magnitude-pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
     }
-    
-    .magnitude-pulse {
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    50% {
+        opacity: 0.85;
+        transform: scale(1.05);
     }
 }
 
-/* Leaflet z-index normalization - keep map layers below app modals */
-@layer base {
-    /* Leaflet container and all child panes */
-    .leaflet-container {
-        z-index: 0 !important;
-    }
-    
-    /* Leaflet map panes (tile, shadow, overlay, marker, tooltip, popup) */
-    .leaflet-pane {
-        z-index: auto !important;
-    }
-    
-    /* Leaflet controls (zoom, attribution, etc.) */
-    .leaflet-control {
-        z-index: 10 !important;
-    }
-    
-    /* Leaflet popups - keep them above markers but below dialogs */
-    .leaflet-popup-pane {
-        z-index: 20 !important;
-    }
-    
-    /* Leaflet tooltip pane */
-    .leaflet-tooltip-pane {
-        z-index: 15 !important;
-    }
-    
-    /* Ensure Leaflet doesn't create a higher stacking context than Radix dialogs */
-    .leaflet-map-pane {
-        z-index: auto !important;
-    }
+.magnitude-pulse {
+    animation: magnitude-pulse 2s ease-in-out infinite;
+}
+
+/* Glassmorphism effect */
+.glass-effect {
+    background: oklch(from var(--card) l c h / 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Gradient text */
+.gradient-text {
+    background: linear-gradient(135deg, oklch(var(--primary)), oklch(var(--accent)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Smooth transitions */
+* {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: oklch(var(--muted));
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: oklch(var(--muted-foreground) / 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: oklch(var(--muted-foreground) / 0.5);
 }

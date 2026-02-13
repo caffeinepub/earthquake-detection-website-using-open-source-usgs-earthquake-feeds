@@ -1,4 +1,4 @@
-import { ExternalLink, MapPin, Clock, Layers, Activity } from 'lucide-react';
+import { ExternalLink, MapPin, Clock, Layers, Activity, Info } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -78,151 +78,142 @@ export function EarthquakeDetailsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
-        <DialogOverlay className="z-[9999]" />
-        <DialogContent className="max-w-2xl z-[10000] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogOverlay className="z-[9999] backdrop-blur-sm" />
+        <DialogContent className="max-w-2xl z-[10000] max-h-[90vh] overflow-y-auto shadow-strong border-border/40">
+          <DialogHeader className="space-y-3 pb-4">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <DialogTitle className="text-xl">{properties.title}</DialogTitle>
-                <DialogDescription className="mt-2">
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-3">
+                  <Badge
+                    variant="outline"
+                    className={`${getMagnitudeColor(properties.mag)} font-mono text-base px-3 py-1.5 font-bold shadow-soft`}
+                  >
+                    M{formatMagnitude(properties.mag)}
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs font-semibold">
+                    {getMagnitudeLabel(properties.mag)}
+                  </Badge>
+                </div>
+                <DialogTitle className="text-2xl font-bold tracking-tight">
                   {properties.place}
+                </DialogTitle>
+                <DialogDescription className="text-sm font-medium">
+                  Detailed information about this seismic event
                 </DialogDescription>
               </div>
-              <Badge
-                variant={getMagnitudeColor(properties.mag) as any}
-                className="text-lg px-3 py-1"
-              >
-                M{formatMagnitude(properties.mag)}
-              </Badge>
             </div>
           </DialogHeader>
 
-          <div className="space-y-4">
-            {/* Magnitude Details */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Activity className="h-4 w-4" />
-                  <span>Magnitude Type</span>
+          <div className="space-y-6">
+            {/* Location & Time Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                Event Information
+              </h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2 p-4 rounded-lg bg-muted/30 border border-border/40">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    <span className="text-xs font-semibold uppercase tracking-wide">Location</span>
+                  </div>
+                  <p className="text-sm font-medium">{formatCoordinates(lat, lon)}</p>
                 </div>
-                <p className="text-sm font-medium">
-                  {properties.magType || 'Unknown'}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Activity className="h-4 w-4" />
-                  <span>Classification</span>
+                <div className="space-y-2 p-4 rounded-lg bg-muted/30 border border-border/40">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span className="text-xs font-semibold uppercase tracking-wide">Time</span>
+                  </div>
+                  <p className="text-sm font-medium">{formatFullTimestamp(properties.time)}</p>
                 </div>
-                <p className="text-sm font-medium">
-                  {getMagnitudeLabel(properties.mag)}
-                </p>
+                <div className="space-y-2 p-4 rounded-lg bg-muted/30 border border-border/40">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Layers className="h-4 w-4" />
+                    <span className="text-xs font-semibold uppercase tracking-wide">Depth</span>
+                  </div>
+                  <p className="text-sm font-medium">{formatDepth(depth)}</p>
+                </div>
+                <div className="space-y-2 p-4 rounded-lg bg-muted/30 border border-border/40">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Activity className="h-4 w-4" />
+                    <span className="text-xs font-semibold uppercase tracking-wide">Type</span>
+                  </div>
+                  <p className="text-sm font-medium">{properties.type || 'Earthquake'}</p>
+                </div>
               </div>
             </div>
 
-            <Separator />
+            <Separator className="bg-border/40" />
 
-            {/* Location Details */}
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span>Coordinates</span>
-                </div>
-                <p className="text-sm font-medium font-mono">
-                  {formatCoordinates(lon, lat)}
-                </p>
+            {/* Additional Details */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+                Additional Details
+              </h3>
+              <div className="grid gap-3">
+                {properties.mmi && (
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
+                    <span className="text-sm font-semibold">Modified Mercalli Intensity</span>
+                    <Badge variant="secondary" className="font-mono font-semibold">
+                      {formatMMI(properties.mmi)}
+                    </Badge>
+                  </div>
+                )}
+                {properties.tsunami === 1 && (
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+                    <span className="text-sm font-semibold">Tsunami Alert</span>
+                    <Badge variant="destructive" className="font-semibold">
+                      Active
+                    </Badge>
+                  </div>
+                )}
+                {properties.felt !== null && properties.felt !== undefined && (
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
+                    <span className="text-sm font-semibold">Felt Reports</span>
+                    <Badge variant="secondary" className="font-semibold">
+                      {properties.felt.toLocaleString()}
+                    </Badge>
+                  </div>
+                )}
               </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Layers className="h-4 w-4" />
-                  <span>Depth</span>
-                </div>
-                <p className="text-sm font-medium">{formatDepth(depth)}</p>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Time Details */}
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>Event Time</span>
-                </div>
-                <p className="text-sm font-medium">
-                  {formatFullTimestamp(properties.time)}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>Last Updated</span>
-                </div>
-                <p className="text-sm font-medium">
-                  {formatFullTimestamp(properties.updated)}
-                </p>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Additional Info */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Status</p>
-                <Badge variant="outline">{properties.status}</Badge>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">MMI</p>
-                <Badge variant="outline">{formatMMI(properties.mmi)}</Badge>
-              </div>
-              {properties.tsunami === 1 && (
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Alert</p>
-                  <Badge variant="destructive">Tsunami Warning</Badge>
-                </div>
-              )}
             </div>
 
             {/* Moment Tensor Section */}
-            {showMomentTensor && (
+            {showMomentTensor && momentTensorInfo && (
               <>
-                <Separator />
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <Activity className="h-4 w-4" />
-                    Moment Tensor
+                <Separator className="bg-border/40" />
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+                    Moment Tensor Analysis
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-3">
                     {momentTensorInfo.source && (
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Source</p>
-                        <p className="text-sm font-medium">{momentTensorInfo.source}</p>
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
+                        <span className="text-sm font-semibold">Source</span>
+                        <span className="text-sm font-mono font-medium">{momentTensorInfo.source}</span>
                       </div>
                     )}
                     {momentTensorInfo.magnitude && (
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">MT Magnitude</p>
-                        <p className="text-sm font-medium">
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
+                        <span className="text-sm font-semibold">Derived Magnitude</span>
+                        <Badge variant="outline" className="font-mono font-semibold">
                           {momentTensorInfo.magnitude}
-                          {momentTensorInfo.magnitudeType && ` (${momentTensorInfo.magnitudeType})`}
-                        </p>
+                          {momentTensorInfo.magnitudeType && ` ${momentTensorInfo.magnitudeType}`}
+                        </Badge>
                       </div>
                     )}
                     {momentTensorInfo.scalarMoment && (
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Scalar Moment</p>
-                        <p className="text-sm font-medium font-mono">
-                          {parseFloat(momentTensorInfo.scalarMoment).toExponential(2)} N⋅m
-                        </p>
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
+                        <span className="text-sm font-semibold">Scalar Moment</span>
+                        <span className="text-sm font-mono font-medium">{momentTensorInfo.scalarMoment}</span>
                       </div>
                     )}
                     {momentTensorInfo.percentDoubleCoup && (
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Double Couple</p>
-                        <p className="text-sm font-medium">{momentTensorInfo.percentDoubleCoup}%</p>
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
+                        <span className="text-sm font-semibold">Double Couple</span>
+                        <Badge variant="secondary" className="font-semibold">
+                          {momentTensorInfo.percentDoubleCoup}%
+                        </Badge>
                       </div>
                     )}
                   </div>
@@ -230,24 +221,22 @@ export function EarthquakeDetailsDialog({
               </>
             )}
 
-            {/* Show error message if detail fetch failed but don't break the dialog */}
-            {isDetailError && !isLoadingDetail && (
-              <>
-                <Separator />
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Moment Tensor</p>
-                  <p className="text-sm text-muted-foreground italic">Moment tensor unavailable</p>
-                </div>
-              </>
-            )}
+            <Separator className="bg-border/40" />
 
-            {/* External Link */}
+            {/* Action Button */}
             <Button
-              className="w-full"
-              onClick={() => window.open(properties.url, '_blank')}
+              asChild
+              className="w-full gap-2 h-12 font-semibold shadow-soft hover:shadow-medium transition-all duration-200"
+              size="lg"
             >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              View on USGS Website
+              <a
+                href={properties.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="h-5 w-5" />
+                View on USGS Website
+              </a>
             </Button>
           </div>
         </DialogContent>

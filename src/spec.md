@@ -1,11 +1,10 @@
 # Specification
 
 ## Summary
-**Goal:** Fix the Split view layout so the Map and Table cards render a complete, properly rounded border (especially along the bottom edge) without clipping, while preserving the intended ~600px panel height behavior.
+**Goal:** Simplify the Earthquake Dashboard header by removing the hero/banner and add a full-screen toggle control to the Leaflet map.
 
 **Planned changes:**
-- Update Split view container/wrapper styling in `frontend/src/pages/EarthquakeDashboard.tsx` to prevent card borders (bottom edge and rounded corners) from being visually clipped.
-- Ensure Split view maintains ~600px panel heights while keeping the map visible and the table scrollable, without introducing new overflow/scrollbar artifacts.
-- Verify Map-only and Table-only views still render continuous, correct card borders (including the Table’s inner bordered container).
+- Remove the hero/banner section visuals (background image/gradient, badge, description text) and keep only the title “Global Earthquake Activity” as a plain heading above the filters/controls.
+- Add a Leaflet full-screen toggle button directly below the existing zoom controls that expands the map into a full-screen overlay and toggles back to the prior layout (including in Map View and Split View), with accessible labeling.
 
-**User-visible outcome:** In Split view, both the Map and Table panels show full, clean rounded card borders (including the bottom edge) with consistent rendering across common screen sizes, and Map-only/Table-only views remain visually correct.
+**User-visible outcome:** The dashboard shows a simple title header (no banner), and users can toggle the map into and out of full-screen via a control button beneath the zoom controls.

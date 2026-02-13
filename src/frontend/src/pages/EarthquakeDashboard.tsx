@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Activity, Moon, Sun, Table as TableIcon, Map, Columns } from 'lucide-react';
+import { Moon, Sun, Table as TableIcon, Map, Columns } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -56,20 +56,23 @@ export default function EarthquakeDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/30">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <img
-                src="/assets/generated/eq-logo.dim_512x512.png"
-                alt="WhoFeelAnEarthquake"
-                className="h-10 w-10"
-              />
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">
+      <header className="sticky top-0 z-50 border-b border-border/40 glass-effect shadow-soft">
+        <div className="container mx-auto px-4 sm:px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+              <div className="relative">
+                <img
+                  src="/assets/generated/eq-logo.dim_512x512.png"
+                  alt="WhoFeelAnEarthquake"
+                  className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 drop-shadow-md"
+                />
+                <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full -z-10" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight truncate bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                   WhoFeelAnEarthquake
                 </h1>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate font-medium">
                   Real-time earthquake detection powered by USGS
                 </p>
               </div>
@@ -78,103 +81,110 @@ export default function EarthquakeDashboard() {
               variant="ghost"
               size="icon"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="flex-shrink-0 hover:bg-accent/50 transition-all duration-200"
             >
               {theme === 'dark' ? (
-                <Sun className="h-5 w-5" />
+                <Sun className="h-5 w-5 text-warning" />
               ) : (
-                <Moon className="h-5 w-5" />
+                <Moon className="h-5 w-5 text-primary" />
               )}
+              <span className="sr-only">Toggle theme</span>
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="border-b border-border/50 bg-gradient-to-b from-card/50 to-background">
-        <div className="container mx-auto px-4 py-12 md:py-16">
-          <div className="flex flex-col items-center justify-center gap-3">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center tracking-tight">
-              Real - Time Earthquake Detection Around The World
-            </h2>
-            <h2 className="text-lg md:text-xl lg:text-2xl text-center text-muted-foreground">
-              Latest real-time earthquake information around the world
-            </h2>
+      {/* Main Content */}
+      <main className="container mx-auto px-4 sm:px-6 py-8 space-y-8">
+        {/* Title Section */}
+        <section className="text-center space-y-2">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+            <span className="bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
+              Global Earthquake Activity
+            </span>
+          </h2>
+        </section>
+
+        {/* Filters and Controls */}
+        <div className="animate-fade-in">
+          <FeedAndFilterControls
+            timeWindow={timeWindow}
+            minMagnitude={minMagnitude}
+            searchQuery={searchQuery}
+            onTimeWindowChange={setTimeWindow}
+            onMinMagnitudeChange={setMinMagnitude}
+            onSearchQueryChange={setSearchQuery}
+            onRefresh={handleRefresh}
+            isRefreshing={isFetching}
+          />
+        </div>
+
+        {/* Summary Cards */}
+        {!isLoading && !isError && (
+          <div className="animate-fade-in">
+            <DashboardSummary stats={stats} threshold={5.0} />
+          </div>
+        )}
+
+        {/* View Mode Toggle */}
+        <div className="flex flex-wrap items-center justify-between gap-4 animate-fade-in">
+          <h3 className="text-xl sm:text-2xl font-bold tracking-tight">
+            {viewMode === 'table' && 'Table View'}
+            {viewMode === 'map' && 'Map View'}
+            {viewMode === 'split' && 'Split View'}
+          </h3>
+          <div className="flex gap-2 p-1 bg-muted/50 rounded-lg backdrop-blur-sm">
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('table')}
+              className="gap-2 transition-all duration-200"
+            >
+              <TableIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Table</span>
+            </Button>
+            <Button
+              variant={viewMode === 'map' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('map')}
+              className="gap-2 transition-all duration-200"
+            >
+              <Map className="h-4 w-4" />
+              <span className="hidden sm:inline">Map</span>
+            </Button>
+            <Button
+              variant={viewMode === 'split' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('split')}
+              className="gap-2 transition-all duration-200"
+            >
+              <Columns className="h-4 w-4" />
+              <span className="hidden sm:inline">Split</span>
+            </Button>
           </div>
         </div>
-      </section>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Controls */}
-        <FeedAndFilterControls
-          timeWindow={timeWindow}
-          onTimeWindowChange={setTimeWindow}
-          minMagnitude={minMagnitude}
-          onMinMagnitudeChange={setMinMagnitude}
-          searchQuery={searchQuery}
-          onSearchQueryChange={setSearchQuery}
-          onRefresh={handleRefresh}
-          isRefreshing={isFetching}
-        />
 
         {/* Loading State */}
         {isLoading && (
-          <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-3">
-              <Skeleton className="h-32" />
-              <Skeleton className="h-32" />
-              <Skeleton className="h-32" />
-            </div>
-            <Skeleton className="h-96" />
+          <div className="space-y-4 animate-fade-in">
+            <Skeleton className="h-[500px] w-full rounded-2xl" />
           </div>
         )}
 
         {/* Error State */}
         {isError && (
-          <Alert variant="destructive">
-            <Activity className="h-4 w-4" />
-            <AlertTitle>Error Loading Data</AlertTitle>
+          <Alert variant="destructive" className="animate-fade-in shadow-soft">
+            <AlertTitle className="font-semibold">Error Loading Data</AlertTitle>
             <AlertDescription>
-              {error instanceof Error ? error.message : 'Failed to fetch earthquake data'}
+              {error instanceof Error ? error.message : 'Failed to fetch earthquake data. Please try again.'}
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Data Display */}
-        {data && (
-          <>
-            {/* Summary Cards */}
-            <DashboardSummary stats={stats} threshold={5.0} />
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center justify-center gap-2">
-              <Button
-                variant={viewMode === 'table' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('table')}
-              >
-                <TableIcon className="h-4 w-4 mr-2" />
-                Table
-              </Button>
-              <Button
-                variant={viewMode === 'map' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('map')}
-              >
-                <Map className="h-4 w-4 mr-2" />
-                Map
-              </Button>
-              <Button
-                variant={viewMode === 'split' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('split')}
-              >
-                <Columns className="h-4 w-4 mr-2" />
-                Split
-              </Button>
-            </div>
-
-            {/* Results Display */}
+        {/* Data Views */}
+        {!isLoading && !isError && (
+          <div className="animate-fade-in">
+            {/* Table View */}
             {viewMode === 'table' && (
               <EarthquakeResultsTable
                 earthquakes={filteredEarthquakes}
@@ -183,6 +193,7 @@ export default function EarthquakeDashboard() {
               />
             )}
 
+            {/* Map View */}
             {viewMode === 'map' && (
               <EarthquakeMapView
                 earthquakes={filteredEarthquakes}
@@ -190,47 +201,42 @@ export default function EarthquakeDashboard() {
               />
             )}
 
+            {/* Split View */}
             {viewMode === 'split' && (
-              <div className="grid gap-6 lg:grid-cols-2">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <EarthquakeMapView
                   earthquakes={filteredEarthquakes}
                   onMarkerClick={handleEarthquakeSelect}
-                  constrainedHeight={600}
+                  constrainedHeight={620}
                 />
                 <EarthquakeResultsTable
                   earthquakes={filteredEarthquakes}
                   selectedEarthquake={selectedEarthquake}
                   onEarthquakeSelect={handleEarthquakeSelect}
-                  constrainedHeight={600}
+                  constrainedHeight={620}
                 />
               </div>
             )}
-          </>
+          </div>
         )}
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 bg-card/30 mt-16">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <p>
-              Data provided by{' '}
-              <a
-                href="https://earthquake.usgs.gov/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                USGS Earthquake Hazards Program
-              </a>
+      <footer className="border-t border-border/40 glass-effect mt-16">
+        <div className="container mx-auto px-4 sm:px-6 py-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+            <p className="font-medium">
+              © {new Date().getFullYear()} WhoFeelAnEarthquake. Data provided by USGS.
             </p>
-            <p>
-              © 2026. Built with love using{' '}
+            <p className="font-medium">
+              Built with ❤️ using{' '}
               <a
-                href="https://caffeine.ai"
+                href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(
+                  typeof window !== 'undefined' ? window.location.hostname : 'earthquake-app'
+                )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:underline"
+                className="text-primary hover:underline transition-colors"
               >
                 caffeine.ai
               </a>
@@ -239,11 +245,13 @@ export default function EarthquakeDashboard() {
         </div>
       </footer>
 
-      {/* Earthquake Details Dialog */}
+      {/* Details Dialog */}
       <EarthquakeDetailsDialog
         earthquake={selectedEarthquake}
         open={!!selectedEarthquake}
-        onOpenChange={(open) => !open && setSelectedEarthquake(null)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedEarthquake(null);
+        }}
       />
     </div>
   );

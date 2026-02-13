@@ -1,52 +1,54 @@
 {
   "kind": "build_request",
-  "title": "Fix bottom border clipping on split-view cards",
+  "title": "Remove hero banner, keep title text only, and add full-screen map control",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix the UI so the bottom border of the Map and Table “border box” cards is fully visible and not clipped/misaligned in Split view (and remains correct in Map-only and Table-only views), matching the expected rounded card border shown in the screenshot.",
+      "text": "Remove the current Hero/Banner section on the Earthquake Dashboard (background image/gradient, badge, and description text) and keep only the hero title text as a simple heading in the main content area.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "fix the butttom of the boarder box"
+          "remove the banner but keep the text title only"
         ]
       },
       "acceptanceCriteria": [
-        "In Split view, neither the Map card nor the Table card has its bottom border (or rounded corners) clipped/cut off.",
-        "The fix works at common breakpoints (mobile, tablet, desktop) without introducing new overflow/scrollbar artifacts.",
-        "Map-only view still shows a correct, continuous border around the Map card (including the bottom edge).",
-        "Table-only view still shows a correct, continuous border around the Table card and its inner bordered container."
+        "On the dashboard page, the previous hero/banner background and its decorative elements are no longer visible (no background image, no gradient overlay, no 'Live Monitoring' pill, no descriptive paragraph).",
+        "The text title \"Global Earthquake Activity\" remains visible as a plain heading above the filters/controls.",
+        "No backend changes are introduced."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Update the Split view layout container styling to avoid clipping card borders (e.g., remove or adjust any parent `overflow-hidden` / fixed-height wrappers that cut off the Card’s bottom border) while keeping the intended 600px panel height behavior.",
+      "text": "Add a Leaflet full-screen toggle button to the map UI, positioned directly below the existing zoom in/out controls. The button must toggle the map container into a full-screen overlay and allow exiting full-screen to return to the prior layout.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "fix the butttom of the boarder box"
+          "add below the zoom in zoom out button of full screen map button"
         ]
       },
       "acceptanceCriteria": [
-        "In `frontend/src/pages/EarthquakeDashboard.tsx`, Split view no longer uses wrapper styles that visually cut off the Card border.",
-        "Both panels remain the intended height (approximately 600px) and content remains usable (map visible, table scrollable)."
+        "A new control button appears in the map controls stack directly below the Leaflet zoom controls (same corner/cluster).",
+        "Clicking the button expands the map to full-screen (covering the viewport above other content) and clicking again exits full-screen, restoring the previous size and layout.",
+        "The button includes accessible text (e.g., via aria-label and/or sr-only) in English such as \"Toggle full screen\".",
+        "The full-screen behavior works in both Map View and Split View without breaking marker rendering or map interactions.",
+        "Exiting full-screen restores normal page scrolling/interaction."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (read-only).",
-    "Keep the backend as a single Motoko actor; no backend changes are required for this UI-only fix."
+    "Do not modify files under frontend/src/components/ui or any other frontend immutablePaths listed in SYSTEM_CONTEXT.",
+    "Keep the backend as a single Motoko actor; no backend changes are required for this request."
   ],
   "nonGoals": [
-    "Adding new dashboard features or changing data fetching/filtering logic.",
-    "Changing the overall theme/colors/typography beyond what is necessary to fix the border rendering issue."
+    "Changing earthquake data fetching, filtering, or marker rendering behavior.",
+    "Adding new authentication or backend persistence features."
   ],
   "imageRequirements": {
     "required": [],

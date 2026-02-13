@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-13T11:43:42.070Z",
+  "generatedAt": "2026-02-13T12:37:24.434Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -12,28 +12,26 @@
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Fix the UI so the bottom border of the Map and Table “border box” cards is fully visible and not clipped/misaligned in Split view (and remains correct in Map-only and Table-only views), matching the expected rounded card border shown in the screenshot.",
+        "summary": "Remove the current Hero/Banner section on the Earthquake Dashboard (background image/gradient, badge, and description text) and keep only the hero title text as a simple heading in the main content area.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/EarthquakeDashboard.tsx",
-          "frontend/src/components/earthquake/EarthquakeMapView.tsx",
-          "frontend/src/components/earthquake/EarthquakeResultsTable.tsx"
+          "frontend/src/pages/EarthquakeDashboard.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/EarthquakeDashboard.tsx",
-          "frontend/src/components/earthquake/EarthquakeMapView.tsx",
-          "frontend/src/components/earthquake/EarthquakeResultsTable.tsx"
+          "frontend/src/pages/EarthquakeDashboard.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Update the Split view layout container styling to avoid clipping card borders (e.g., remove or adjust any parent `overflow-hidden` / fixed-height wrappers that cut off the Card’s bottom border) while keeping the intended 600px panel height behavior.",
+        "summary": "Add a Leaflet full-screen toggle button to the map UI, positioned directly below the existing zoom in/out controls. The button must toggle the map container into a full-screen overlay and allow exiting full-screen to return to the prior layout.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/EarthquakeDashboard.tsx"
+          "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+          "frontend/src/index.css"
         ],
         "matchedFiles": [
-          "frontend/src/pages/EarthquakeDashboard.tsx"
+          "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+          "frontend/src/index.css"
         ]
       }
     ]
@@ -44,7 +42,7 @@
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/components/earthquake/EarthquakeMapView.tsx",
-    "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
+    "frontend/src/index.css",
     "frontend/src/pages/EarthquakeDashboard.tsx",
     "project_state.json",
     "scratch/component-selection.json",
