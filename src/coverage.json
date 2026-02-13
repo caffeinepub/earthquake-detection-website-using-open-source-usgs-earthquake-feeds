@@ -1,18 +1,33 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-10T02:00:33.908Z",
+  "generatedAt": "2026-02-13T11:43:42.070Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
-    "implemented": 1,
+    "total": 2,
+    "implemented": 2,
     "items": [
       {
-        "id": "REQ-31",
-        "summary": "On the dashboard hero section (frontend/src/pages/EarthquakeDashboard.tsx), add a new subtitle line directly below the existing centered hero title \"Real - Time Earthquake Detection Around The World\". The subtitle must be rendered as an H2 and must read exactly: \"Latest real-time earthquake information around the world\". Keep the subtitle centered and visually secondary to the main hero title (smaller size and/or muted color), without changing the existing hero title wording, alignment, or layout.",
+        "id": "REQ-1",
+        "summary": "Fix the UI so the bottom border of the Map and Table “border box” cards is fully visible and not clipped/misaligned in Split view (and remains correct in Map-only and Table-only views), matching the expected rounded card border shown in the screenshot.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/EarthquakeDashboard.tsx",
+          "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+          "frontend/src/components/earthquake/EarthquakeResultsTable.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/EarthquakeDashboard.tsx",
+          "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+          "frontend/src/components/earthquake/EarthquakeResultsTable.tsx"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Update the Split view layout container styling to avoid clipping card borders (e.g., remove or adjust any parent `overflow-hidden` / fixed-height wrappers that cut off the Card’s bottom border) while keeping the intended 600px panel height behavior.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/pages/EarthquakeDashboard.tsx"
@@ -28,6 +43,8 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+    "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
     "frontend/src/pages/EarthquakeDashboard.tsx",
     "project_state.json",
     "scratch/component-selection.json",

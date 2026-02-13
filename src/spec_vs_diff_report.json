@@ -1,31 +1,74 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-10T02:00:33.905Z",
-  "summary": "REQ-31 cannot be fully verified from the provided diff summary because the relevant portion of `EarthquakeDashboard.tsx` is truncated right at the hero title, and the subtitle line is not visible. There are also unrelated modified metadata/summary files not requested by the BuildRequest.",
+  "generatedAt": "2026-02-13T11:43:42.067Z",
+  "summary": "The diff includes substantial functional additions (map bounds-based marker filtering, moment tensor support, virtualization height logic, and various UI/content changes), but the provided truncated diffs do not clearly show the specific Split-view container/style changes needed to ensure Card bottom borders are not clipped. Based on available evidence, REQ-1/REQ-2 are not demonstrably implemented, while multiple unrequested features appear to have been added.",
   "missing_requirements": [
     {
-      "id": "REQ-31",
-      "requirement": "Add a new subtitle line directly below the existing centered hero title, rendered as an H2 with exact text: \"Latest real-time earthquake information around the world\", styled as visually secondary, without changing the existing hero title text/alignment/layout.",
-      "reason": "The diff snippet shows the hero section and a hero title element starting with \"Real - Time Earthqua...\" but is truncated before confirming the full unchanged title text and before any subtitle H2 is visible. Therefore the required subtitle presence, exact text, and placement cannot be confirmed from the provided diff summary.",
+      "id": "REQ-1",
+      "requirement": "Fix the UI so the bottom border of the Map and Table “border box” cards is fully visible and not clipped/misaligned in Split view (and remains correct in Map-only and Table-only views).",
+      "reason": "The diffs shown for EarthquakeMapView.tsx and EarthquakeResultsTable.tsx do not include any explicit border/overflow/height adjustments tied to preventing bottom border clipping in split view; EarthquakeDashboard.tsx changes related to split view styling are not visible in the truncated excerpt, so the required border-fix behavior cannot be verified from the provided evidence.",
       "evidence": [
-        "frontend/src/pages/EarthquakeDashboard.tsx (truncated at hero title: \"Real - Time Earthqua...\")"
+        "frontend/src/components/earthquake/EarthquakeMapView.tsx (truncated)",
+        "frontend/src/components/earthquake/EarthquakeResultsTable.tsx (truncated)",
+        "frontend/src/pages/EarthquakeDashboard.tsx (truncated)"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Update the Split view layout container styling in frontend/src/pages/EarthquakeDashboard.tsx to avoid clipping card borders (e.g., remove/adjust parent overflow-hidden/fixed-height wrappers) while keeping intended ~600px panel height behavior.",
+      "reason": "The truncated EarthquakeDashboard.tsx excerpt does not show the split-view container implementation, so it is not possible to confirm that overflow-hidden/fixed-height wrappers were removed/adjusted or that ~600px panel height is preserved without introducing overflow artifacts.",
+      "evidence": [
+        "frontend/src/pages/EarthquakeDashboard.tsx (truncated)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Updated/modified repository metadata/summary files not requested by the BuildRequest (e.g., project state and file summaries).",
-      "reason": "BuildRequest only asks for a UI text change in `frontend/src/pages/EarthquakeDashboard.tsx` and explicitly limits scope; modifications to these meta files are not part of REQ-31.",
+      "description": "Bounds-based marker filtering and debounced updates for the Leaflet map (move/zoom event handling, filtering earthquakes in current bounds with padding).",
+      "reason": "The BuildRequest is specifically about fixing split-view card border clipping; it explicitly lists non-goals including not changing data fetching/filtering logic. Map marker filtering is additional behavior unrelated to border rendering.",
       "evidence": [
-        "frontend-file-summaries.txt",
-        "project_state.json"
+        "frontend/src/components/earthquake/EarthquakeMapView.tsx (truncated)",
+        "frontend-file-summaries.txt (EarthquakeMapView.tsx, leafletTypes.ts)"
+      ]
+    },
+    {
+      "description": "Moment Tensor feature additions (new Moment Tensor column in table and a new Moment Tensor section in the details dialog with event detail fetching).",
+      "reason": "Not requested; BuildRequest non-goals include not adding new dashboard features.",
+      "evidence": [
+        "frontend/src/components/earthquake/EarthquakeResultsTable.tsx (truncated)",
+        "frontend-file-summaries.txt (EarthquakeResultsTable.tsx, EarthquakeDetailsDialog.tsx)"
+      ]
+    },
+    {
+      "description": "Virtualized table behavior and new constrainedHeight-driven scroll height calculation (constrainedHeight ? constrainedHeight - 120 : 600).",
+      "reason": "Not requested as part of the border clipping fix; could be related but is presented as a functional enhancement (virtualization) rather than a targeted style/layout fix, and it changes table behavior.",
+      "evidence": [
+        "frontend/src/components/earthquake/EarthquakeResultsTable.tsx (truncated)",
+        "frontend-file-summaries.txt (EarthquakeResultsTable.tsx)"
+      ]
+    },
+    {
+      "description": "Leaflet TypeScript declaration extensions (bounds support and map event subscriptions).",
+      "reason": "Not requested; supports the new map filtering behavior rather than the border clipping issue.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/lib/leafletTypes.ts)"
+      ]
+    },
+    {
+      "description": "Branding/content changes (document title update, favicon/logo asset references).",
+      "reason": "Not requested; outside the scope of a border rendering fix and risks violating the constraint about avoiding broader theme/typography changes beyond necessity.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/index.html)",
+        "frontend/src/pages/EarthquakeDashboard.tsx (truncated: logo image and app title text present)"
       ]
     }
   ],
-  "confidence": 0.48,
+  "confidence": 0.62,
   "changed_files": [
     "frontend-file-summaries.txt",
+    "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+    "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
     "frontend/src/pages/EarthquakeDashboard.tsx",
     "project_state.json"
   ]

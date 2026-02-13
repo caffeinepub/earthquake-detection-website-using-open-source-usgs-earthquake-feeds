@@ -192,19 +192,17 @@ export default function EarthquakeDashboard() {
 
             {viewMode === 'split' && (
               <div className="grid gap-6 lg:grid-cols-2">
-                <div className="h-[600px] overflow-hidden">
-                  <EarthquakeMapView
-                    earthquakes={filteredEarthquakes}
-                    onMarkerClick={handleEarthquakeSelect}
-                  />
-                </div>
-                <div className="h-[600px] overflow-hidden">
-                  <EarthquakeResultsTable
-                    earthquakes={filteredEarthquakes}
-                    selectedEarthquake={selectedEarthquake}
-                    onEarthquakeSelect={handleEarthquakeSelect}
-                  />
-                </div>
+                <EarthquakeMapView
+                  earthquakes={filteredEarthquakes}
+                  onMarkerClick={handleEarthquakeSelect}
+                  constrainedHeight={600}
+                />
+                <EarthquakeResultsTable
+                  earthquakes={filteredEarthquakes}
+                  selectedEarthquake={selectedEarthquake}
+                  onEarthquakeSelect={handleEarthquakeSelect}
+                  constrainedHeight={600}
+                />
               </div>
             )}
           </>

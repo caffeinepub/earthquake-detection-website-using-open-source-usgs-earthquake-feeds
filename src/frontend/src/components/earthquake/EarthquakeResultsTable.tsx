@@ -19,6 +19,7 @@ interface EarthquakeResultsTableProps {
   earthquakes: UsgsFeature[];
   selectedEarthquake?: UsgsFeature | null;
   onEarthquakeSelect?: (earthquake: UsgsFeature) => void;
+  constrainedHeight?: number;
 }
 
 /**
@@ -35,6 +36,7 @@ export function EarthquakeResultsTable({
   earthquakes,
   selectedEarthquake,
   onEarthquakeSelect,
+  constrainedHeight,
 }: EarthquakeResultsTableProps) {
   const handleRowClick = (earthquake: UsgsFeature) => {
     if (onEarthquakeSelect) {
@@ -67,6 +69,9 @@ export function EarthquakeResultsTable({
     virtualWindow.endIndex + 1
   );
 
+  // Calculate scroll container height based on whether we're in constrained mode
+  const scrollHeight = constrainedHeight ? constrainedHeight - 120 : 600;
+
   return (
     <Card className="border-border/50">
       <CardHeader>
@@ -78,7 +83,7 @@ export function EarthquakeResultsTable({
             ref={containerRef}
             onScroll={onScroll}
             className="overflow-auto"
-            style={{ maxHeight: '600px' }}
+            style={{ maxHeight: `${scrollHeight}px` }}
           >
             <Table>
               <TableHeader className="sticky top-0 bg-card z-10">
@@ -95,81 +100,88 @@ export function EarthquakeResultsTable({
               <TableBody>
                 {/* Top spacer for virtualization */}
                 {virtualWindow.offsetTop > 0 && (
-                  <TableRow style={{ height: `${virtualWindow.offsetTop}px` }}>
-                    <TableCell colSpan={7} />
+                  <TableRow>
+                    <TableCell colSpan={7} style={{ height: virtualWindow.offsetTop }} />
                   </TableRow>
                 )}
-                
+
                 {/* Visible rows */}
-                {visibleEarthquakes.map((earthquake) => (
-                  <TableRow
-                    key={earthquake.id}
-                    className={`cursor-pointer hover:bg-muted/50 ${
-                      selectedEarthquake?.id === earthquake.id ? 'bg-muted/30' : ''
-                    }`}
-                    onClick={() => handleRowClick(earthquake)}
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={
-                            getMagnitudeColor(earthquake.properties.mag) as any
-                          }
+                {visibleEarthquakes.map((earthquake) => {
+                  const isSelected = selectedEarthquake?.id === earthquake.id;
+                  const magColor = getMagnitudeColor(earthquake.properties.mag);
+                  const magLabel = getMagnitudeLabel(earthquake.properties.mag);
+                  const hasTsunami = earthquake.properties.tsunami === 1;
+                  const hasMT = hasMomentTensor(earthquake.properties.types || '');
+
+                  return (
+                    <TableRow
+                      key={earthquake.id}
+                      className={`cursor-pointer transition-colors ${
+                        isSelected ? 'bg-accent' : 'hover:bg-muted/50'
+                      }`}
+                      onClick={() => handleRowClick(earthquake)}
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={`${magColor} font-mono`}
+                          >
+                            M{formatMagnitude(earthquake.properties.mag)}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {magLabel}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {earthquake.properties.place}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {formatTimestamp(earthquake.properties.time)}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {earthquake.geometry.coordinates[2]?.toFixed(1) ?? 'N/A'} km
+                      </TableCell>
+                      <TableCell>
+                        {hasTsunami && (
+                          <Badge variant="destructive" className="gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            Alert
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {hasMT && (
+                          <Badge variant="secondary" className="text-xs">
+                            Available
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          asChild
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          M{formatMagnitude(earthquake.properties.mag)}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {getMagnitudeLabel(earthquake.properties.mag)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {earthquake.properties.place}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatTimestamp(earthquake.properties.time)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {earthquake.geometry.coordinates[2]?.toFixed(1) ?? 'N/A'} km
-                    </TableCell>
-                    <TableCell>
-                      {earthquake.properties.tsunami === 1 ? (
-                        <Badge variant="destructive" className="flex items-center gap-1 w-fit">
-                          <AlertTriangle className="h-3 w-3" />
-                          Warning
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {hasMomentTensor(earthquake.properties.types) ? (
-                        <Badge variant="secondary" className="w-fit">
-                          Available
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(earthquake.properties.url, '_blank');
-                        }}
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                
+                          <a
+                            href={earthquake.properties.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+
                 {/* Bottom spacer for virtualization */}
                 {virtualWindow.offsetBottom > 0 && (
-                  <TableRow style={{ height: `${virtualWindow.offsetBottom}px` }}>
-                    <TableCell colSpan={7} />
+                  <TableRow>
+                    <TableCell colSpan={7} style={{ height: virtualWindow.offsetBottom }} />
                   </TableRow>
                 )}
               </TableBody>

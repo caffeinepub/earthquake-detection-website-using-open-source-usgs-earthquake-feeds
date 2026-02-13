@@ -1,22 +1,47 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Dashboard hero subtitle line",
+  "title": "Fix split-view card border clipping for Map and Table panels",
   "requirements": [
     {
-      "id": "REQ-31",
-      "summary": "Add a centered, visually secondary H2 subtitle directly below the existing hero title on the earthquake dashboard without altering other dashboard content or layout.",
+      "id": "REQ-1",
+      "summary": "Ensure Map and Table cards render a continuous, unclipped bottom border and rounded corners in Split view, while remaining correct in Map-only and Table-only views.",
       "acceptanceCriteria": [
-        "The hero section shows the existing title text unchanged: \"Real - Time Earthquake Detection Around The World\".",
-        "A second line appears immediately below the title and is rendered as an H2 with exact text: \"Latest real-time earthquake information around the world\".",
-        "The new subtitle is center-aligned and clearly styled as secondary (e.g., smaller font size and/or muted foreground) across breakpoints.",
-        "No other dashboard sections (controls, summary, table/map/split views, footer) change behavior or content."
+        "In Split view, neither the Map card nor the Table card has its bottom border (or rounded corners) clipped/cut off.",
+        "The fix works at common breakpoints (mobile, tablet, desktop) without introducing new overflow/scrollbar artifacts.",
+        "Map-only view still shows a correct, continuous border around the Map card (including the bottom edge).",
+        "Table-only view still shows a correct, continuous border around the Table card and its inner bordered container."
       ],
       "file_operations": [
         {
           "path": "frontend/src/pages/EarthquakeDashboard.tsx",
           "operation": "modify",
-          "description": "In the Hero Section, keep the existing centered hero title unchanged and add a new H2 subtitle immediately below it with exact text \"Latest real-time earthquake information around the world\". Ensure subtitle remains center-aligned and styled as visually secondary via Tailwind classes (smaller typography and/or muted foreground), without affecting other dashboard sections or modifying any files under frontend/src/components/ui."
+          "description": "Adjust Split view panel wrappers so the card borders/rounded corners remain visible (remove clipping/overflow behavior) while still constraining each panel to ~600px height. Ensure both panels use a layout that lets inner content scroll/fit without cutting off the Card border. Leverage the existing shadcn-ui Card composition already used by Map/Table; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+          "operation": "modify",
+          "description": "Update the Map card internal sizing so it can fill a parent-constrained panel height (e.g., Split view) without forcing a fixed inner height that contributes to outer clipping. Keep Map-only view visually unchanged (still ~600px tall), and preserve correct rounded bottom corners and border visibility. Uses shadcn-ui Card; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
+          "operation": "modify",
+          "description": "Update the Table card layout so the scroll container can either use the existing 600px max height (Table-only) or fill a parent-constrained panel height (Split view) without overflowing and causing border clipping. Ensure the inner bordered container remains intact and visible. Uses shadcn-ui Card/Table; verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Refine Split view container styling in EarthquakeDashboard to avoid any wrapper overflow/fixed-height combinations that clip card borders while keeping ~600px panel height and usability.",
+      "acceptanceCriteria": [
+        "In `frontend/src/pages/EarthquakeDashboard.tsx`, Split view no longer uses wrapper styles that visually cut off the Card border.",
+        "Both panels remain the intended height (approximately 600px) and content remains usable (map visible, table scrollable)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/EarthquakeDashboard.tsx",
+          "operation": "modify",
+          "description": "Replace the current Split view `h-[600px] overflow-hidden` wrappers with a non-clipping panel container approach (still ~600px tall) and wire any new optional sizing props into EarthquakeMapView/EarthquakeResultsTable so map/table content remains usable without cutting off card borders. Leverage existing shadcn-ui Card-based panels; verify the component's usage instructions before implementing."
         }
       ]
     }

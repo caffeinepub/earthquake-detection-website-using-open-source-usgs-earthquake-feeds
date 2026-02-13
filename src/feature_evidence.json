@@ -2,8 +2,28 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-on-the-dashboard-hero-section-frontend-src-pages-earthquakedashboard-tsx-add-a-new-subtitle-line-directly-below-the-existing-centered-hero-title-real-time-earthquake-detection-around-the-world-the-subtitle-must-be-rendered-as-an-h2-and-must-read-exactly-latest-real-time-earthquake-information-around-the-world-keep-the-subtitle-centered-and-visually-secondary-to-the-main-hero-title-smaller-size-and-or-muted-color-without-changing-the-existing-hero-title-wording-alignment-or-layout",
-      "featureTitle": "On the dashboard hero section (frontend/src/pages/EarthquakeDashboard.tsx), add a new subtitle line directly below the existing centered hero title \"Real - Time Earthquake Detection Around The World\". The subtitle must be rendered as an H2 and must read exactly: \"Latest real-time earthquake information around the world\". Keep the subtitle centered and visually secondary to the main hero title (smaller size and/or muted color), without changing the existing hero title wording, alignment, or layout.",
+      "featureId": "feature-fix-the-ui-so-the-bottom-border-of-the-map-and-table-border-box-cards-is-fully-visible-and-not-clipped-misaligned-in-split-view-and-remains-correct-in-map-only-and-table-only-views-matching-the-expected-rounded-card-border-shown-in-the-screenshot",
+      "featureTitle": "Fix the UI so the bottom border of the Map and Table “border box” cards is fully visible and not clipped/misaligned in Split view (and remains correct in Map-only and Table-only views), matching the expected rounded card border shown in the screenshot.",
+      "files": [
+        "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+        "frontend/src/components/earthquake/EarthquakeResultsTable.tsx",
+        "frontend/src/pages/EarthquakeDashboard.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-the-split-view-layout-container-styling-to-avoid-clipping-card-borders-e-g-remove-or-adjust-any-parent-overflow-hidden-fixed-height-wrappers-that-cut-off-the-card-s-bottom-border-while-keeping-the-intended-600px-panel-height-behavior",
+      "featureTitle": "Update the Split view layout container styling to avoid clipping card borders (e.g., remove or adjust any parent `overflow-hidden` / fixed-height wrappers that cut off the Card’s bottom border) while keeping the intended 600px panel height behavior.",
       "files": [
         "frontend/src/pages/EarthquakeDashboard.tsx"
       ],
@@ -15,7 +35,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-31"
+        "REQ-2"
       ],
       "confidence": "high"
     }

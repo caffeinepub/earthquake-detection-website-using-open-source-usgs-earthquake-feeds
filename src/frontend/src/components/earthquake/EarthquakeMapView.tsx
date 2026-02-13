@@ -9,9 +9,10 @@ import { filterEarthquakesInBounds } from '../../lib/earthquakeMapBounds';
 interface EarthquakeMapViewProps {
   earthquakes: UsgsFeature[];
   onMarkerClick?: (earthquake: UsgsFeature) => void;
+  constrainedHeight?: number;
 }
 
-export function EarthquakeMapView({ earthquakes, onMarkerClick }: EarthquakeMapViewProps) {
+export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeight }: EarthquakeMapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<LeafletMap | null>(null);
   const markersLayerRef = useRef<LeafletLayerGroup | null>(null);
@@ -140,6 +141,9 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick }: EarthquakeMapV
     updateVisibleMarkers();
   }, [earthquakes, updateVisibleMarkers]);
 
+  // Calculate map height based on whether we're in constrained mode
+  const mapHeight = constrainedHeight ? constrainedHeight - 120 : 600;
+
   // Empty state
   if (earthquakes.length === 0) {
     return (
@@ -168,8 +172,8 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick }: EarthquakeMapV
       <CardContent className="p-0">
         <div 
           ref={mapRef} 
-          className="w-full h-[600px] rounded-b-lg overflow-hidden relative z-0"
-          style={{ minHeight: '400px' }}
+          className="w-full rounded-b-lg overflow-hidden relative z-0"
+          style={{ height: `${mapHeight}px`, minHeight: '400px' }}
         />
       </CardContent>
     </Card>
