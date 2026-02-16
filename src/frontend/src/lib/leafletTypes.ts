@@ -25,13 +25,14 @@ export interface LeafletMap {
 
 export interface LeafletMarker {
   addTo(target: LeafletMap | LeafletLayerGroup): LeafletMarker;
-  on(event: string, handler: () => void): LeafletMarker;
+  on(event: string, handler: (e: any) => void): LeafletMarker;
   bindPopup(content: string, options?: any): LeafletMarker;
 }
 
 export interface LeafletLayerGroup {
   addTo(map: LeafletMap): LeafletLayerGroup;
   clearLayers(): void;
+  addLayer(layer: LeafletMarker): void;
 }
 
 // Helper to check if Leaflet is loaded

@@ -1,67 +1,70 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Make manual USGS feed refresh immediate, correctly disabled, and user-confirmed",
+  "title": "Fix Leaflet fullscreen rendering and resize for Earthquake map",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Ensure the Refresh Data button always forces an immediate refetch of the currently selected USGS feed, even when React Query data is still fresh.",
+      "summary": "Ensure the Leaflet map keeps base tiles visible and resizes correctly when entering/exiting fullscreen via the custom control.",
       "acceptanceCriteria": [
-        "Clicking \"Refresh Data\" triggers a new network request for the current time window feed (same query key used by the dashboard).",
-        "The refresh action works repeatedly (e.g., multiple clicks separated by completion) and updates UI state based on the newest response.",
-        "If the user changes the time window and then clicks refresh, the refetch targets the newly selected time window feed."
+        "Clicking the custom fullscreen control in the map enters fullscreen and OpenStreetMap tiles remain visible (no black map background).",
+        "Exiting fullscreen restores the original constrained map height and tiles remain visible.",
+        "Map controls (zoom buttons and fullscreen toggle) remain usable in fullscreen and non-fullscreen modes.",
+        "Markers and popups still work as before in fullscreen and non-fullscreen modes.",
+        "No console errors are introduced when toggling fullscreen multiple times."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/EarthquakeDashboard.tsx",
+          "path": "frontend/src/components/earthquake/EarthquakeMapView.tsx",
           "operation": "modify",
-          "description": "Replace the current invalidate-only refresh behavior with a true user-initiated force refetch for the active React Query key (['earthquakes', timeWindow]) by using the hook's refetch (or queryClient refetchQueries) so a network request is issued even when data is fresh; ensure the refresh uses the latest selected timeWindow and updates the dashboard from the returned data."
+          "description": "Stabilize fullscreen toggle behavior so tiles never render black: keep the existing custom fullscreen control, but ensure the Leaflet instance is revalidated after fullscreen transitions and after React class updates; also ensure marker/popup interactions and control click handling remain unchanged."
         },
         {
-          "path": "frontend/src/hooks/useUsgsEarthquakes.ts",
+          "path": "frontend/src/index.css",
           "operation": "modify",
-          "description": "Confirm the queryKey is stable and consistent with the dashboard usage and, if needed, expose/enable a refetch behavior that can be invoked from the UI to force a network call regardless of staleTime (without changing feed URLs or filtering/sorting logic)."
+          "description": "Update fullscreen-related Leaflet/map styles to prevent the tile layer from being visually hidden/covered (e.g., stacking/background issues) and to keep controls usable in fullscreen and normal modes."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Make the refresh button disabled/spinner state track only user-initiated refreshes (not background fetching) and avoid getting stuck disabled.",
+      "summary": "Trigger Leaflet resize/invalidate after fullscreen layout is applied and ensure true fullscreen container dimensions.",
       "acceptanceCriteria": [
-        "The \"Refresh Data\" button is clickable during normal idle state after data has loaded.",
-        "Background auto-refetching (interval or window focus) does not permanently disable the button.",
-        "While a manual refresh is in progress, the button shows \"Refreshing...\" with the spinning icon and is temporarily disabled to prevent duplicate manual refreshes."
+        "After toggling fullscreen, the Leaflet instance is invalidated/resized after the fullscreen layout is applied (not only immediately on the fullscreenchange event).",
+        "In fullscreen, the map container dimensions match the viewport (100vw x 100vh or equivalent), and in non-fullscreen the map container matches the configured height.",
+        "The fix is implemented within the existing Leaflet map component and global CSS (no new backend changes)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/EarthquakeDashboard.tsx",
+          "path": "frontend/src/components/earthquake/EarthquakeMapView.tsx",
           "operation": "modify",
-          "description": "Introduce explicit manual-refresh UI state (e.g., a local boolean) that is set only when the user clicks Refresh and cleared when that specific refetch completes/fails; keep background isFetching/isRefetching from React Query out of the button disabled logic so interval/window-focus refetches do not disable the button."
+          "description": "Refactor fullscreen resize logic to run after layout settles: move invalidateSize calls to a React effect driven by the fullscreen state and/or attach a ResizeObserver on the map container to call invalidateSize on size changes (including fullscreen enter/exit), scheduling the call(s) via requestAnimationFrame/timeout to occur after DOM updates."
         },
         {
-          "path": "frontend/src/components/earthquake/FeedAndFilterControls.tsx",
+          "path": "frontend/src/index.css",
           "operation": "modify",
-          "description": "Keep using shadcn/ui Button to present the refresh action, but wire its disabled state, label (\"Refreshing...\"), and spinning RefreshCw icon strictly to the manual-refresh flag passed from the dashboard (not general query fetching). Verify the component's usage instructions before implementing."
+          "description": "Ensure the fullscreen class/pseudo-state results in real viewport-sized dimensions for the Leaflet container (and that non-fullscreen continues to respect the configured constrained height), without relying on backend changes."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Show a user-facing confirmation that a manual refresh occurred by displaying an English 'Last refreshed' timestamp near the controls and update it only after manual refreshes.",
+      "summary": "Adjust fullscreen CSS so Leaflet container and panes render reliably in fullscreen with correct stacking context and visible tiles.",
       "acceptanceCriteria": [
-        "After a successful manual refresh, a timestamp/confirmation is visible and updates to the latest refresh time.",
-        "The confirmation UI does not appear to update when only background refetching occurs (unless the manual refresh also ran)."
+        "CSS changes do not cause the tile layer to be covered/hidden in fullscreen.",
+        "Fullscreen styles do not break the layout of the rest of the dashboard when exiting fullscreen.",
+        "The map remains interactive (panning/zooming) in fullscreen and non-fullscreen modes."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/EarthquakeDashboard.tsx",
+          "path": "frontend/src/index.css",
           "operation": "modify",
-          "description": "Track a 'lastManualRefreshAt' timestamp in state and update it only on successful completion of the user-initiated refresh; pass this value down to the controls so it is not affected by background refetches."
+          "description": "Harden Leaflet fullscreen CSS: ensure the fullscreen container establishes a reliable stacking context, the tile pane remains visible (avoid global pane z-index settings that can hide tiles), and apply appropriate background/positioning rules for .leaflet-container:fullscreen and the .map-fullscreen state so tiles render and interaction remains intact."
         },
         {
-          "path": "frontend/src/components/earthquake/FeedAndFilterControls.tsx",
+          "path": "frontend/src/components/earthquake/EarthquakeMapView.tsx",
           "operation": "modify",
-          "description": "Render a small English confirmation line near the refresh controls (e.g., \"Last refreshed: <time>\") when lastManualRefreshAt is present, using existing app styling and shadcn/ui typography primitives as needed (compose only; do not edit files under frontend/src/components/ui). Verify the component's usage instructions before implementing."
+          "description": "Align component class/state usage with the updated fullscreen CSS (e.g., ensure the fullscreen class is applied to the actual Leaflet container element and that any transitions do not interfere with Leaflet rendering), keeping existing map behavior and UI structure intact."
         }
       ]
     }

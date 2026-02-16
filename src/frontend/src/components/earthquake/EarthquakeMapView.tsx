@@ -1,5 +1,4 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { MapPin } from 'lucide-react';
 import { PanelCard } from './PanelCard';
 import { UsgsFeature } from '../../lib/usgsTypes';
 import { formatMagnitude } from '../../lib/formatters';
@@ -19,6 +18,7 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
   const allEarthquakesRef = useRef<UsgsFeature[]>([]);
   const updateTimeoutRef = useRef<number | null>(null);
   const fullscreenControlRef = useRef<HTMLButtonElement | null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
   // Store all earthquakes for bounds filtering
@@ -53,225 +53,254 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
         // Add popup with autoPan disabled to prevent map jumping
         const popupContent = `
           <div style="font-family: system-ui, sans-serif;">
-            <strong style="font-size: 14px;">M${formatMagnitude(earthquake.properties.mag)}</strong>
-            <br/>
-            <span style="font-size: 12px; color: #666;">${earthquake.properties.place}</span>
+            <strong style="font-size: 14px; display: block; margin-bottom: 4px;">
+              M${formatMagnitude(earthquake.properties.mag)}
+            </strong>
+            <div style="font-size: 12px; color: #666;">
+              ${earthquake.properties.place}
+            </div>
           </div>
         `;
         marker.bindPopup(popupContent, { autoPan: false });
 
-        // Add click handler
-        if (onMarkerClick) {
-          marker.on('click', () => {
-            onMarkerClick(earthquake);
-          });
-        }
+        // Handle marker click - prevent default navigation behavior
+        marker.on('click', (e) => {
+          // Stop event propagation and prevent default behavior
+          if (e.originalEvent) {
+            e.originalEvent.preventDefault();
+            e.originalEvent.stopPropagation();
+          }
+          
+          // Use Leaflet's DomEvent to stop propagation
+          if (window.L && window.L.DomEvent) {
+            window.L.DomEvent.stopPropagation(e);
+            window.L.DomEvent.preventDefault(e);
+          }
 
-        marker.addTo(markersLayer);
+          // Call the callback without triggering navigation
+          if (onMarkerClick) {
+            onMarkerClick(earthquake);
+          }
+        });
+
+        markersLayer.addLayer(marker);
       }
     });
   }, [onMarkerClick]);
 
-  // Debounced update for map move/zoom events
-  const handleMapMove = useCallback(() => {
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current);
+  // Debounced update on map move/zoom
+  const handleMapMoveEnd = useCallback(() => {
+    if (updateTimeoutRef.current !== null) {
+      window.clearTimeout(updateTimeoutRef.current);
     }
     updateTimeoutRef.current = window.setTimeout(() => {
       updateVisibleMarkers();
     }, 150);
   }, [updateVisibleMarkers]);
 
-  // Toggle full-screen mode
-  const toggleFullScreen = useCallback(() => {
-    setIsFullScreen((prev) => {
-      const newState = !prev;
-      
-      // Toggle body scroll
-      if (newState) {
-        document.body.style.overflow = 'hidden';
-      } else {
-        document.body.style.overflow = '';
-      }
-      
-      // Update control button attributes
-      if (fullscreenControlRef.current) {
-        const label = newState ? 'Exit full screen' : 'Enter full screen';
-        fullscreenControlRef.current.setAttribute('aria-label', label);
-        fullscreenControlRef.current.setAttribute('title', label);
-        fullscreenControlRef.current.setAttribute('data-fullscreen', newState ? 'true' : 'false');
-      }
-      
-      // Invalidate map size after state change and after layout settles
-      setTimeout(() => {
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.invalidateSize();
-        }
-      }, 100);
-      
-      // Additional invalidation after animation completes
-      setTimeout(() => {
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.invalidateSize();
-        }
-      }, 350);
-      
-      return newState;
-    });
-  }, []);
-
   // Initialize map
   useEffect(() => {
-    if (!mapRef.current || !isLeafletLoaded()) return;
+    if (!mapRef.current || mapInstanceRef.current || !isLeafletLoaded()) return;
 
     const L = window.L;
+    if (!L) return;
 
-    // Create map instance
-    const map = L.map(mapRef.current).setView([20, 0], 2);
+    // Create map
+    const map = L.map(mapRef.current, {
+      center: [20, 0],
+      zoom: 2,
+      minZoom: 2,
+      maxZoom: 18,
+      worldCopyJump: true,
+      maxBounds: [[-90, -180], [90, 180]],
+      maxBoundsViscosity: 0.5,
+    });
 
     // Add tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 18,
+      attribution: '© OpenStreetMap contributors',
+      noWrap: false,
     }).addTo(map);
 
-    // Create markers layer group
+    // Create markers layer
     const markersLayer = L.layerGroup().addTo(map);
 
+    // Store references
     mapInstanceRef.current = map;
     markersLayerRef.current = markersLayer;
 
-    // Listen to map move and zoom events
-    map.on('moveend', handleMapMove);
-    map.on('zoomend', handleMapMove);
+    // Listen to map move/zoom events
+    map.on('moveend', handleMapMoveEnd);
+    map.on('zoomend', handleMapMoveEnd);
 
-    // Create custom full-screen control
-    const FullScreenControl = L.Control.extend({
+    // Create custom fullscreen control
+    const FullscreenControl = L.Control.extend({
       options: {
-        position: 'topleft'
+        position: 'topright',
       },
-      onAdd: function() {
-        const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-fullscreen');
-        const button = L.DomUtil.create('button', 'leaflet-control-fullscreen-button', container);
+      onAdd: function () {
+        const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+        const button = L.DomUtil.create('button', 'leaflet-control-fullscreen', container);
+        
+        button.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+        `;
+        button.title = 'Toggle fullscreen';
+        button.setAttribute('aria-label', 'Toggle fullscreen');
         button.type = 'button';
-        button.title = 'Enter full screen';
-        button.setAttribute('role', 'button');
-        button.setAttribute('aria-label', 'Enter full screen');
-        button.setAttribute('data-fullscreen', 'false');
-        
-        // Store reference for state updates
-        fullscreenControlRef.current = button;
-        
-        // Prevent default behavior and stop propagation
+
+        // Prevent default anchor behavior and stop propagation
         L.DomEvent.disableClickPropagation(button);
         L.DomEvent.disableScrollPropagation(button);
         
-        L.DomEvent.on(button, 'click', function(e: Event) {
+        L.DomEvent.on(button, 'click', function (e) {
           L.DomEvent.stopPropagation(e);
           L.DomEvent.preventDefault(e);
-          toggleFullScreen();
-        });
-        
-        // Keyboard support
-        L.DomEvent.on(button, 'keydown', function(e: KeyboardEvent) {
-          if (e.key === 'Enter' || e.key === ' ') {
-            L.DomEvent.stopPropagation(e);
-            L.DomEvent.preventDefault(e);
-            toggleFullScreen();
+          
+          const mapContainer = mapRef.current;
+          if (!mapContainer) return;
+
+          const isCurrentlyFullscreen = document.fullscreenElement === mapContainer;
+
+          if (!isCurrentlyFullscreen) {
+            // Enter fullscreen
+            if (mapContainer.requestFullscreen) {
+              mapContainer.requestFullscreen();
+            }
+          } else {
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+              document.exitFullscreen();
+            }
           }
         });
-        
+
+        fullscreenControlRef.current = button;
         return container;
-      }
+      },
     });
 
-    // Add the full-screen control (it will naturally appear below zoom controls)
-    map.addControl(new FullScreenControl());
+    map.addControl(new FullscreenControl());
 
-    // Prevent map interactions from bubbling
-    const mapContainer = mapRef.current;
-    if (mapContainer) {
-      L.DomEvent.disableClickPropagation(mapContainer);
-      L.DomEvent.disableScrollPropagation(mapContainer);
+    // Handle fullscreen change events
+    const handleFullscreenChange = () => {
+      const mapContainer = mapRef.current;
+      if (!mapContainer) return;
+
+      const isNowFullscreen = document.fullscreenElement === mapContainer;
+      setIsFullScreen(isNowFullscreen);
+
+      // Update button icon and aria-label
+      if (fullscreenControlRef.current) {
+        const button = fullscreenControlRef.current;
+        if (isNowFullscreen) {
+          button.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+            </svg>
+          `;
+          button.setAttribute('aria-label', 'Exit fullscreen');
+        } else {
+          button.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+          `;
+          button.setAttribute('aria-label', 'Toggle fullscreen');
+        }
+      }
+
+      // Force map to recalculate size after layout settles
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+        // Second pass after a short delay to catch any late layout changes
+        setTimeout(() => {
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.invalidateSize();
+          }
+        }, 100);
+      });
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    // Set up ResizeObserver to handle container size changes
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserverRef.current = new ResizeObserver(() => {
+        // Debounce resize invalidation
+        requestAnimationFrame(() => {
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.invalidateSize();
+          }
+        });
+      });
+      resizeObserverRef.current.observe(mapRef.current);
     }
 
-    // Cleanup on unmount
+    // Initial marker update
+    updateVisibleMarkers();
+
+    // Cleanup
     return () => {
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+        resizeObserverRef.current = null;
+      }
+      if (updateTimeoutRef.current !== null) {
+        window.clearTimeout(updateTimeoutRef.current);
       }
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.off('moveend', handleMapMove);
-        mapInstanceRef.current.off('zoomend', handleMapMove);
+        mapInstanceRef.current.off('moveend', handleMapMoveEnd);
+        mapInstanceRef.current.off('zoomend', handleMapMoveEnd);
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
-      // Restore body scroll on unmount
-      document.body.style.overflow = '';
-      fullscreenControlRef.current = null;
+      markersLayerRef.current = null;
     };
-  }, [handleMapMove, toggleFullScreen]);
+  }, [handleMapMoveEnd, updateVisibleMarkers]);
 
   // Update markers when earthquakes change
   useEffect(() => {
-    if (!mapInstanceRef.current || !markersLayerRef.current || !isLeafletLoaded()) return;
-
-    const L = window.L;
-
-    // Fit bounds if there are earthquakes
-    if (earthquakes.length > 0) {
-      const bounds = L.latLngBounds(
-        earthquakes.map((eq) => {
-          const [lon, lat] = eq.geometry.coordinates;
-          return [lat, lon];
-        })
-      );
-      mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 });
-    }
-
-    // Update visible markers (will be called after fitBounds triggers moveend)
     updateVisibleMarkers();
   }, [earthquakes, updateVisibleMarkers]);
 
-  // Calculate map height
-  const mapHeight = constrainedHeight 
-    ? Math.min(constrainedHeight - 100, 520) 
-    : 600;
-  
-  const minHeight = constrainedHeight ? 300 : 400;
+  // Handle fullscreen state changes to ensure proper sizing
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
 
-  // Empty state
-  if (earthquakes.length === 0) {
-    return (
-      <PanelCard title="Map View" subtitle="No results">
-        <div className="flex flex-col items-center justify-center py-16">
-          <div className="p-4 rounded-full bg-muted/50 mb-4">
-            <MapPin className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <p className="text-muted-foreground text-center font-medium">
-            No earthquakes found matching your filters.
-          </p>
-          <p className="text-sm text-muted-foreground text-center mt-2">
-            Try adjusting your time window or magnitude threshold.
-          </p>
-        </div>
-      </PanelCard>
-    );
-  }
+    // Invalidate size when fullscreen state changes
+    const timer = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [isFullScreen]);
+
+  const mapHeight = constrainedHeight || 600;
 
   return (
-    <div className={isFullScreen ? 'map-fullscreen' : ''}>
-      <PanelCard
-        title="Map View"
-        subtitle={`${earthquakes.length} ${earthquakes.length === 1 ? 'event' : 'events'}`}
-        noPadding
-      >
-        <div 
-          ref={mapRef} 
-          className="w-full border-t border-border/30 relative z-0 rounded-b-lg overflow-hidden"
-          style={{ height: `${mapHeight}px`, minHeight: `${minHeight}px` }}
+    <PanelCard
+      title="Earthquake Map"
+      subtitle={`${earthquakes.length} ${earthquakes.length === 1 ? 'event' : 'events'}`}
+      noPadding
+    >
+      <div className="border-t border-border/30">
+        <div
+          ref={mapRef}
+          className={`w-full transition-none ${
+            isFullScreen ? 'map-fullscreen' : ''
+          }`}
+          style={{ height: isFullScreen ? '100vh' : `${mapHeight}px` }}
         />
-      </PanelCard>
-    </div>
+      </div>
+    </PanelCard>
   );
 }

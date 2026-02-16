@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { Moon, Sun, Table as TableIcon, Map, Columns } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
@@ -19,7 +18,6 @@ type ViewMode = 'table' | 'map' | 'split';
 
 export default function EarthquakeDashboard() {
   const { theme, setTheme } = useTheme();
-  const queryClient = useQueryClient();
 
   // Filter state
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('day');
@@ -37,7 +35,7 @@ export default function EarthquakeDashboard() {
   const [lastManualRefreshAt, setLastManualRefreshAt] = useState<Date | null>(null);
 
   // Fetch earthquake data
-  const { data, isLoading, isError, error, refetch } = useUsgsEarthquakes(timeWindow);
+  const { data, isLoading, isError, error, forceRefresh } = useUsgsEarthquakes(timeWindow);
 
   // Apply filters with time window restriction and sorting
   const filteredEarthquakes = data
@@ -51,7 +49,7 @@ export default function EarthquakeDashboard() {
   const handleRefresh = async () => {
     setIsManualRefreshing(true);
     try {
-      await refetch();
+      await forceRefresh();
       setLastManualRefreshAt(new Date());
     } catch (err) {
       // Error is already handled by React Query
@@ -61,8 +59,9 @@ export default function EarthquakeDashboard() {
     }
   };
 
-  // Handle earthquake selection from table or map
+  // Handle earthquake selection from table or map - prevent any state reset
   const handleEarthquakeSelect = (earthquake: UsgsFeature) => {
+    // Only update the selected earthquake, do not change any other state
     setSelectedEarthquake(earthquake);
   };
 
@@ -123,7 +122,7 @@ export default function EarthquakeDashboard() {
         </section>
 
         {/* Filters and Controls */}
-        <div className="animate-fade-in">
+        <div className="animate-fade-in relative z-30">
           <FeedAndFilterControls
             timeWindow={timeWindow}
             minMagnitude={minMagnitude}
@@ -201,7 +200,7 @@ export default function EarthquakeDashboard() {
 
         {/* Data Views */}
         {!isLoading && !isError && (
-          <div className="animate-fade-in">
+          <div className="animate-fade-in relative z-10">
             {/* Table View */}
             {viewMode === 'table' && (
               <EarthquakeResultsTable
@@ -244,7 +243,7 @@ export default function EarthquakeDashboard() {
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <p className="font-medium">
-              © 2026 WhoFeelAnEarthquake. Powered by USGS.
+              © {new Date().getFullYear()} WhoFeelAnEarthquake. Powered by USGS.
             </p>
             <p className="font-medium">
               Built with ❤️ using{' '}

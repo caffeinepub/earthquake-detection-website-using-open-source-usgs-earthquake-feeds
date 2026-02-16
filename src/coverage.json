@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-13T13:44:17.394Z",
+  "generatedAt": "2026-02-16T11:01:44.074Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -12,40 +12,41 @@
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Make the \"Refresh Data\" button reliably trigger an immediate refetch of the currently selected USGS earthquake feed, even when the React Query cache is still fresh.",
+        "summary": "Fix the Leaflet map so that when the user enters fullscreen mode, the base map tiles remain visible (the map must not render as a black background) and the map correctly resizes to the fullscreen viewport.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/EarthquakeDashboard.tsx",
-          "frontend/src/hooks/useUsgsEarthquakes.ts"
+          "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+          "frontend/src/index.css"
         ],
         "matchedFiles": [
-          "frontend/src/pages/EarthquakeDashboard.tsx"
+          "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+          "frontend/src/index.css"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Fix the refresh button loading/disabled behavior so it is not stuck in a disabled state due to background fetching; only disable (and show the spinner/\"Refreshing...\") while a user-initiated refresh is in progress.",
+        "summary": "Update the map fullscreen implementation to ensure Leaflet receives a correct container size after fullscreen changes by triggering a resize/invalidate after the fullscreen layout is applied (e.g., after React state-driven class/style updates) and ensuring the map container has a real fullscreen height/width while in fullscreen.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/EarthquakeDashboard.tsx",
-          "frontend/src/components/earthquake/FeedAndFilterControls.tsx"
+          "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+          "frontend/src/index.css"
         ],
         "matchedFiles": [
-          "frontend/src/pages/EarthquakeDashboard.tsx",
-          "frontend/src/components/earthquake/FeedAndFilterControls.tsx"
+          "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+          "frontend/src/index.css"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Add a small, user-facing confirmation signal that a manual refresh occurred (e.g., \"Last refreshed: <time>\" near the controls), using English UI text.",
+        "summary": "Adjust/extend the existing fullscreen-related CSS so the Leaflet container and its panes reliably render in fullscreen (including correct stacking context) without hiding the tile layer.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/EarthquakeDashboard.tsx",
-          "frontend/src/components/earthquake/FeedAndFilterControls.tsx"
+          "frontend/src/index.css",
+          "frontend/src/components/earthquake/EarthquakeMapView.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/EarthquakeDashboard.tsx",
-          "frontend/src/components/earthquake/FeedAndFilterControls.tsx"
+          "frontend/src/index.css",
+          "frontend/src/components/earthquake/EarthquakeMapView.tsx"
         ]
       }
     ]
@@ -55,8 +56,8 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/earthquake/FeedAndFilterControls.tsx",
-    "frontend/src/pages/EarthquakeDashboard.tsx",
+    "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+    "frontend/src/index.css",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

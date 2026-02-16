@@ -3,218 +3,279 @@
 @tailwind utilities;
 
 @layer base {
-    :root {
-        --radius: 0.75rem;
-        /* Light mode - Modern vibrant palette */
-        --background: 0.99 0.002 264;
-        --foreground: 0.15 0.015 264;
-        --card: 1 0 0;
-        --card-foreground: 0.15 0.015 264;
-        --popover: 1 0 0;
-        --popover-foreground: 0.15 0.015 264;
-        --primary: 0.55 0.22 264;
-        --primary-foreground: 0.98 0.005 264;
-        --secondary: 0.96 0.01 264;
-        --secondary-foreground: 0.15 0.015 264;
-        --muted: 0.96 0.01 264;
-        --muted-foreground: 0.45 0.01 264;
-        --accent: 0.94 0.02 264;
-        --accent-foreground: 0.15 0.015 264;
-        --destructive: 0.58 0.22 25;
-        --destructive-foreground: 0.98 0.005 25;
-        --border: 0.92 0.01 264;
-        --input: 0.92 0.01 264;
-        --ring: 0.55 0.22 264;
-        --success: 0.65 0.18 145;
-        --success-foreground: 0.98 0.005 145;
-        --warning: 0.75 0.18 65;
-        --warning-foreground: 0.15 0.015 65;
-    }
+  :root {
+    /* Modern OKLCH color system - Light mode */
+    /* Store channel values only: L C H */
+    --background: 0.98 0.01 270;
+    --foreground: 0.15 0.02 270;
+    --card: 1 0 0;
+    --card-foreground: 0.15 0.02 270;
+    --popover: 1 0 0;
+    --popover-foreground: 0.15 0.02 270;
+    --primary: 0.55 0.25 270;
+    --primary-foreground: 1 0 0;
+    --secondary: 0.60 0.20 240;
+    --secondary-foreground: 0.15 0.02 270;
+    --muted: 0.95 0.01 270;
+    --muted-foreground: 0.45 0.02 270;
+    --accent: 0.92 0.02 270;
+    --accent-foreground: 0.15 0.02 270;
+    --destructive: 0.55 0.22 25;
+    --destructive-foreground: 1 0 0;
+    --success: 0.60 0.18 145;
+    --success-foreground: 1 0 0;
+    --warning: 0.70 0.18 85;
+    --warning-foreground: 0.15 0.02 270;
+    --border: 0.88 0.01 270;
+    --input: 0.88 0.01 270;
+    --ring: 0.55 0.25 270;
+    --radius: 0.75rem;
+  }
 
-    .dark {
-        /* Dark mode - Modern vibrant palette */
-        --background: 0.12 0.015 264;
-        --foreground: 0.95 0.005 264;
-        --card: 0.15 0.018 264;
-        --card-foreground: 0.95 0.005 264;
-        --popover: 0.15 0.018 264;
-        --popover-foreground: 0.95 0.005 264;
-        --primary: 0.65 0.24 264;
-        --primary-foreground: 0.98 0.005 264;
-        --secondary: 0.20 0.02 264;
-        --secondary-foreground: 0.95 0.005 264;
-        --muted: 0.20 0.02 264;
-        --muted-foreground: 0.60 0.01 264;
-        --accent: 0.25 0.025 264;
-        --accent-foreground: 0.95 0.005 264;
-        --destructive: 0.60 0.24 25;
-        --destructive-foreground: 0.98 0.005 25;
-        --border: 0.25 0.02 264;
-        --input: 0.25 0.02 264;
-        --ring: 0.65 0.24 264;
-        --success: 0.68 0.20 145;
-        --success-foreground: 0.98 0.005 145;
-        --warning: 0.78 0.20 65;
-        --warning-foreground: 0.15 0.015 65;
-    }
+  .dark {
+    /* Modern OKLCH color system - Dark mode */
+    /* Store channel values only: L C H */
+    --background: 0.15 0.02 270;
+    --foreground: 0.95 0.01 270;
+    --card: 0.18 0.02 270;
+    --card-foreground: 0.95 0.01 270;
+    --popover: 0.18 0.02 270;
+    --popover-foreground: 0.95 0.01 270;
+    --primary: 0.65 0.25 270;
+    --primary-foreground: 0.15 0.02 270;
+    --secondary: 0.70 0.20 240;
+    --secondary-foreground: 0.15 0.02 270;
+    --muted: 0.25 0.02 270;
+    --muted-foreground: 0.65 0.02 270;
+    --accent: 0.28 0.03 270;
+    --accent-foreground: 0.95 0.01 270;
+    --destructive: 0.60 0.22 25;
+    --destructive-foreground: 1 0 0;
+    --success: 0.65 0.18 145;
+    --success-foreground: 0.15 0.02 270;
+    --warning: 0.75 0.18 85;
+    --warning-foreground: 0.15 0.02 270;
+    --border: 0.28 0.03 270;
+    --input: 0.28 0.03 270;
+    --ring: 0.65 0.25 270;
+  }
 }
 
 @layer base {
-    * {
-        @apply border-border;
-    }
-    html,
-    body {
-        @apply bg-background text-foreground overflow-x-hidden;
-    }
-    html {
-        font-feature-settings: "cv11", "ss01";
-        font-variation-settings: "opsz" auto;
-    }
-}
-
-/* Leaflet z-index normalization - keep dialogs above map */
-.leaflet-pane,
-.leaflet-tile,
-.leaflet-marker-icon,
-.leaflet-marker-shadow,
-.leaflet-tile-container,
-.leaflet-pane > svg,
-.leaflet-pane > canvas,
-.leaflet-zoom-box,
-.leaflet-image-layer,
-.leaflet-layer {
-    position: absolute;
-    left: 0;
-    top: 0;
-    z-index: 0 !important;
-}
-
-.leaflet-control {
-    z-index: 1 !important;
-}
-
-/* Full-screen map styles */
-.map-fullscreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 9999;
-    background: oklch(var(--background));
-    overflow: hidden;
-}
-
-.map-fullscreen > div {
-    height: 100vh !important;
-    max-height: 100vh !important;
-    border-radius: 0 !important;
-}
-
-.map-fullscreen .leaflet-container {
-    height: 100vh !important;
-    width: 100vw !important;
-}
-
-/* Custom full-screen control button styling */
-.leaflet-control-fullscreen-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    background: white;
-    color: #333;
-    border: none;
-    cursor: pointer;
-    font-size: 18px;
-    line-height: 30px;
-    text-align: center;
-    padding: 0;
-    outline: none;
-}
-
-.leaflet-control-fullscreen-button::before {
-    content: '⛶';
-    font-size: 18px;
-}
-
-/* Change icon when in fullscreen mode */
-.leaflet-control-fullscreen-button[data-fullscreen="true"]::before {
-    content: '⛶';
-    transform: rotate(45deg);
-    display: inline-block;
-}
-
-.dark .leaflet-control-fullscreen-button {
-    background: oklch(var(--card));
-    color: oklch(var(--foreground));
-}
-
-.leaflet-control-fullscreen-button:hover {
-    background: oklch(var(--accent));
-}
-
-.leaflet-control-fullscreen-button:focus-visible {
-    outline: 2px solid oklch(var(--ring));
-    outline-offset: 2px;
-}
-
-/* Magnitude pulse animation */
-@keyframes magnitude-pulse {
-    0%, 100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.85;
-        transform: scale(1.05);
-    }
-}
-
-.magnitude-pulse {
-    animation: magnitude-pulse 2s ease-in-out infinite;
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
 }
 
 /* Glassmorphism effect */
 .glass-effect {
-    background: oklch(from var(--card) l c h / 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-}
-
-/* Gradient text */
-.gradient-text {
-    background: linear-gradient(135deg, oklch(var(--primary)), oklch(var(--accent)));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* Smooth transitions */
-* {
-    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
+  background: oklch(var(--card) / 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-    background: oklch(var(--muted));
-    border-radius: 4px;
+  background: oklch(var(--muted) / 0.3);
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: oklch(var(--muted-foreground) / 0.3);
-    border-radius: 4px;
+  background: oklch(var(--primary) / 0.5);
+  border-radius: 5px;
+  transition: background 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: oklch(var(--muted-foreground) / 0.5);
+  background: oklch(var(--primary) / 0.7);
+}
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(135deg, oklch(var(--primary)), oklch(var(--secondary)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Leaflet map z-index normalization */
+.leaflet-tile-pane {
+  z-index: 2 !important;
+}
+
+.leaflet-overlay-pane {
+  z-index: 4 !important;
+}
+
+.leaflet-shadow-pane {
+  z-index: 5 !important;
+}
+
+.leaflet-marker-pane {
+  z-index: 6 !important;
+}
+
+.leaflet-tooltip-pane {
+  z-index: 7 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 8 !important;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 10 !important;
+}
+
+.leaflet-control {
+  z-index: 15 !important;
+}
+
+/* Ensure Leaflet controls don't trigger navigation */
+.leaflet-control a,
+.leaflet-control button {
+  cursor: pointer !important;
+  text-decoration: none !important;
+}
+
+.leaflet-control a:focus,
+.leaflet-control button:focus {
+  outline: 2px solid oklch(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Prevent Leaflet anchor default behavior */
+.leaflet-container a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: #757575;
+}
+
+/* Enhanced full-screen map styles */
+.map-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 9999 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Ensure Leaflet container renders properly in fullscreen */
+.map-fullscreen .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  background: #ddd;
+}
+
+.dark .map-fullscreen .leaflet-container {
+  background: #333;
+}
+
+/* Ensure tile pane is visible in fullscreen */
+.map-fullscreen .leaflet-tile-pane {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fullscreen control button styling */
+.leaflet-control-fullscreen {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: oklch(var(--card));
+  border: 2px solid oklch(var(--border));
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: oklch(var(--foreground));
+  padding: 0;
+  margin: 0;
+}
+
+.leaflet-control-fullscreen:hover {
+  background: oklch(var(--accent));
+  border-color: oklch(var(--primary));
+  transform: scale(1.05);
+}
+
+.leaflet-control-fullscreen:focus {
+  outline: 2px solid oklch(var(--ring));
+  outline-offset: 2px;
+}
+
+.leaflet-control-fullscreen:active {
+  transform: scale(0.98);
+}
+
+/* Dark mode adjustments for Leaflet */
+.dark .leaflet-control-fullscreen {
+  background: oklch(var(--card));
+  border-color: oklch(var(--border));
+  color: oklch(var(--foreground));
+}
+
+.dark .leaflet-control-fullscreen:hover {
+  background: oklch(var(--accent));
+  border-color: oklch(var(--primary));
+}
+
+/* Ensure map container has proper stacking in fullscreen */
+.leaflet-container:fullscreen {
+  z-index: 9999 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: #ddd;
+}
+
+.dark .leaflet-container:fullscreen {
+  background: #333;
+}
+
+/* Icon rotation for fullscreen state */
+.leaflet-control-fullscreen svg {
+  transition: transform 0.2s;
+}
+
+.leaflet-control-fullscreen:hover svg {
+  transform: rotate(90deg);
+}
+
+/* Prevent pointer-events issues with map overlays */
+.leaflet-overlay-pane {
+  pointer-events: none;
+}
+
+.leaflet-overlay-pane > * {
+  pointer-events: auto;
+}
+
+/* Ensure marker interactions work properly */
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Prevent map from blocking UI interactions */
+.leaflet-container {
+  position: relative;
+  z-index: 1;
 }

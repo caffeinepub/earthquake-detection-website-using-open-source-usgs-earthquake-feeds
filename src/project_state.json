@@ -4,29 +4,29 @@
   "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
-    "Refresh data button is not responding (no action on click)."
+    "Leaflet map becomes black when entering fullscreen mode."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-make-the-refresh-data-button-reliably-trigger-an-immediate-refetch-of-the-currently-selected-usgs-earthquake-feed-even-when-the-react-query-cache-is-still-fresh",
-      "title": "Make the \"Refresh Data\" button reliably trigger an immediate refetch of the currently selected USGS earthquake feed, even when the React Query cache is still fresh.",
+      "id": "feature-fix-the-leaflet-map-so-that-when-the-user-enters-fullscreen-mode-the-base-map-tiles-remain-visible-the-map-must-not-render-as-a-black-background-and-the-map-correctly-resizes-to-the-fullscreen-viewport",
+      "title": "Fix the Leaflet map so that when the user enters fullscreen mode, the base map tiles remain visible (the map must not render as a black background) and the map correctly resizes to the fullscreen viewport.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-fix-the-refresh-button-loading-disabled-behavior-so-it-is-not-stuck-in-a-disabled-state-due-to-background-fetching-only-disable-and-show-the-spinner-refreshing-while-a-user-initiated-refresh-is-in-progress",
-      "title": "Fix the refresh button loading/disabled behavior so it is not stuck in a disabled state due to background fetching; only disable (and show the spinner/\"Refreshing...\") while a user-initiated refresh is in progress.",
+      "id": "feature-update-the-map-fullscreen-implementation-to-ensure-leaflet-receives-a-correct-container-size-after-fullscreen-changes-by-triggering-a-resize-invalidate-after-the-fullscreen-layout-is-applied-e-g-after-react-state-driven-class-style-updates-and-ensuring-the-map-container-has-a-real-fullscreen-height-width-while-in-fullscreen",
+      "title": "Update the map fullscreen implementation to ensure Leaflet receives a correct container size after fullscreen changes by triggering a resize/invalidate after the fullscreen layout is applied (e.g., after React state-driven class/style updates) and ensuring the map container has a real fullscreen height/width while in fullscreen.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-small-user-facing-confirmation-signal-that-a-manual-refresh-occurred-e-g-last-refreshed-time-near-the-controls-using-english-ui-text",
-      "title": "Add a small, user-facing confirmation signal that a manual refresh occurred (e.g., \"Last refreshed: <time>\" near the controls), using English UI text.",
+      "id": "feature-adjust-extend-the-existing-fullscreen-related-css-so-the-leaflet-container-and-its-panes-reliably-render-in-fullscreen-including-correct-stacking-context-without-hiding-the-tile-layer",
+      "title": "Adjust/extend the existing fullscreen-related CSS so the Leaflet container and its panes reliably render in fullscreen (including correct stacking context) without hiding the tile layer.",
       "reqIds": [
         "REQ-3"
       ],
@@ -34,7 +34,7 @@
     }
   ],
   "new_feature_requests": [],
-  "projectName": "Fix Refresh Data button not triggering an immediate USGS refetch",
+  "projectName": "Fix Leaflet map turning black in fullscreen",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

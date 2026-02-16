@@ -1,71 +1,74 @@
 {
   "kind": "build_request",
-  "title": "Fix Refresh Data button not triggering an immediate USGS refetch",
+  "title": "Fix Leaflet map turning black in fullscreen",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Make the \"Refresh Data\" button reliably trigger an immediate refetch of the currently selected USGS earthquake feed, even when the React Query cache is still fresh.",
+      "text": "Fix the Leaflet map so that when the user enters fullscreen mode, the base map tiles remain visible (the map must not render as a black background) and the map correctly resizes to the fullscreen viewport.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "fix the refresh data button not responding"
+          "fix the leaflet map when full screen become black"
         ]
       },
       "acceptanceCriteria": [
-        "Clicking \"Refresh Data\" triggers a new network request for the current time window feed (same query key used by the dashboard).",
-        "The refresh action works repeatedly (e.g., multiple clicks separated by completion) and updates UI state based on the newest response.",
-        "If the user changes the time window and then clicks refresh, the refetch targets the newly selected time window feed."
+        "Clicking the custom fullscreen control in the map enters fullscreen and OpenStreetMap tiles remain visible (no black map background).",
+        "Exiting fullscreen restores the original constrained map height and tiles remain visible.",
+        "Map controls (zoom buttons and fullscreen toggle) remain usable in fullscreen and non-fullscreen modes.",
+        "Markers and popups still work as before in fullscreen and non-fullscreen modes.",
+        "No console errors are introduced when toggling fullscreen multiple times."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Fix the refresh button loading/disabled behavior so it is not stuck in a disabled state due to background fetching; only disable (and show the spinner/\"Refreshing...\") while a user-initiated refresh is in progress.",
+      "text": "Update the map fullscreen implementation to ensure Leaflet receives a correct container size after fullscreen changes by triggering a resize/invalidate after the fullscreen layout is applied (e.g., after React state-driven class/style updates) and ensuring the map container has a real fullscreen height/width while in fullscreen.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "fix the refresh data button not responding"
+          "fix the leaflet map when full screen become black"
         ]
       },
       "acceptanceCriteria": [
-        "The \"Refresh Data\" button is clickable during normal idle state after data has loaded.",
-        "Background auto-refetching (interval or window focus) does not permanently disable the button.",
-        "While a manual refresh is in progress, the button shows \"Refreshing...\" with the spinning icon and is temporarily disabled to prevent duplicate manual refreshes."
+        "After toggling fullscreen, the Leaflet instance is invalidated/resized after the fullscreen layout is applied (not only immediately on the fullscreenchange event).",
+        "In fullscreen, the map container dimensions match the viewport (100vw x 100vh or equivalent), and in non-fullscreen the map container matches the configured height.",
+        "The fix is implemented within the existing Leaflet map component and global CSS (no new backend changes)."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add a small, user-facing confirmation signal that a manual refresh occurred (e.g., \"Last refreshed: <time>\" near the controls), using English UI text.",
+      "text": "Adjust/extend the existing fullscreen-related CSS so the Leaflet container and its panes reliably render in fullscreen (including correct stacking context) without hiding the tile layer.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "fix the refresh data button not responding"
+          "fix the leaflet map when full screen become black"
         ]
       },
       "acceptanceCriteria": [
-        "After a successful manual refresh, a timestamp/confirmation is visible and updates to the latest refresh time.",
-        "The confirmation UI does not appear to update when only background refetching occurs (unless the manual refresh also ran)."
+        "CSS changes do not cause the tile layer to be covered/hidden in fullscreen.",
+        "Fullscreen styles do not break the layout of the rest of the dashboard when exiting fullscreen.",
+        "The map remains interactive (panning/zooming) in fullscreen and non-fullscreen modes."
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files under frontend/src/components/ui (read-only components must be composed, not edited).",
-    "Do not edit frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx (immutable paths).",
-    "Keep the backend as a single Motoko actor; no backend changes are required for this fix."
+    "Do not modify files under frontend/src/components/ui (shadcn) read-only path; compose components instead.",
+    "Do not edit immutable hook files: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx.",
+    "Backend must remain single-actor; no backend changes are required for this issue."
   ],
   "nonGoals": [
-    "Changing the USGS feed URLs or the filtering/sorting logic.",
-    "Adding real-time websocket updates or any external backend/database integration.",
-    "Redesigning the overall dashboard layout beyond what is necessary to show refresh feedback."
+    "Adding new map providers or changing from OpenStreetMap tiles.",
+    "Adding new fullscreen UI beyond fixing the existing fullscreen toggle behavior.",
+    "Implementing backend persistence or logging for map state."
   ],
   "imageRequirements": {
     "required": [],

@@ -1,15 +1,41 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-13T13:44:17.391Z",
-  "summary": "Diff adds explicit manual-refresh state to the dashboard (isManualRefreshing, lastManualRefreshAt) and wires the Refresh action to React Query’s refetch() for the currently selected timeWindow, plus passes manual refresh state/timestamp into the controls for user-visible feedback. No backend or immutable/ui-component-path changes are evidenced.",
-  "missing_requirements": [],
-  "hallucinated_features": [],
-  "confidence": 0.74,
+  "generatedAt": "2026-02-16T11:01:44.071Z",
+  "summary": "Diff shows updates to the Leaflet map view component and global CSS, including new fullscreen-related CSS (.map-fullscreen) and extensive Leaflet z-index/pane/controls styling. However, due to truncation of EarthquakeMapView.tsx, it’s not verifiable from the provided diff summary whether the core fullscreen resize/invalidate logic (timed after layout) is implemented and whether all fullscreen toggle acceptance criteria are met.",
+  "missing_requirements": [
+    {
+      "id": "REQ-2",
+      "requirement": "Trigger a Leaflet resize/invalidate after fullscreen layout is applied (not only immediately on fullscreenchange) so Leaflet receives correct container size.",
+      "reason": "The diff summary for EarthquakeMapView.tsx is truncated before any fullscreen toggle handlers or Leaflet invalidateSize calls are shown; there is no explicit evidence of invalidateSize/resize being called after React state/class updates.",
+      "evidence": [
+        "frontend/src/components/earthquake/EarthquakeMapView.tsx (truncated)"
+      ]
+    },
+    {
+      "id": "REQ-1",
+      "requirement": "Ensure OpenStreetMap tiles remain visible (no black map) and map correctly resizes when entering/exiting fullscreen; controls/markers/popups still work; no console errors on repeated toggles.",
+      "reason": "CSS indicates an attempt to support fullscreen, but the truncated component diff does not provide evidence of the fullscreen toggle wiring, tile-layer behavior during toggles, restoration of constrained height on exit, or repeated-toggle robustness/no-error handling.",
+      "evidence": [
+        "frontend/src/components/earthquake/EarthquakeMapView.tsx (truncated)",
+        "frontend/src/index.css (truncated)"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Global Leaflet z-index normalization across panes and additional styling to prevent Leaflet control/anchor navigation behavior (e.g., .leaflet-control a/button cursor/focus styles, .leaflet-container a overrides).",
+      "reason": "The request focuses on fullscreen black tiles/resizing and fullscreen-specific CSS; broad global Leaflet control/anchor behavior changes are not explicitly requested (though they may be tangentially helpful).",
+      "evidence": [
+        "frontend/src/index.css (truncated)"
+      ]
+    }
+  ],
+  "confidence": 0.56,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/components/earthquake/FeedAndFilterControls.tsx",
-    "frontend/src/pages/EarthquakeDashboard.tsx",
+    "frontend/src/components/earthquake/EarthquakeMapView.tsx",
+    "frontend/src/index.css",
     "project_state.json"
   ]
 }

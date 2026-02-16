@@ -1,11 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Make the dashboard’s “Refresh Data” button reliably force an immediate refetch of the currently selected USGS earthquake feed, with correct manual-refresh loading state and clear user confirmation.
+**Goal:** Fix the Leaflet map rendering as a black background when toggling the existing custom fullscreen mode, ensuring tiles stay visible and the map properly resizes.
 
 **Planned changes:**
-- Update the “Refresh Data” action to force a new network request for the currently selected time-window feed (even if React Query considers cached data fresh), using the same query key as the dashboard feed query.
-- Separate manual refresh state from background React Query fetching so the button is only disabled and shows “Refreshing...” during a user-initiated refresh.
-- Add a small “Last refreshed: <time>” style indicator near the controls that updates only after successful manual refreshes (not background refetches).
+- Update the existing Leaflet map component to trigger a resize/invalidate after fullscreen layout changes have been applied (not just immediately on fullscreenchange).
+- Ensure the map container uses true fullscreen dimensions while in fullscreen (e.g., 100vw/100vh) and restores its prior constrained height on exit.
+- Adjust/extend existing fullscreen-related CSS so the Leaflet container/panes stack and render correctly in fullscreen without covering/hiding the tile layer.
+- Verify controls, markers, and popups remain functional across repeated fullscreen toggles and that no console errors are introduced.
 
-**User-visible outcome:** Clicking “Refresh Data” consistently fetches the latest data for the selected time window, the button remains usable during normal operation, and the UI shows when the last manual refresh occurred.
+**User-visible outcome:** Users can enter and exit fullscreen on the map without the base tiles disappearing; the map fills the viewport in fullscreen, returns to its original size on exit, and remains fully interactive (controls, markers, popups) throughout.
