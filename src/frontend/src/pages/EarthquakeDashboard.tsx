@@ -1,6 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
+  Activity,
   Columns,
   Map as MapIcon,
   Moon,
@@ -18,71 +19,56 @@ import { EarthquakeMapView } from "../components/earthquake/EarthquakeMapView";
 import { EarthquakeResultsTable } from "../components/earthquake/EarthquakeResultsTable";
 import { EewView } from "../components/earthquake/EewView";
 import { FeedAndFilterControls } from "../components/earthquake/FeedAndFilterControls";
+import { ShakeMapView } from "../components/earthquake/ShakeMapView";
 import { TsunamiAlertBanner } from "../components/earthquake/TsunamiAlertBanner";
 import { TsunamiView } from "../components/earthquake/TsunamiView";
-import { useUsgsEarthquakes } from "../hooks/useUsgsEarthquakes";
+import { useMultiSourceEarthquakes } from "../hooks/useMultiSourceEarthquakes";
 import { applyFilters } from "../lib/earthquakeFilters";
 import { computeStats } from "../lib/earthquakeStats";
 import type { TimeWindow, UsgsFeature } from "../lib/usgsTypes";
 
-type ViewMode = "table" | "map" | "split" | "tsunami" | "eew";
+type ViewMode = "table" | "map" | "split" | "tsunami" | "eew" | "shakemap";
 
 export default function EarthquakeDashboard() {
   const { theme, setTheme } = useTheme();
 
-  // Filter state
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("day");
   const [minMagnitude, setMinMagnitude] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-
-  // View mode state
   const [viewMode, setViewMode] = useState<ViewMode>("table");
-
-  // Selected earthquake for details dialog
   const [selectedEarthquake, setSelectedEarthquake] =
     useState<UsgsFeature | null>(null);
-
-  // Manual refresh state
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const [lastManualRefreshAt, setLastManualRefreshAt] = useState<Date | null>(
     null,
   );
-
-  // Tsunami banner dismiss state (per-session, resets on new data)
   const [tsunamiBannerDismissed, setTsunamiBannerDismissed] = useState(false);
   const prevTsunamiCountRef = useRef(0);
 
-  // Fetch earthquake data
-  const { data, isLoading, isError, error, forceRefresh } =
-    useUsgsEarthquakes(timeWindow);
+  const { data, isLoading, isError, error, forceRefresh, sources } =
+    useMultiSourceEarthquakes(timeWindow);
 
-  // Apply filters with time window restriction and sorting
   const filteredEarthquakes = data
     ? applyFilters(data.features, timeWindow, minMagnitude, searchQuery)
     : [];
 
-  // Tsunami-flagged events
   const tsunamiEvents = filteredEarthquakes.filter(
     (eq) => eq.properties.tsunami === 1,
   );
 
-  // Re-show banner if new tsunami events appear after a refresh
   if (tsunamiEvents.length > prevTsunamiCountRef.current) {
     setTsunamiBannerDismissed(false);
   }
   prevTsunamiCountRef.current = tsunamiEvents.length;
 
-  // Count M5+ events in past hour for EEW badge
   const eewAlertCount = filteredEarthquakes.filter(
     (eq) =>
       (eq.properties.mag ?? 0) >= 5 &&
       Date.now() - eq.properties.time < 3600000,
   ).length;
 
-  // Compute stats
   const stats = computeStats(filteredEarthquakes, 5.0);
 
-  // Manual refresh - force refetch regardless of staleTime
   const handleRefresh = async () => {
     setIsManualRefreshing(true);
     try {
@@ -95,25 +81,23 @@ export default function EarthquakeDashboard() {
     }
   };
 
-  // Handle earthquake selection from table or map - prevent any state reset
   const handleEarthquakeSelect = (earthquake: UsgsFeature) => {
     setSelectedEarthquake(earthquake);
   };
 
-  // Determine if auto-fit should be enabled (for Past Hour view)
   const shouldAutoFitBounds = timeWindow === "hour";
 
-  const viewTitle = {
+  const viewTitle: Record<ViewMode, string> = {
     table: "Table View",
     map: "Map View",
     split: "Split View",
     tsunami: "Tsunami Warnings",
     eew: "EEW Monitor",
-  }[viewMode];
+    shakemap: "ShakeMap Viewer",
+  };
 
   return (
     <>
-      {/* Full-screen loading animation */}
       {isLoading && <LoadingScreen />}
 
       <div className="min-h-screen bg-background">
@@ -121,7 +105,6 @@ export default function EarthquakeDashboard() {
         <header className="sticky top-0 z-50 border-b border-border/40 glass-effect shadow-soft">
           <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-5">
             <div className="grid grid-cols-[1fr_auto] items-start gap-4 sm:gap-6">
-              {/* Brand block with logo and text */}
               <div className="flex items-start gap-3 sm:gap-4 min-w-0">
                 <div className="relative flex-shrink-0 mt-1">
                   <img
@@ -140,8 +123,6 @@ export default function EarthquakeDashboard() {
                   </p>
                 </div>
               </div>
-
-              {/* Theme toggle */}
               <div className="flex-shrink-0 pt-1">
                 <Button
                   variant="ghost"
@@ -162,7 +143,6 @@ export default function EarthquakeDashboard() {
           </div>
         </header>
 
-        {/* Main Content */}
         <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-8 sm:space-y-10">
           {/* Title Section */}
           <section className="text-center space-y-4 py-4 sm:py-6">
@@ -175,7 +155,7 @@ export default function EarthquakeDashboard() {
             </p>
           </section>
 
-          {/* Filters and Controls */}
+          {/* Filters */}
           <div className="animate-fade-in relative z-30">
             <FeedAndFilterControls
               timeWindow={timeWindow}
@@ -212,10 +192,42 @@ export default function EarthquakeDashboard() {
             </div>
           )}
 
+          {/* Data Sources Indicator */}
+          {!isLoading &&
+            !isError &&
+            (sources.usgs > 0 || sources.bmkg > 0 || sources.emsc > 0) && (
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground animate-fade-in">
+                <span className="font-medium">Data sources:</span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 font-semibold">
+                  USGS · {sources.usgs}
+                </span>
+                {sources.bmkg > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30 font-semibold">
+                    BMKG · {sources.bmkg}
+                  </span>
+                )}
+                {sources.emsc > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/30 font-semibold">
+                    EMSC · {sources.emsc}
+                  </span>
+                )}
+                {sources.bmkg === 0 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground border border-border/30 text-[10px]">
+                    BMKG unavailable
+                  </span>
+                )}
+                {sources.emsc === 0 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground border border-border/30 text-[10px]">
+                    EMSC unavailable
+                  </span>
+                )}
+              </div>
+            )}
+
           {/* View Mode Toggle */}
           <div className="flex flex-wrap items-center justify-between gap-4 animate-fade-in">
             <h3 className="text-xl sm:text-2xl font-bold tracking-tight">
-              {viewTitle}
+              {viewTitle[viewMode]}
               {viewMode === "tsunami" && tsunamiEvents.length > 0 && (
                 <span className="ml-3 inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white text-xs font-bold animate-pulse">
                   {tsunamiEvents.length}
@@ -291,6 +303,16 @@ export default function EarthquakeDashboard() {
                   </span>
                 )}
               </Button>
+              <Button
+                variant={viewMode === "shakemap" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("shakemap")}
+                className="gap-2 transition-all duration-200"
+                data-ocid="shakemap.tab"
+              >
+                <Activity className="h-4 w-4" />
+                <span className="hidden sm:inline">ShakeMap</span>
+              </Button>
             </div>
           </div>
 
@@ -326,7 +348,6 @@ export default function EarthquakeDashboard() {
                   earthquakes={filteredEarthquakes}
                   onMarkerClick={handleEarthquakeSelect}
                   autoFitBounds={shouldAutoFitBounds}
-                  selectedEarthquake={selectedEarthquake}
                 />
               )}
 
@@ -343,7 +364,6 @@ export default function EarthquakeDashboard() {
                     onMarkerClick={handleEarthquakeSelect}
                     constrainedHeight={600}
                     autoFitBounds={shouldAutoFitBounds}
-                    selectedEarthquake={selectedEarthquake}
                   />
                 </div>
               )}
@@ -358,6 +378,10 @@ export default function EarthquakeDashboard() {
               {viewMode === "eew" && (
                 <EewView earthquakes={filteredEarthquakes} />
               )}
+
+              {viewMode === "shakemap" && (
+                <ShakeMapView earthquakes={filteredEarthquakes} />
+              )}
             </div>
           )}
         </main>
@@ -367,8 +391,8 @@ export default function EarthquakeDashboard() {
           <div className="container mx-auto px-4 sm:px-6 py-8">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-sm text-muted-foreground text-center sm:text-left">
-                © {new Date().getFullYear()} WhoFeelAnEarthquake. Powered by
-                USGS.
+                &copy; {new Date().getFullYear()} WhoFeelAnEarthquake. Powered
+                by USGS.
               </p>
               <p className="text-sm text-muted-foreground text-center sm:text-right">
                 Built with ❤️ using{" "}

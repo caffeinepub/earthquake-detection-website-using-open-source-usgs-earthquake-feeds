@@ -17,7 +17,6 @@ interface EarthquakeMapViewProps {
   onMarkerClick?: (earthquake: UsgsFeature) => void;
   constrainedHeight?: number;
   autoFitBounds?: boolean;
-  selectedEarthquake?: UsgsFeature | null;
 }
 
 export function EarthquakeMapView({
@@ -25,7 +24,6 @@ export function EarthquakeMapView({
   onMarkerClick,
   constrainedHeight,
   autoFitBounds = false,
-  selectedEarthquake,
 }: EarthquakeMapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<LeafletMap | null>(null);
@@ -37,17 +35,9 @@ export function EarthquakeMapView({
   const fullscreenControlRef = useRef<HTMLButtonElement | null>(null);
   const tectonicToggleRef = useRef<HTMLButtonElement | null>(null);
   const terrainToggleRef = useRef<HTMLButtonElement | null>(null);
-  const shakemapToggleRef = useRef<HTMLButtonElement | null>(null);
-  const toggleShakemapRef = useRef<() => void>(() => {});
+  const toggleTectonicBoundariesRef = useRef<() => void>(() => {});
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
-  const shakemapLayerRef = useRef<any | null>(null);
-  const shakemapDataRef = useRef<{
-    url: string;
-    bounds: [[number, number], [number, number]];
-  } | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [showShakemap, setShowShakemap] = useState(false);
-  const [shakemapAvailable, setShakemapAvailable] = useState(false);
   const [showTectonics, setShowTectonics] = useState(false);
   const [tectonicDataLoaded, setTectonicDataLoaded] = useState(false);
   const hasAutoFittedRef = useRef(false);
@@ -68,20 +58,16 @@ export function EarthquakeMapView({
     const map = mapInstanceRef.current;
     const markersLayer = markersLayerRef.current;
 
-    // Get current map bounds
     const bounds = map.getBounds();
 
-    // Filter earthquakes to visible bounds (with 10% padding)
     const visibleEarthquakes = filterEarthquakesInBounds(
       allEarthquakesRef.current,
       bounds,
       0.1,
     );
 
-    // Clear existing markers
     markersLayer.clearLayers();
 
-    // Add markers only for visible earthquakes
     for (const earthquake of visibleEarthquakes) {
       const [lon, lat] = earthquake.geometry.coordinates;
       const isTsunami = earthquake.properties.tsunami === 1;
@@ -93,7 +79,6 @@ export function EarthquakeMapView({
       );
 
       if (marker) {
-        // Add popup with autoPan disabled to prevent map jumping
         const tsunamiLabel = isTsunami
           ? `<div style="margin-top:6px;padding:3px 8px;background:#dc2626;color:#fff;border-radius:4px;font-size:11px;font-weight:bold;display:inline-flex;align-items:center;gap:4px;">⚠ TSUNAMI WARNING</div>`
           : "";
@@ -110,19 +95,13 @@ export function EarthquakeMapView({
         `;
         marker.bindPopup(popupContent, { autoPan: false });
 
-        // Handle marker click - prevent default navigation behavior
         marker.on("click", (e) => {
-          // Stop event propagation and prevent default behavior
           if (e.originalEvent) {
             e.originalEvent.preventDefault();
             e.originalEvent.stopPropagation();
           }
-
-          // Use Leaflet's DomEvent to stop propagation
           window.L?.DomEvent?.stopPropagation(e);
           window.L?.DomEvent?.preventDefault(e);
-
-          // Call the callback without triggering navigation
           if (onMarkerClick) {
             onMarkerClick(earthquake);
           }
@@ -133,7 +112,6 @@ export function EarthquakeMapView({
     }
   }, [onMarkerClick]);
 
-  // Debounced update on map move/zoom
   const handleMapMoveEnd = useCallback(() => {
     if (updateTimeoutRef.current !== null) {
       window.clearTimeout(updateTimeoutRef.current);
@@ -143,7 +121,6 @@ export function EarthquakeMapView({
     }, 150);
   }, [updateVisibleMarkers]);
 
-  // Load tectonic boundaries GeoJSON
   const loadTectonicBoundaries = useCallback(async () => {
     if (
       !mapInstanceRef.current ||
@@ -157,13 +134,11 @@ export function EarthquakeMapView({
     if (!L) return;
 
     try {
-      // Fetch tectonic boundaries from GitHub
       const response = await fetch(
         "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json",
       );
       const geojsonData = await response.json();
 
-      // Add GeoJSON layer with custom styling
       L.geoJSON(geojsonData, {
         style: {
           color: "#ff6b35",
@@ -186,194 +161,18 @@ export function EarthquakeMapView({
     setShowTectonics(newShowState);
 
     if (newShowState) {
-      // Show layer and load data if not already loaded
       mapInstanceRef.current.addLayer(tectonicLayerRef.current);
       if (!tectonicDataLoaded) {
         loadTectonicBoundaries();
       }
     } else {
-      // Hide layer
       mapInstanceRef.current.removeLayer(tectonicLayerRef.current);
     }
   }, [showTectonics, tectonicDataLoaded, loadTectonicBoundaries]);
 
-  // Toggle shakemap visibility
-  const toggleShakemap = useCallback(() => {
-    setShowShakemap((prev) => {
-      const next = !prev;
-      if (next) {
-        if (shakemapDataRef.current) {
-          // apply in next tick so state is set
-          setTimeout(() => {
-            if (
-              !shakemapDataRef.current ||
-              !mapInstanceRef.current ||
-              !isLeafletLoaded()
-            )
-              return;
-            const L = window.L;
-            if (!L) return;
-            if (shakemapLayerRef.current) {
-              try {
-                mapInstanceRef.current.removeLayer(shakemapLayerRef.current);
-              } catch (_e) {
-                /* ignore */
-              }
-              shakemapLayerRef.current = null;
-            }
-            const { url, bounds } = shakemapDataRef.current;
-            const overlay = L.imageOverlay(url, bounds, {
-              opacity: 0.7,
-              zIndex: 500,
-              attribution: "\u00a9 USGS ShakeMap",
-            });
-            overlay.addTo(mapInstanceRef.current);
-            shakemapLayerRef.current = overlay;
-            mapInstanceRef.current.fitBounds(bounds, { padding: [20, 20] });
-          }, 0);
-        } else {
-          console.warn("No ShakeMap data available for this earthquake.");
-        }
-      } else {
-        if (shakemapLayerRef.current && mapInstanceRef.current) {
-          try {
-            mapInstanceRef.current.removeLayer(shakemapLayerRef.current);
-          } catch (_e) {
-            /* ignore */
-          }
-          shakemapLayerRef.current = null;
-        }
-      }
-      return next;
-    });
-  }, []);
-  toggleShakemapRef.current = toggleShakemap;
+  // Keep ref in sync so map-init useEffect can call the latest version
+  toggleTectonicBoundariesRef.current = toggleTectonicBoundaries;
 
-  // Fetch ShakeMap data when selectedEarthquake changes
-  // biome-ignore lint/correctness/useExhaustiveDependencies: selectedEarthquake is the trigger
-  useEffect(() => {
-    if (!selectedEarthquake) {
-      shakemapDataRef.current = null;
-      setShakemapAvailable(false);
-      if (shakemapLayerRef.current && mapInstanceRef.current) {
-        try {
-          mapInstanceRef.current.removeLayer(shakemapLayerRef.current);
-        } catch (_e) {
-          /* ignore */
-        }
-        shakemapLayerRef.current = null;
-      }
-      setShowShakemap(false);
-      return;
-    }
-
-    const detailUrl = selectedEarthquake.properties.detail;
-    if (!detailUrl) {
-      shakemapDataRef.current = null;
-      setShakemapAvailable(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    fetch(detailUrl)
-      .then((res) => res.json())
-      .then((eventDetail) => {
-        if (cancelled) return;
-        const shakemapProduct =
-          eventDetail?.properties?.products?.shakemap?.[0];
-        if (!shakemapProduct) {
-          shakemapDataRef.current = null;
-          setShakemapAvailable(false);
-          if (shakemapLayerRef.current && mapInstanceRef.current) {
-            try {
-              mapInstanceRef.current.removeLayer(shakemapLayerRef.current);
-            } catch (_e) {
-              /* ignore */
-            }
-            shakemapLayerRef.current = null;
-          }
-          setShowShakemap(false);
-          return;
-        }
-
-        const imageUrl = shakemapProduct.contents?.["intensity.jpg"]?.url;
-        const props = shakemapProduct.properties || {};
-        const minLat = Number.parseFloat(props["minimum-latitude"]);
-        const maxLat = Number.parseFloat(props["maximum-latitude"]);
-        const minLon = Number.parseFloat(props["minimum-longitude"]);
-        const maxLon = Number.parseFloat(props["maximum-longitude"]);
-
-        if (
-          !imageUrl ||
-          Number.isNaN(minLat) ||
-          Number.isNaN(maxLat) ||
-          Number.isNaN(minLon) ||
-          Number.isNaN(maxLon)
-        ) {
-          shakemapDataRef.current = null;
-          setShakemapAvailable(false);
-          if (shakemapLayerRef.current && mapInstanceRef.current) {
-            try {
-              mapInstanceRef.current.removeLayer(shakemapLayerRef.current);
-            } catch (_e) {
-              /* ignore */
-            }
-            shakemapLayerRef.current = null;
-          }
-          setShowShakemap(false);
-          return;
-        }
-
-        shakemapDataRef.current = {
-          url: imageUrl,
-          bounds: [
-            [minLat, minLon],
-            [maxLat, maxLon],
-          ],
-        };
-        setShakemapAvailable(true);
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          console.warn("Failed to fetch ShakeMap data:", err);
-          shakemapDataRef.current = null;
-          setShakemapAvailable(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedEarthquake]);
-
-  // Update shakemap toggle button appearance
-  useEffect(() => {
-    if (!shakemapToggleRef.current) return;
-    const button = shakemapToggleRef.current;
-    if (!shakemapAvailable) {
-      button.style.opacity = "0.4";
-      button.style.cursor = "not-allowed";
-      button.title = "No ShakeMap available for this event";
-    } else {
-      button.style.opacity = "1";
-      button.style.cursor = "pointer";
-      button.title = "Toggle USGS ShakeMap overlay";
-    }
-    if (showShakemap && shakemapAvailable) {
-      button.classList.add("active");
-      button.style.backgroundColor = "#f59e0b";
-      button.style.color = "#fff";
-    } else {
-      button.classList.remove("active");
-      if (shakemapAvailable) {
-        button.style.backgroundColor = "";
-        button.style.color = "";
-      }
-    }
-  }, [showShakemap, shakemapAvailable]);
-
-  // Switch tile layer based on terrain mode
   const switchTileLayer = useCallback((mode: "light" | "dark") => {
     if (!mapInstanceRef.current || !isLeafletLoaded()) return;
 
@@ -382,12 +181,10 @@ export function EarthquakeMapView({
 
     const map = mapInstanceRef.current;
 
-    // Remove existing tile layer
     if (tileLayerRef.current) {
       map.removeLayer(tileLayerRef.current);
     }
 
-    // Create new tile layer based on mode
     let newTileLayer: LeafletTileLayer;
     if (mode === "dark") {
       newTileLayer = L.tileLayer(
@@ -413,12 +210,11 @@ export function EarthquakeMapView({
     tileLayerRef.current = newTileLayer;
   }, []);
 
-  // Handle terrain toggle
   const handleTerrainToggle = useCallback(() => {
     toggleTerrainMode();
   }, [toggleTerrainMode]);
 
-  // Auto-fit bounds when earthquakes change and autoFitBounds is true
+  // Auto-fit bounds
   useEffect(() => {
     if (
       !mapInstanceRef.current ||
@@ -449,7 +245,6 @@ export function EarthquakeMapView({
     }
   }, [earthquakes, autoFitBounds]);
 
-  // Reset auto-fit flag when autoFitBounds changes
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally react on autoFitBounds
   useEffect(() => {
     hasAutoFittedRef.current = false;
@@ -561,48 +356,14 @@ export function EarthquakeMapView({
         L.DomEvent.on(button, "click", (e) => {
           L.DomEvent.stopPropagation(e);
           L.DomEvent.preventDefault(e);
-          toggleTectonicBoundaries();
+          // Use ref so we always call the latest version
+          toggleTectonicBoundariesRef.current();
         });
         tectonicToggleRef.current = button;
         return container;
       },
     });
     map.addControl(new TectonicToggleControl());
-
-    // ShakeMap toggle control
-    const ShakemapToggleControl = L.Control.extend({
-      options: { position: "topleft" },
-      onAdd: () => {
-        const container = L.DomUtil.create(
-          "div",
-          "leaflet-bar leaflet-control",
-        );
-        const button = L.DomUtil.create(
-          "button",
-          "leaflet-control-shakemap-toggle",
-          container,
-        );
-        button.innerHTML = `<span style="font-size:11px;font-weight:bold;letter-spacing:-0.5px;">SM</span>`;
-        button.title = "Toggle USGS ShakeMap overlay";
-        button.setAttribute("aria-label", "Toggle ShakeMap overlay");
-        button.type = "button";
-        button.style.minWidth = "30px";
-        button.style.minHeight = "30px";
-        button.style.display = "flex";
-        button.style.alignItems = "center";
-        button.style.justifyContent = "center";
-        L.DomEvent.disableClickPropagation(button);
-        L.DomEvent.disableScrollPropagation(button);
-        L.DomEvent.on(button, "click", (e) => {
-          L.DomEvent.stopPropagation(e);
-          L.DomEvent.preventDefault(e);
-          toggleShakemapRef.current();
-        });
-        shakemapToggleRef.current = button;
-        return container;
-      },
-    });
-    map.addControl(new ShakemapToggleControl());
 
     // Fullscreen control
     const FullscreenControl = L.Control.extend({
@@ -643,7 +404,6 @@ export function EarthquakeMapView({
     });
     map.addControl(new FullscreenControl());
 
-    // Handle fullscreen change events
     const handleFullscreenChange = () => {
       const mapContainer = mapRef.current;
       if (!mapContainer) return;
@@ -697,12 +457,10 @@ export function EarthquakeMapView({
       markersLayerRef.current = null;
       tectonicLayerRef.current = null;
       tileLayerRef.current = null;
-      shakemapLayerRef.current = null;
     };
   }, [
     handleMapMoveEnd,
     updateVisibleMarkers,
-    toggleTectonicBoundaries,
     handleTerrainToggle,
     terrainMode,
   ]);
@@ -763,7 +521,9 @@ export function EarthquakeMapView({
   return (
     <PanelCard
       title="Earthquake Map"
-      subtitle={`${earthquakes.length} ${earthquakes.length === 1 ? "event" : "events"}`}
+      subtitle={`${earthquakes.length} ${
+        earthquakes.length === 1 ? "event" : "events"
+      }`}
       noPadding
     >
       <div className="border-t border-border/30">

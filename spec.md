@@ -1,40 +1,34 @@
-# WhoFeelAnEarthquake - EEW (Earthquake Early Warning) Tab
+# WhoFeelAnEarthquake
 
 ## Current State
-The app has 4 view tabs: Table, Map, Split, Tsunami. It fetches USGS earthquake data and displays it in a Leaflet map with markers, table, and tsunami warnings. The USGS data includes `mmi`, `cdi`, `alert`, magnitude, coordinates, and time fields.
+- ShakeMapView fetches USGS detail JSON and looks for `intensity.jpg` — fails for most events because USGS only generates ShakeMaps for significant earthquakes (M5.5+). It shows "No ShakeMap available" even when a USGS event page exists.
+- EewView MMI radius formula ignores earthquake depth, so rings appear oversized for shallow events and undersized for deep ones. No city/location labels in MMI zones.
+- Data is fetched only from USGS. BMKG (Indonesia) and EMSC (European-Mediterranean) are not included.
 
 ## Requested Changes (Diff)
 
 ### Add
-- New `EEW` tab (Earthquake Early Warning) in the view mode toggle
-- New `EewView.tsx` component with:
-  - Left panel: list of recent significant earthquakes as "EEW Alerts" (sorted by time, newest first, preferably past hour/day)
-  - Right panel: Leaflet map showing the selected alert's epicenter with:
-    - Animated expanding P-wave ring (faster, blue)
-    - Animated expanding S-wave ring (slower, red/orange)
-    - MMI intensity contour rings (color-coded concentric circles: I–X+)
-    - Epicenter crosshair marker
-  - MMI scale legend panel
-  - Alert info card: magnitude, depth, location, time since event, PAGER alert level
-  - "Impacted Areas" table/list showing estimated MMI at distance bands
-- New `useEewAlerts.ts` hook that:
-  - Derives EEW alerts from the existing USGS data (past 24h, magnitude >= 3.0)
-  - Auto-selects the most recent significant event
-  - Refreshes every 60 seconds
-- New `eewUtils.ts` lib:
-  - MMI estimation from magnitude and distance (using Wald et al. attenuation)
-  - P-wave and S-wave radius calculation from elapsed seconds
-  - MMI -> color mapping (I=white, II-III=light green, IV-V=yellow, VI=orange, VII=red-orange, VIII=red, IX=dark red, X+=maroon)
-  - MMI -> felt description labels
+- BMKG data source: `https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.json` (latest 15 Indonesia quakes)
+- EMSC data source: `https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=100&minmag=2.5` (global M2.5+)
+- New hook `useMultiSourceEarthquakes.ts` that fetches USGS + BMKG + EMSC, normalizes all to `UsgsFeature` schema, deduplicates by time+location proximity (within 50km and 60 seconds), and returns a merged array with a `source` field on properties
+- Source indicator badge (USGS / BMKG / EMSC) in earthquake list items and detail dialog
+- MMI rings on EEW map should show city/place labels (using OpenStreetMap Nominatim reverse geocoding for cities within each MMI ring at ~3 sample points per ring)
 
 ### Modify
-- `EarthquakeDashboard.tsx`: add `"eew"` to `ViewMode` type and add the EEW tab button (with a "pulse" icon like Radio/Zap) in the tab row
+- `ShakeMapView.tsx`: Instead of just fetching `intensity.jpg`, fall back to embedding the USGS ShakeMap event page as an iframe (`https://earthquake.usgs.gov/earthquakes/eventpage/{id}/shakemap`) when the JSON detail approach fails or no intensity.jpg is found. For BMKG/EMSC events without a USGS eventId, show the image from their own ShakeMap URL if available, or a message that ShakeMap is only available for USGS events.
+- `eewUtils.ts`: Update `getMmiRadiusKm` to accept `depth` parameter and calculate correct epicentral distance using hypocentral distance: `epicentralDist = sqrt(max(0, hypocentralDist² - depth²))`. Keep backward compatibility by defaulting depth to 10km.
+- `EewView.tsx`: Pass earthquake depth to `getMmiRadiusKm`. Add city label markers on the map at the boundary of each MMI ring using Nominatim reverse geocoding. Show source badge (USGS/BMKG/EMSC) in alert list items.
+- `EarthquakeDashboard.tsx`: Replace `useUsgsEarthquakes` with `useMultiSourceEarthquakes`, pass the merged data to all views. Add a small "Sources" badge/count in the header or stats row.
 
 ### Remove
 - Nothing removed
 
 ## Implementation Plan
-1. Create `src/frontend/src/lib/eewUtils.ts` - MMI attenuation math, wave radius calc, color/label maps
-2. Create `src/frontend/src/hooks/useEewAlerts.ts` - derive EEW alerts from props/USGS data
-3. Create `src/frontend/src/components/earthquake/EewView.tsx` - full EEW panel with Leaflet map, animated rings, MMI legend, alert list
-4. Update `EarthquakeDashboard.tsx` - add `eew` view mode, tab button, and render `<EewView>`
+1. Create `src/frontend/src/lib/bmkgTypes.ts` — BMKG response types
+2. Create `src/frontend/src/lib/emscTypes.ts` — EMSC/FDSN response types
+3. Create `src/frontend/src/lib/dataNormalizer.ts` — normalize BMKG + EMSC responses to `UsgsFeature` format with `source` field
+4. Create `src/frontend/src/hooks/useMultiSourceEarthquakes.ts` — merge USGS + BMKG + EMSC, deduplicate
+5. Update `eewUtils.ts` — depth-aware MMI radius
+6. Update `EewView.tsx` — pass depth to MMI radius, add Nominatim city labels on MMI ring boundaries
+7. Update `ShakeMapView.tsx` — iframe fallback for USGS events when intensity.jpg not found
+8. Update `EarthquakeDashboard.tsx` — switch to useMultiSourceEarthquakes
