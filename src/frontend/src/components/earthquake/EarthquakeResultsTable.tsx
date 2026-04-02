@@ -74,11 +74,13 @@ export function EarthquakeResultsTable({
       noPadding
       className={constrainedHeight ? "flex flex-col" : ""}
     >
-      <div className="border-t border-border/30 flex flex-col flex-1">
+      <div
+        className={`border-t border-border/30 flex flex-col${constrainedHeight ? "" : " flex-1"}`}
+      >
         <div
           ref={containerRef}
           onScroll={onScroll}
-          className="overflow-y-auto overflow-x-hidden flex-1"
+          className={`overflow-y-auto overflow-x-hidden${!constrainedHeight ? " flex-1" : ""}`}
           style={
             constrainedHeight
               ? { height: `${scrollHeight}px` }
