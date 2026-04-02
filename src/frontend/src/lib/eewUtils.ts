@@ -16,23 +16,13 @@ export function getMmiFromMagAndDistance(
 }
 
 /**
- * Given a target MMI level, magnitude, and depth, compute the epicentral radius (km)
- * at which that MMI is reached.
- * Inverted from: mmi = 2.20*mag - 1.91*log10(hypDist) - 1.4
- * → hypDist = 10^((2.20*mag - 1.4 - mmi) / 1.91)
- * Then: epicentralDist = sqrt(max(0, hypDist^2 - depth^2))
+ * Given a target MMI level and magnitude, compute the radius (km) at which that MMI is reached
+ * Inverted from: mmi = 2.20*mag - 1.91*log10(dist) - 1.4
+ * → dist = 10^((2.20*mag - 1.4 - mmi) / 1.91)
  */
-export function getMmiRadiusKm(
-  mag: number,
-  targetMmi: number,
-  depthKm = 10,
-): number {
+export function getMmiRadiusKm(mag: number, targetMmi: number): number {
   const exp = (2.2 * mag - 1.4 - targetMmi) / 1.91;
-  const hypocentralDist = 10 ** exp;
-  const epicentralDist = Math.sqrt(
-    Math.max(0, hypocentralDist ** 2 - depthKm ** 2),
-  );
-  return Math.max(0, epicentralDist);
+  return 10 ** exp;
 }
 
 /**

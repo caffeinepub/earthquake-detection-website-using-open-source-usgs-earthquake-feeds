@@ -47,49 +47,6 @@ function getAlertColor(alert: string | null, mag: number | null): string {
   return "#6b7280";
 }
 
-// Convert km offset to lat/lon degrees (approximate)
-function offsetToLatLon(
-  centerLat: number,
-  centerLon: number,
-  radiusKm: number,
-  direction: "N" | "S" | "E" | "W",
-): [number, number] {
-  const kmPerDegLat = 111;
-  const kmPerDegLon = 111 * Math.cos((centerLat * Math.PI) / 180);
-  switch (direction) {
-    case "N":
-      return [centerLat + radiusKm / kmPerDegLat, centerLon];
-    case "S":
-      return [centerLat - radiusKm / kmPerDegLat, centerLon];
-    case "E":
-      return [centerLat, centerLon + radiusKm / kmPerDegLon];
-    case "W":
-      return [centerLat, centerLon - radiusKm / kmPerDegLon];
-  }
-}
-
-async function reverseGeocode(
-  lat: number,
-  lon: number,
-): Promise<string | null> {
-  try {
-    const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}&format=json&zoom=10`;
-    const res = await fetch(url, { headers: { "Accept-Language": "en" } });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return (
-      data?.address?.city ||
-      data?.address?.town ||
-      data?.address?.county ||
-      data?.address?.state ||
-      data?.address?.country ||
-      null
-    );
-  } catch {
-    return null;
-  }
-}
-
 const MMI_LEVELS = [8, 7, 6, 5, 4, 3, 2] as const;
 
 const MMI_DESCRIPTIONS: Record<number, string> = {
@@ -116,13 +73,8 @@ export function EewView({ earthquakes }: EewViewProps) {
   const mapInstanceRef = useRef<any | null>(null);
   const epicenterLayerRef = useRef<any | null>(null);
   const waveLayerRef = useRef<any | null>(null);
-  const cityLabelLayerRef = useRef<any | null>(null);
   const pWaveCircleRef = useRef<any | null>(null);
   const sWaveCircleRef = useRef<any | null>(null);
-  // Cache city labels per earthquake id
-  const cityLabelCacheRef = useRef<
-    Record<string, Array<{ lat: number; lon: number; name: string }>>
-  >({});
 
   const selectedEq =
     alerts.find((eq) => eq.id === selectedId) ?? alerts[0] ?? null;
@@ -185,7 +137,6 @@ export function EewView({ earthquakes }: EewViewProps) {
 
       epicenterLayerRef.current = L.layerGroup().addTo(map);
       waveLayerRef.current = L.layerGroup().addTo(map);
-      cityLabelLayerRef.current = L.layerGroup().addTo(map);
       mapInstanceRef.current = map;
     }
 
@@ -201,86 +152,11 @@ export function EewView({ earthquakes }: EewViewProps) {
         mapInstanceRef.current = null;
         epicenterLayerRef.current = null;
         waveLayerRef.current = null;
-        cityLabelLayerRef.current = null;
         pWaveCircleRef.current = null;
         sWaveCircleRef.current = null;
       }
     };
   }, []);
-
-  // Draw city labels from cache onto the map
-  const drawCityLabels = useCallback((eqId: string) => {
-    if (
-      !mapInstanceRef.current ||
-      !isLeafletLoaded() ||
-      !cityLabelLayerRef.current
-    )
-      return;
-    const L = window.L;
-    if (!L) return;
-
-    cityLabelLayerRef.current.clearLayers();
-    const labels = cityLabelCacheRef.current[eqId];
-    if (!labels) return;
-
-    for (const { lat, lon, name } of labels) {
-      const marker = L.circleMarker([lat, lon], {
-        radius: 3,
-        color: "#fff",
-        fillColor: "#fff",
-        fillOpacity: 0.9,
-        weight: 1,
-      });
-      marker.bindTooltip(name, {
-        permanent: true,
-        direction: "top",
-        className: "eew-city-label",
-        offset: [0, -4],
-      });
-      cityLabelLayerRef.current.addLayer(marker);
-    }
-  }, []);
-
-  // Fetch city labels for compass points at MMI IV boundary (async, once per eq)
-  const fetchCityLabels = useCallback(
-    async (eq: UsgsFeature) => {
-      const id = eq.id;
-      if (cityLabelCacheRef.current[id]) {
-        drawCityLabels(id);
-        return;
-      }
-
-      const mag = eq.properties.mag ?? 0;
-      const depth = eq.geometry.coordinates[2] ?? 10;
-      const [lon, lat] = eq.geometry.coordinates;
-
-      const mmi4Radius = getMmiRadiusKm(mag, 4, depth);
-      if (mmi4Radius <= 0 || mmi4Radius > 10000) {
-        cityLabelCacheRef.current[id] = [];
-        return;
-      }
-
-      const directions: Array<"N" | "S" | "E" | "W"> = ["N", "S", "E", "W"];
-      const points = directions.map((d) => ({
-        dir: d,
-        coords: offsetToLatLon(lat, lon, mmi4Radius, d),
-      }));
-
-      const results: Array<{ lat: number; lon: number; name: string }> = [];
-
-      for (const { coords } of points) {
-        const [pLat, pLon] = coords;
-        const name = await reverseGeocode(pLat, pLon);
-        if (name) results.push({ lat: pLat, lon: pLon, name });
-        // Small throttle delay between requests
-        await new Promise((r) => setTimeout(r, 300));
-      }
-
-      cityLabelCacheRef.current[id] = results;
-      drawCityLabels(id);
-    },
-    [drawCityLabels],
-  );
 
   // Full map update when selected eq changes
   const updateMapForEarthquake = useCallback(() => {
@@ -290,7 +166,6 @@ export function EewView({ earthquakes }: EewViewProps) {
 
     const [lon, lat] = selectedEq.geometry.coordinates;
     const mag = selectedEq.properties.mag ?? 0;
-    const depth = selectedEq.geometry.coordinates[2] ?? 10;
 
     if (epicenterLayerRef.current) epicenterLayerRef.current.clearLayers();
     if (waveLayerRef.current) waveLayerRef.current.clearLayers();
@@ -299,7 +174,7 @@ export function EewView({ earthquakes }: EewViewProps) {
 
     // MMI concentric filled zones (draw from outer/low to inner/high)
     for (const mmiLevel of [...MMI_LEVELS].reverse()) {
-      const radiusKm = getMmiRadiusKm(mag, mmiLevel, depth);
+      const radiusKm = getMmiRadiusKm(mag, mmiLevel);
       if (radiusKm > 0 && radiusKm < 20000) {
         const color = getMmiColor(mmiLevel);
         const circle = L.circle([lat, lon], {
@@ -317,7 +192,7 @@ export function EewView({ earthquakes }: EewViewProps) {
 
     // MMI dashed boundary rings
     for (const mmiLevel of MMI_LEVELS) {
-      const radiusKm = getMmiRadiusKm(mag, mmiLevel, depth);
+      const radiusKm = getMmiRadiusKm(mag, mmiLevel);
       if (radiusKm > 0 && radiusKm < 20000) {
         const color = getMmiColor(mmiLevel);
         const ring = L.circle([lat, lon], {
@@ -421,11 +296,7 @@ export function EewView({ earthquakes }: EewViewProps) {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: selectedEq.id triggers full map reset
   useEffect(() => {
-    if (selectedEq) {
-      updateMapForEarthquake();
-      // Fetch city labels asynchronously (throttled, cached)
-      fetchCityLabels(selectedEq);
-    }
+    if (selectedEq) updateMapForEarthquake();
   }, [selectedEq?.id]);
 
   useEffect(() => {
@@ -490,18 +361,6 @@ export function EewView({ earthquakes }: EewViewProps) {
           border-radius: 50%;
           animation: epicenter-ring-pulse 1.5s ease-out infinite;
         }
-        .eew-city-label {
-          background: rgba(0,0,0,0.75);
-          border: 1px solid rgba(255,255,255,0.4);
-          color: #fff;
-          font-size: 10px;
-          font-weight: 600;
-          padding: 2px 5px;
-          border-radius: 3px;
-          white-space: nowrap;
-          pointer-events: none;
-        }
-        .eew-city-label::before { display: none; }
       `}</style>
 
       <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
@@ -638,10 +497,6 @@ export function EewView({ earthquakes }: EewViewProps) {
               <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
               <span>Epicenter</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-white opacity-80" />
-              <span>City labels (MMI IV boundary)</span>
-            </div>
           </div>
 
           {selectedEq && (
@@ -774,8 +629,7 @@ export function EewView({ earthquakes }: EewViewProps) {
               Estimated Impact Zones
               {selectedEq && (
                 <span className="ml-2 text-xs text-muted-foreground font-normal normal-case">
-                  for M{(selectedEq.properties.mag ?? 0).toFixed(1)}, depth{" "}
-                  {(selectedEq.geometry.coordinates[2] ?? 0).toFixed(0)} km
+                  for M{(selectedEq.properties.mag ?? 0).toFixed(1)}
                 </span>
               )}
             </CardTitle>
@@ -799,11 +653,7 @@ export function EewView({ earthquakes }: EewViewProps) {
                 <tbody>
                   {MMI_LEVELS.map((mmiLevel, i) => {
                     const radiusKm = selectedEq
-                      ? getMmiRadiusKm(
-                          selectedEq.properties.mag ?? 0,
-                          mmiLevel,
-                          selectedEq.geometry.coordinates[2] ?? 10,
-                        )
+                      ? getMmiRadiusKm(selectedEq.properties.mag ?? 0, mmiLevel)
                       : null;
                     return (
                       <tr
@@ -829,7 +679,7 @@ export function EewView({ earthquakes }: EewViewProps) {
                           {MMI_DESCRIPTIONS[mmiLevel]}
                         </td>
                         <td className="px-4 py-1.5 text-right font-mono">
-                          {radiusKm !== null && radiusKm > 0 && radiusKm < 20000
+                          {radiusKm !== null && radiusKm < 20000
                             ? `~${Math.round(radiusKm)} km`
                             : "—"}
                         </td>

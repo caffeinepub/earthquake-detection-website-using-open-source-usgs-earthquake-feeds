@@ -22,29 +22,6 @@ interface EarthquakeResultsTableProps {
   constrainedHeight?: number;
 }
 
-function getSourceBadge(eq: UsgsFeature) {
-  const source = (eq.properties as any).source as string | undefined;
-  const net = eq.properties.net as string | undefined;
-  const resolved =
-    source ?? (net === "bmkg" ? "BMKG" : net === "emsc" ? "EMSC" : "USGS");
-
-  if (resolved === "BMKG") {
-    return (
-      <span className="text-[9px] font-bold px-1 py-0 rounded bg-green-500/15 text-green-400 border border-green-500/30 leading-tight">
-        BMKG
-      </span>
-    );
-  }
-  if (resolved === "EMSC") {
-    return (
-      <span className="text-[9px] font-bold px-1 py-0 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30 leading-tight">
-        EMSC
-      </span>
-    );
-  }
-  return null;
-}
-
 export function EarthquakeResultsTable({
   earthquakes,
   selectedEarthquake,
@@ -113,7 +90,7 @@ export function EarthquakeResultsTable({
           <Table className="w-full table-fixed">
             <TableHeader className="sticky top-0 bg-card/95 backdrop-blur-sm z-10 border-b border-border/40">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[120px] font-bold text-foreground">
+                <TableHead className="w-[110px] font-bold text-foreground">
                   Magnitude
                 </TableHead>
                 <TableHead className="font-bold text-foreground">
@@ -148,7 +125,6 @@ export function EarthquakeResultsTable({
                 const magColor = getMagnitudeColor(earthquake.properties.mag);
                 const magLabel = getMagnitudeLabel(earthquake.properties.mag);
                 const hasTsunami = earthquake.properties.tsunami === 1;
-                const sourceBadge = getSourceBadge(earthquake);
 
                 return (
                   <TableRow
@@ -162,15 +138,12 @@ export function EarthquakeResultsTable({
                   >
                     <TableCell className="py-3">
                       <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5">
-                          <Badge
-                            variant="outline"
-                            className={`${magColor} font-mono w-fit text-xs px-2 py-0.5 font-semibold shadow-sm`}
-                          >
-                            M{formatMagnitude(earthquake.properties.mag)}
-                          </Badge>
-                          {sourceBadge}
-                        </div>
+                        <Badge
+                          variant="outline"
+                          className={`${magColor} font-mono w-fit text-xs px-2 py-0.5 font-semibold shadow-sm`}
+                        >
+                          M{formatMagnitude(earthquake.properties.mag)}
+                        </Badge>
                         <span className="text-xs text-muted-foreground hidden sm:inline font-medium">
                           {magLabel}
                         </span>
@@ -216,7 +189,7 @@ export function EarthquakeResultsTable({
                           rel="noopener noreferrer"
                         >
                           <ExternalLink className="h-4 w-4" />
-                          <span className="sr-only">View details</span>
+                          <span className="sr-only">View on USGS</span>
                         </a>
                       </Button>
                     </TableCell>

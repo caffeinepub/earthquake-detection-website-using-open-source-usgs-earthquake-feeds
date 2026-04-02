@@ -22,7 +22,7 @@ import { FeedAndFilterControls } from "../components/earthquake/FeedAndFilterCon
 import { ShakeMapView } from "../components/earthquake/ShakeMapView";
 import { TsunamiAlertBanner } from "../components/earthquake/TsunamiAlertBanner";
 import { TsunamiView } from "../components/earthquake/TsunamiView";
-import { useMultiSourceEarthquakes } from "../hooks/useMultiSourceEarthquakes";
+import { useUsgsEarthquakes } from "../hooks/useUsgsEarthquakes";
 import { applyFilters } from "../lib/earthquakeFilters";
 import { computeStats } from "../lib/earthquakeStats";
 import type { TimeWindow, UsgsFeature } from "../lib/usgsTypes";
@@ -45,8 +45,8 @@ export default function EarthquakeDashboard() {
   const [tsunamiBannerDismissed, setTsunamiBannerDismissed] = useState(false);
   const prevTsunamiCountRef = useRef(0);
 
-  const { data, isLoading, isError, error, forceRefresh, sources } =
-    useMultiSourceEarthquakes(timeWindow);
+  const { data, isLoading, isError, error, forceRefresh } =
+    useUsgsEarthquakes(timeWindow);
 
   const filteredEarthquakes = data
     ? applyFilters(data.features, timeWindow, minMagnitude, searchQuery)
@@ -191,38 +191,6 @@ export default function EarthquakeDashboard() {
               />
             </div>
           )}
-
-          {/* Data Sources Indicator */}
-          {!isLoading &&
-            !isError &&
-            (sources.usgs > 0 || sources.bmkg > 0 || sources.emsc > 0) && (
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground animate-fade-in">
-                <span className="font-medium">Data sources:</span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 font-semibold">
-                  USGS · {sources.usgs}
-                </span>
-                {sources.bmkg > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30 font-semibold">
-                    BMKG · {sources.bmkg}
-                  </span>
-                )}
-                {sources.emsc > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/30 font-semibold">
-                    EMSC · {sources.emsc}
-                  </span>
-                )}
-                {sources.bmkg === 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground border border-border/30 text-[10px]">
-                    BMKG unavailable
-                  </span>
-                )}
-                {sources.emsc === 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground border border-border/30 text-[10px]">
-                    EMSC unavailable
-                  </span>
-                )}
-              </div>
-            )}
 
           {/* View Mode Toggle */}
           <div className="flex flex-wrap items-center justify-between gap-4 animate-fade-in">

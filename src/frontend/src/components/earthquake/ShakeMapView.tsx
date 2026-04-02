@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Activity, Clock, ExternalLink, ImageOff, MapPin } from "lucide-react";
+import { Activity, Clock, ImageOff, MapPin } from "lucide-react";
 import { useState } from "react";
 import { formatMagnitude, formatTimestamp } from "../../lib/formatters";
 import { getMagnitudeColor } from "../../lib/usgsFeeds";
@@ -10,16 +10,16 @@ interface ShakeMapViewProps {
   earthquakes: UsgsFeature[];
 }
 
-type Status = "idle" | "loading" | "found" | "iframe" | "no-usgs" | "error";
+type Status = "idle" | "loading" | "found" | "not-found" | "error";
 
 export function ShakeMapView({ earthquakes }: ShakeMapViewProps) {
   const [selected, setSelected] = useState<UsgsFeature | null>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
-  // Earthquakes M3.5+ for shakemap candidates
+  // Earthquakes M4.0+ for shakemap candidates
   const candidates = earthquakes.filter(
-    (eq) => (eq.properties.mag ?? 0) >= 3.5,
+    (eq) => (eq.properties.mag ?? 0) >= 4.0,
   );
 
   const handleSelect = async (eq: UsgsFeature) => {
@@ -27,17 +27,9 @@ export function ShakeMapView({ earthquakes }: ShakeMapViewProps) {
     setStatus("loading");
     setImageUrl(null);
 
-    // BMKG/EMSC events won't have a USGS detail URL
-    const source = (eq.properties as any).source;
-    if (source === "BMKG" || source === "EMSC") {
-      setStatus("no-usgs");
-      return;
-    }
-
     const detailUrl = eq.properties.detail;
     if (!detailUrl) {
-      // Fall back to USGS event page iframe using the event id
-      setStatus("iframe");
+      setStatus("not-found");
       return;
     }
 
@@ -45,27 +37,21 @@ export function ShakeMapView({ earthquakes }: ShakeMapViewProps) {
       const res = await fetch(detailUrl);
       const detail = await res.json();
       const shakemap = detail?.properties?.products?.shakemap?.[0];
-      if (shakemap) {
-        const url = shakemap.contents?.["intensity.jpg"]?.url;
-        if (url) {
-          setImageUrl(url);
-          setStatus("found");
-          return;
-        }
+      if (!shakemap) {
+        setStatus("not-found");
+        return;
       }
-      // No intensity.jpg — fall back to USGS iframe
-      setStatus("iframe");
+      const url = shakemap.contents?.["intensity.jpg"]?.url;
+      if (!url) {
+        setStatus("not-found");
+        return;
+      }
+      setImageUrl(url);
+      setStatus("found");
     } catch (err) {
       console.error("ShakeMap fetch error:", err);
-      // Still try iframe fallback on network error
-      setStatus("iframe");
+      setStatus("error");
     }
-  };
-
-  // Extract the USGS event id (e.g. "us6000abcd") from eq.id
-  const getUsgsEventId = (eq: UsgsFeature): string => {
-    // eq.id may be like "us6000abcd" or "usc000lvb5"
-    return String(eq.id).replace(/^https?:\/\/.*\//, "");
   };
 
   return (
@@ -73,13 +59,13 @@ export function ShakeMapView({ earthquakes }: ShakeMapViewProps) {
       {/* Sidebar – earthquake list */}
       <PanelCard
         title="ShakeMap Viewer"
-        subtitle={`${candidates.length} M3.5+ events`}
+        subtitle={`${candidates.length} M4.0+ events`}
       >
         {candidates.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
             <Activity className="h-10 w-10 text-muted-foreground/40" />
             <p className="text-sm text-muted-foreground">
-              No M3.5+ events in current time window.
+              No M4.0+ events in current time window.
             </p>
           </div>
         ) : (
@@ -90,9 +76,6 @@ export function ShakeMapView({ earthquakes }: ShakeMapViewProps) {
             {candidates.map((eq, idx) => {
               const isActive = selected?.id === eq.id;
               const magColor = getMagnitudeColor(eq.properties.mag);
-              const source = (eq.properties as any).source as
-                | string
-                | undefined;
               return (
                 <li key={eq.id} data-ocid={`shakemap.item.${idx + 1}`}>
                   <button
@@ -103,27 +86,12 @@ export function ShakeMapView({ earthquakes }: ShakeMapViewProps) {
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-1.5">
-                        <Badge
-                          variant="outline"
-                          className={`${magColor} font-mono text-xs font-bold`}
-                        >
-                          M{formatMagnitude(eq.properties.mag)}
-                        </Badge>
-                        {source && source !== "USGS" && (
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] px-1.5 py-0 font-semibold"
-                            style={{
-                              color: source === "BMKG" ? "#22c55e" : "#f97316",
-                              borderColor:
-                                source === "BMKG" ? "#22c55e55" : "#f9731655",
-                            }}
-                          >
-                            {source}
-                          </Badge>
-                        )}
-                      </div>
+                      <Badge
+                        variant="outline"
+                        className={`${magColor} font-mono text-xs font-bold`}
+                      >
+                        M{formatMagnitude(eq.properties.mag)}
+                      </Badge>
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {formatTimestamp(eq.properties.time)}
@@ -143,12 +111,12 @@ export function ShakeMapView({ earthquakes }: ShakeMapViewProps) {
         )}
       </PanelCard>
 
-      {/* Main panel – shakemap image or iframe */}
+      {/* Main panel – shakemap image */}
       <PanelCard
         title={selected ? selected.properties.place : "ShakeMap"}
         subtitle={
           selected
-            ? `M${formatMagnitude(selected.properties.mag)} \u00b7 ${formatTimestamp(selected.properties.time)}`
+            ? `M${formatMagnitude(selected.properties.mag)} · ${formatTimestamp(selected.properties.time)}`
             : "Select an earthquake from the list"
         }
       >
@@ -187,7 +155,7 @@ export function ShakeMapView({ earthquakes }: ShakeMapViewProps) {
             </div>
           )}
 
-          {status === "no-usgs" && (
+          {status === "not-found" && (
             <div
               className="flex flex-col items-center gap-4 text-center px-8"
               data-ocid="shakemap.error_state"
@@ -196,9 +164,9 @@ export function ShakeMapView({ earthquakes }: ShakeMapViewProps) {
                 <ImageOff className="h-10 w-10 text-muted-foreground/50" />
               </div>
               <div>
-                <p className="font-semibold text-base">ShakeMap Unavailable</p>
+                <p className="font-semibold text-base">No ShakeMap available</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  ShakeMap is only available for USGS events.
+                  No ShakeMap available for this event
                 </p>
               </div>
             </div>
@@ -228,35 +196,6 @@ export function ShakeMapView({ earthquakes }: ShakeMapViewProps) {
                 ShakeMap data provided by USGS. Intensity scale: I (not felt) to
                 X+ (extreme).
               </p>
-            </div>
-          )}
-
-          {status === "iframe" && selected && (
-            <div className="w-full space-y-3" data-ocid="shakemap.panel">
-              <div
-                className="rounded-lg overflow-hidden border border-border/40 shadow-soft"
-                style={{ height: "520px" }}
-              >
-                <iframe
-                  src={`https://earthquake.usgs.gov/earthquakes/eventpage/${getUsgsEventId(selected)}/shakemap`}
-                  title={`ShakeMap for ${selected.properties.place}`}
-                  className="w-full h-full border-0"
-                  sandbox="allow-scripts allow-same-origin allow-popups"
-                />
-              </div>
-              <div className="flex items-center justify-between px-4 pb-2">
-                <p className="text-xs text-muted-foreground">
-                  ShakeMap powered by USGS
-                </p>
-                <a
-                  href={`https://earthquake.usgs.gov/earthquakes/eventpage/${getUsgsEventId(selected)}/shakemap`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary flex items-center gap-1 hover:underline"
-                >
-                  Open in USGS <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
             </div>
           )}
         </div>
