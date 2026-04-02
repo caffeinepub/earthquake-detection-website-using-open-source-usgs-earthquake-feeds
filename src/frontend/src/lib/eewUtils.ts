@@ -4,8 +4,9 @@
  */
 
 /**
- * Estimate MMI at a given distance from epicenter using Wald et al. attenuation
- * mmi = 2.20 * mag - 1.91 * log10(distKm) - 1.4
+ * Estimate MMI at a given hypocentral distance using Wald et al. (1999) IPE:
+ * MMI = 2.20 * Mw - 1.91 * log10(R_hypo) - 1.4
+ * where R_hypo is the hypocentral distance in km.
  */
 export function getMmiFromMagAndDistance(
   mag: number,
@@ -16,13 +17,30 @@ export function getMmiFromMagAndDistance(
 }
 
 /**
- * Given a target MMI level and magnitude, compute the radius (km) at which that MMI is reached
- * Inverted from: mmi = 2.20*mag - 1.91*log10(dist) - 1.4
- * → dist = 10^((2.20*mag - 1.4 - mmi) / 1.91)
+ * Given a target MMI level, magnitude, and focal depth, compute the
+ * SURFACE (epicentral) radius in km at which that MMI level is reached.
+ *
+ * Step 1 — solve for hypocentral distance where MMI equals targetMmi:
+ *   mmi = 2.20*mag - 1.91*log10(R_hypo) - 1.4
+ *   R_hypo = 10^((2.20*mag - 1.4 - mmi) / 1.91)
+ *
+ * Step 2 — convert hypocentral distance to surface epicentral radius:
+ *   R_surface = sqrt(max(0, R_hypo² - depth²))
+ *
+ * This ensures that a deep earthquake produces much smaller felt circles
+ * than a shallow one of the same magnitude.
  */
-export function getMmiRadiusKm(mag: number, targetMmi: number): number {
+export function getMmiRadiusKm(
+  mag: number,
+  targetMmi: number,
+  depthKm = 10,
+): number {
+  const depth = Math.max(0, depthKm);
   const exp = (2.2 * mag - 1.4 - targetMmi) / 1.91;
-  return 10 ** exp;
+  const rHypo = 10 ** exp; // hypocentral distance (km)
+  // Surface epicentral radius – can only be real if rHypo > depth
+  const rSurface = Math.sqrt(Math.max(0, rHypo * rHypo - depth * depth));
+  return rSurface;
 }
 
 /**

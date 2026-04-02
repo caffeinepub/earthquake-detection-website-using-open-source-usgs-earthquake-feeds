@@ -164,8 +164,9 @@ export function EewView({ earthquakes }: EewViewProps) {
     const L = window.L;
     if (!L) return;
 
-    const [lon, lat] = selectedEq.geometry.coordinates;
+    const [lon, lat, eqDepth] = selectedEq.geometry.coordinates;
     const mag = selectedEq.properties.mag ?? 0;
+    const depthKm = typeof eqDepth === "number" && eqDepth > 0 ? eqDepth : 10;
 
     if (epicenterLayerRef.current) epicenterLayerRef.current.clearLayers();
     if (waveLayerRef.current) waveLayerRef.current.clearLayers();
@@ -174,7 +175,7 @@ export function EewView({ earthquakes }: EewViewProps) {
 
     // MMI concentric filled zones (draw from outer/low to inner/high)
     for (const mmiLevel of [...MMI_LEVELS].reverse()) {
-      const radiusKm = getMmiRadiusKm(mag, mmiLevel);
+      const radiusKm = getMmiRadiusKm(mag, mmiLevel, depthKm);
       if (radiusKm > 0 && radiusKm < 20000) {
         const color = getMmiColor(mmiLevel);
         const circle = L.circle([lat, lon], {
@@ -192,7 +193,7 @@ export function EewView({ earthquakes }: EewViewProps) {
 
     // MMI dashed boundary rings
     for (const mmiLevel of MMI_LEVELS) {
-      const radiusKm = getMmiRadiusKm(mag, mmiLevel);
+      const radiusKm = getMmiRadiusKm(mag, mmiLevel, depthKm);
       if (radiusKm > 0 && radiusKm < 20000) {
         const color = getMmiColor(mmiLevel);
         const ring = L.circle([lat, lon], {
@@ -653,7 +654,11 @@ export function EewView({ earthquakes }: EewViewProps) {
                 <tbody>
                   {MMI_LEVELS.map((mmiLevel, i) => {
                     const radiusKm = selectedEq
-                      ? getMmiRadiusKm(selectedEq.properties.mag ?? 0, mmiLevel)
+                      ? getMmiRadiusKm(
+                          selectedEq.properties.mag ?? 0,
+                          mmiLevel,
+                          selectedEq.geometry.coordinates[2] ?? 10,
+                        )
                       : null;
                     return (
                       <tr
