@@ -104,3 +104,32 @@ export function getMmiFromUsgsAlert(alert: string | null): number {
       return 1;
   }
 }
+
+/**
+ * Calculate a coordinate point at a given distance and bearing from origin.
+ * Uses the haversine / spherical law of cosines formula.
+ * bearingDeg: 0=North, 90=East, 180=South, 270=West
+ */
+export function getCircumferencePoint(
+  lat: number,
+  lon: number,
+  radiusKm: number,
+  bearingDeg: number,
+): [number, number] {
+  const R = 6371; // Earth radius km
+  const d = radiusKm / R;
+  const bearing = (bearingDeg * Math.PI) / 180;
+  const lat1 = (lat * Math.PI) / 180;
+  const lon1 = (lon * Math.PI) / 180;
+  const lat2 = Math.asin(
+    Math.sin(lat1) * Math.cos(d) +
+      Math.cos(lat1) * Math.sin(d) * Math.cos(bearing),
+  );
+  const lon2 =
+    lon1 +
+    Math.atan2(
+      Math.sin(bearing) * Math.sin(d) * Math.cos(lat1),
+      Math.cos(d) - Math.sin(lat1) * Math.sin(lat2),
+    );
+  return [(lat2 * 180) / Math.PI, (lon2 * 180) / Math.PI];
+}

@@ -1,34 +1,36 @@
 # WhoFeelAnEarthquake
 
 ## Current State
-- ShakeMapView fetches USGS detail JSON and looks for `intensity.jpg` — fails for most events because USGS only generates ShakeMaps for significant earthquakes (M5.5+). It shows "No ShakeMap available" even when a USGS event page exists.
-- EewView MMI radius formula ignores earthquake depth, so rings appear oversized for shallow events and undersized for deep ones. No city/location labels in MMI zones.
-- Data is fetched only from USGS. BMKG (Indonesia) and EMSC (European-Mediterranean) are not included.
+App sudah memiliki EEW tab dengan peta Leaflet yang menampilkan:
+- Lingkaran MMI zone (filled + dashed rings)
+- P-wave dan S-wave rings yang bergerak real-time
+- Epicenter pulsing marker
+- Info card dan impact zones table di bawah peta
+
+Belum ada label kota/wilayah di dalam masing-masing MMI ring zone.
 
 ## Requested Changes (Diff)
 
 ### Add
-- BMKG data source: `https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.json` (latest 15 Indonesia quakes)
-- EMSC data source: `https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=100&minmag=2.5` (global M2.5+)
-- New hook `useMultiSourceEarthquakes.ts` that fetches USGS + BMKG + EMSC, normalizes all to `UsgsFeature` schema, deduplicates by time+location proximity (within 50km and 60 seconds), and returns a merged array with a `source` field on properties
-- Source indicator badge (USGS / BMKG / EMSC) in earthquake list items and detail dialog
-- MMI rings on EEW map should show city/place labels (using OpenStreetMap Nominatim reverse geocoding for cities within each MMI ring at ~3 sample points per ring)
+- Fungsi utilitas untuk mengambil nama kota/kabupaten/provinsi terdekat dari koordinat menggunakan Nominatim reverse geocoding (OpenStreetMap)
+- Marker label kota di dalam setiap MMI zone ring (di tepi lingkaran, bukan di tengah) pada peta EEW
+- Label menampilkan nama kota/region terkecil yang berada di batas radius masing-masing MMI level
+- Cache hasil geocoding agar tidak spam API
 
 ### Modify
-- `ShakeMapView.tsx`: Instead of just fetching `intensity.jpg`, fall back to embedding the USGS ShakeMap event page as an iframe (`https://earthquake.usgs.gov/earthquakes/eventpage/{id}/shakemap`) when the JSON detail approach fails or no intensity.jpg is found. For BMKG/EMSC events without a USGS eventId, show the image from their own ShakeMap URL if available, or a message that ShakeMap is only available for USGS events.
-- `eewUtils.ts`: Update `getMmiRadiusKm` to accept `depth` parameter and calculate correct epicentral distance using hypocentral distance: `epicentralDist = sqrt(max(0, hypocentralDist² - depth²))`. Keep backward compatibility by defaulting depth to 10km.
-- `EewView.tsx`: Pass earthquake depth to `getMmiRadiusKm`. Add city label markers on the map at the boundary of each MMI ring using Nominatim reverse geocoding. Show source badge (USGS/BMKG/EMSC) in alert list items.
-- `EarthquakeDashboard.tsx`: Replace `useUsgsEarthquakes` with `useMultiSourceEarthquakes`, pass the merged data to all views. Add a small "Sources" badge/count in the header or stats row.
+- `EewView.tsx`: Tambahkan layer label kota di setiap MMI boundary ring, diambil via reverse geocoding pada koordinat titik-titik di sekitar radius masing-masing MMI zone
+- `eewUtils.ts`: Tambahkan helper untuk menghitung titik koordinat di circumference lingkaran MMI (cardinal points: N, E, S, W)
 
 ### Remove
-- Nothing removed
+- Tidak ada yang dihapus
 
 ## Implementation Plan
-1. Create `src/frontend/src/lib/bmkgTypes.ts` — BMKG response types
-2. Create `src/frontend/src/lib/emscTypes.ts` — EMSC/FDSN response types
-3. Create `src/frontend/src/lib/dataNormalizer.ts` — normalize BMKG + EMSC responses to `UsgsFeature` format with `source` field
-4. Create `src/frontend/src/hooks/useMultiSourceEarthquakes.ts` — merge USGS + BMKG + EMSC, deduplicate
-5. Update `eewUtils.ts` — depth-aware MMI radius
-6. Update `EewView.tsx` — pass depth to MMI radius, add Nominatim city labels on MMI ring boundaries
-7. Update `ShakeMapView.tsx` — iframe fallback for USGS events when intensity.jpg not found
-8. Update `EarthquakeDashboard.tsx` — switch to useMultiSourceEarthquakes
+1. Tambahkan helper `getCircumferencePoint(lat, lon, radiusKm, bearingDeg)` di `eewUtils.ts` untuk menghitung koordinat di tepi lingkaran
+2. Di `EewView.tsx`, buat fungsi `fetchCityLabels(lat, lon, mag, depth)` yang:
+   - Untuk setiap MMI level, hitung radius surface
+   - Ambil 1 titik di arah Timur (bearing 90°) dari epicenter pada radius tersebut
+   - Panggil Nominatim reverse geocoding untuk titik tersebut
+   - Kembalikan nama kota/kabupaten/provinsi
+3. Simpan hasil geocoding di React state (per selectedEq.id)
+4. Render label sebagai Leaflet DivIcon di tepi setiap MMI ring (arah Timur dari epicenter)
+5. Label menampilkan nama kota + MMI level dengan warna sesuai MMI
