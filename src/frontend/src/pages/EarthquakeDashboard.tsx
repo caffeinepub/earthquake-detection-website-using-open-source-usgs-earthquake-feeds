@@ -7,6 +7,7 @@ import {
   Sun,
   Table as TableIcon,
   Waves,
+  Zap,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRef, useState } from "react";
@@ -15,6 +16,7 @@ import { DashboardSummary } from "../components/earthquake/DashboardSummary";
 import { EarthquakeDetailsDialog } from "../components/earthquake/EarthquakeDetailsDialog";
 import { EarthquakeMapView } from "../components/earthquake/EarthquakeMapView";
 import { EarthquakeResultsTable } from "../components/earthquake/EarthquakeResultsTable";
+import { EewView } from "../components/earthquake/EewView";
 import { FeedAndFilterControls } from "../components/earthquake/FeedAndFilterControls";
 import { TsunamiAlertBanner } from "../components/earthquake/TsunamiAlertBanner";
 import { TsunamiView } from "../components/earthquake/TsunamiView";
@@ -23,7 +25,7 @@ import { applyFilters } from "../lib/earthquakeFilters";
 import { computeStats } from "../lib/earthquakeStats";
 import type { TimeWindow, UsgsFeature } from "../lib/usgsTypes";
 
-type ViewMode = "table" | "map" | "split" | "tsunami";
+type ViewMode = "table" | "map" | "split" | "tsunami" | "eew";
 
 export default function EarthquakeDashboard() {
   const { theme, setTheme } = useTheme();
@@ -70,6 +72,13 @@ export default function EarthquakeDashboard() {
   }
   prevTsunamiCountRef.current = tsunamiEvents.length;
 
+  // Count M5+ events in past hour for EEW badge
+  const eewAlertCount = filteredEarthquakes.filter(
+    (eq) =>
+      (eq.properties.mag ?? 0) >= 5 &&
+      Date.now() - eq.properties.time < 3600000,
+  ).length;
+
   // Compute stats
   const stats = computeStats(filteredEarthquakes, 5.0);
 
@@ -99,6 +108,7 @@ export default function EarthquakeDashboard() {
     map: "Map View",
     split: "Split View",
     tsunami: "Tsunami Warnings",
+    eew: "EEW Monitor",
   }[viewMode];
 
   return (
@@ -262,6 +272,25 @@ export default function EarthquakeDashboard() {
                   </span>
                 )}
               </Button>
+              <Button
+                variant={viewMode === "eew" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("eew")}
+                className={`gap-2 transition-all duration-200 relative ${
+                  viewMode !== "eew"
+                    ? "text-orange-400 hover:text-orange-300 border border-orange-500/40 hover:border-orange-500/70"
+                    : ""
+                }`}
+                data-ocid="eew.tab"
+              >
+                <Zap className="h-4 w-4" />
+                <span className="hidden sm:inline">EEW</span>
+                {eewAlertCount > 0 && viewMode !== "eew" && (
+                  <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white animate-pulse">
+                    {eewAlertCount}
+                  </span>
+                )}
+              </Button>
             </div>
           </div>
 
@@ -324,6 +353,10 @@ export default function EarthquakeDashboard() {
                   tsunamiEvents={tsunamiEvents}
                   onEventSelect={handleEarthquakeSelect}
                 />
+              )}
+
+              {viewMode === "eew" && (
+                <EewView earthquakes={filteredEarthquakes} />
               )}
             </div>
           )}

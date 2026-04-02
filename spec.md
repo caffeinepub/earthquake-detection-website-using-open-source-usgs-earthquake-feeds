@@ -1,41 +1,40 @@
-# WhoFeelAnEarthquake
+# WhoFeelAnEarthquake - EEW (Earthquake Early Warning) Tab
 
 ## Current State
-Full earthquake detection dashboard built with React + TypeScript + Leaflet + USGS API. Features:
-- EarthquakeDashboard page with header, filter controls, summary stats, table/map/split views
-- EarthquakeMapView with Leaflet, tectonic boundaries, terrain mode toggle, fullscreen control
-- EarthquakeResultsTable with virtualization
-- EarthquakeDetailsDialog with moment tensor & MMI info
-- FeedAndFilterControls with time window, magnitude slider, search, refresh
-- DashboardSummary stats cards
-- Dark/light theme via next-themes
-- OKLCH color tokens in index.css
+The app has 4 view tabs: Table, Map, Split, Tsunami. It fetches USGS earthquake data and displays it in a Leaflet map with markers, table, and tsunami warnings. The USGS data includes `mmi`, `cdi`, `alert`, magnitude, coordinates, and time fields.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Full-screen loading animation on initial page load (before data/UI appears)
-- Missing CSS variables for `--success`, `--success-foreground`, `--warning`, `--warning-foreground` in index.css
-- Leaflet fullscreen CSS fix: when fullscreen, map tile layers must re-render (invalidateSize call after transition)
-- CSS rule: `.leaflet-control-container` buttons get proper styling
+- New `EEW` tab (Earthquake Early Warning) in the view mode toggle
+- New `EewView.tsx` component with:
+  - Left panel: list of recent significant earthquakes as "EEW Alerts" (sorted by time, newest first, preferably past hour/day)
+  - Right panel: Leaflet map showing the selected alert's epicenter with:
+    - Animated expanding P-wave ring (faster, blue)
+    - Animated expanding S-wave ring (slower, red/orange)
+    - MMI intensity contour rings (color-coded concentric circles: I–X+)
+    - Epicenter crosshair marker
+  - MMI scale legend panel
+  - Alert info card: magnitude, depth, location, time since event, PAGER alert level
+  - "Impacted Areas" table/list showing estimated MMI at distance bands
+- New `useEewAlerts.ts` hook that:
+  - Derives EEW alerts from the existing USGS data (past 24h, magnitude >= 3.0)
+  - Auto-selects the most recent significant event
+  - Refreshes every 60 seconds
+- New `eewUtils.ts` lib:
+  - MMI estimation from magnitude and distance (using Wald et al. attenuation)
+  - P-wave and S-wave radius calculation from elapsed seconds
+  - MMI -> color mapping (I=white, II-III=light green, IV-V=yellow, VI=orange, VII=red-orange, VIII=red, IX=dark red, X+=maroon)
+  - MMI -> felt description labels
 
 ### Modify
-- Fix index.css to add success/warning OKLCH color variables (currently missing, causing broken badge colors)
-- Fix map fullscreen going black: ensure map container has correct height and invalidateSize fires properly after fullscreen transition
-- Fix missing `--subtitle` text under the main title to say: "Latest real-time earthquake information around the world"
-- Ensure footer says: "© 2026 WhoFeelAnEarthquake. Powered by USGS."
-- Ensure all filter controls (Time Window select, Magnitude slider, Search input, Refresh button) are fully functional with correct z-index
-- Table must be fully visible (no cropped bottom), scrollable, responsive on all devices
-- Loading state: replace skeleton with a full-page animated loading screen
+- `EarthquakeDashboard.tsx`: add `"eew"` to `ViewMode` type and add the EEW tab button (with a "pulse" icon like Radio/Zap) in the tab row
 
 ### Remove
-- Nothing to remove
+- Nothing removed
 
 ## Implementation Plan
-1. Add full-screen loading animation component (LoadingScreen) shown while `isLoading` is true
-2. Add missing OKLCH color variables for success/warning to index.css
-3. Fix Leaflet fullscreen black-screen issue with proper invalidateSize timing
-4. Add h2 subtitle under main title
-5. Fix footer copyright text
-6. Ensure table scrolls properly and is not cropped
-7. Validate and build
+1. Create `src/frontend/src/lib/eewUtils.ts` - MMI attenuation math, wave radius calc, color/label maps
+2. Create `src/frontend/src/hooks/useEewAlerts.ts` - derive EEW alerts from props/USGS data
+3. Create `src/frontend/src/components/earthquake/EewView.tsx` - full EEW panel with Leaflet map, animated rings, MMI legend, alert list
+4. Update `EarthquakeDashboard.tsx` - add `eew` view mode, tab button, and render `<EewView>`
