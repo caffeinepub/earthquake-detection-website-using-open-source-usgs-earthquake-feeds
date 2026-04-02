@@ -96,6 +96,30 @@
   }
 }
 
+/* ── Thin custom scrollbar (4px) ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(40% 0.03 280) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: oklch(40% 0.03 280);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: oklch(50% 0.05 280);
+}
+
 /* Glassmorphism effect */
 .glass-effect {
   background: oklch(var(--background) / 0.8);
