@@ -6,21 +6,24 @@ import {
   Moon,
   Sun,
   Table as TableIcon,
+  Waves,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { DashboardSummary } from "../components/earthquake/DashboardSummary";
 import { EarthquakeDetailsDialog } from "../components/earthquake/EarthquakeDetailsDialog";
 import { EarthquakeMapView } from "../components/earthquake/EarthquakeMapView";
 import { EarthquakeResultsTable } from "../components/earthquake/EarthquakeResultsTable";
 import { FeedAndFilterControls } from "../components/earthquake/FeedAndFilterControls";
+import { TsunamiAlertBanner } from "../components/earthquake/TsunamiAlertBanner";
+import { TsunamiView } from "../components/earthquake/TsunamiView";
 import { useUsgsEarthquakes } from "../hooks/useUsgsEarthquakes";
 import { applyFilters } from "../lib/earthquakeFilters";
 import { computeStats } from "../lib/earthquakeStats";
 import type { TimeWindow, UsgsFeature } from "../lib/usgsTypes";
 
-type ViewMode = "table" | "map" | "split";
+type ViewMode = "table" | "map" | "split" | "tsunami";
 
 export default function EarthquakeDashboard() {
   const { theme, setTheme } = useTheme();
@@ -43,6 +46,10 @@ export default function EarthquakeDashboard() {
     null,
   );
 
+  // Tsunami banner dismiss state (per-session, resets on new data)
+  const [tsunamiBannerDismissed, setTsunamiBannerDismissed] = useState(false);
+  const prevTsunamiCountRef = useRef(0);
+
   // Fetch earthquake data
   const { data, isLoading, isError, error, forceRefresh } =
     useUsgsEarthquakes(timeWindow);
@@ -51,6 +58,17 @@ export default function EarthquakeDashboard() {
   const filteredEarthquakes = data
     ? applyFilters(data.features, timeWindow, minMagnitude, searchQuery)
     : [];
+
+  // Tsunami-flagged events
+  const tsunamiEvents = filteredEarthquakes.filter(
+    (eq) => eq.properties.tsunami === 1,
+  );
+
+  // Re-show banner if new tsunami events appear after a refresh
+  if (tsunamiEvents.length > prevTsunamiCountRef.current) {
+    setTsunamiBannerDismissed(false);
+  }
+  prevTsunamiCountRef.current = tsunamiEvents.length;
 
   // Compute stats
   const stats = computeStats(filteredEarthquakes, 5.0);
@@ -75,6 +93,13 @@ export default function EarthquakeDashboard() {
 
   // Determine if auto-fit should be enabled (for Past Hour view)
   const shouldAutoFitBounds = timeWindow === "hour";
+
+  const viewTitle = {
+    table: "Table View",
+    map: "Map View",
+    split: "Split View",
+    tsunami: "Tsunami Warnings",
+  }[viewMode];
 
   return (
     <>
@@ -155,21 +180,39 @@ export default function EarthquakeDashboard() {
             />
           </div>
 
+          {/* Tsunami Alert Banner */}
+          {!isLoading && !isError && (
+            <div className="animate-fade-in relative z-20">
+              <TsunamiAlertBanner
+                tsunamiEvents={tsunamiEvents}
+                dismissed={tsunamiBannerDismissed}
+                onDismiss={() => setTsunamiBannerDismissed(true)}
+              />
+            </div>
+          )}
+
           {/* Summary Cards */}
           {!isLoading && !isError && (
             <div className="animate-fade-in">
-              <DashboardSummary stats={stats} threshold={5.0} />
+              <DashboardSummary
+                stats={stats}
+                threshold={5.0}
+                tsunamiCount={tsunamiEvents.length}
+              />
             </div>
           )}
 
           {/* View Mode Toggle */}
           <div className="flex flex-wrap items-center justify-between gap-4 animate-fade-in">
             <h3 className="text-xl sm:text-2xl font-bold tracking-tight">
-              {viewMode === "table" && "Table View"}
-              {viewMode === "map" && "Map View"}
-              {viewMode === "split" && "Split View"}
+              {viewTitle}
+              {viewMode === "tsunami" && tsunamiEvents.length > 0 && (
+                <span className="ml-3 inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white text-xs font-bold animate-pulse">
+                  {tsunamiEvents.length}
+                </span>
+              )}
             </h3>
-            <div className="flex gap-2 p-1 bg-muted/50 rounded-lg backdrop-blur-sm">
+            <div className="flex flex-wrap gap-2 p-1 bg-muted/50 rounded-lg backdrop-blur-sm">
               <Button
                 variant={viewMode === "table" ? "default" : "ghost"}
                 size="sm"
@@ -199,6 +242,25 @@ export default function EarthquakeDashboard() {
               >
                 <Columns className="h-4 w-4" />
                 <span className="hidden sm:inline">Split</span>
+              </Button>
+              <Button
+                variant={viewMode === "tsunami" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("tsunami")}
+                className={`gap-2 transition-all duration-200 relative ${
+                  viewMode !== "tsunami" && tsunamiEvents.length > 0
+                    ? "text-red-400 hover:text-red-300 border border-red-500/40 hover:border-red-500/70"
+                    : ""
+                }`}
+                data-ocid="tsunami.tab"
+              >
+                <Waves className="h-4 w-4" />
+                <span className="hidden sm:inline">Tsunami</span>
+                {tsunamiEvents.length > 0 && viewMode !== "tsunami" && (
+                  <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white animate-pulse">
+                    {tsunamiEvents.length}
+                  </span>
+                )}
               </Button>
             </div>
           </div>
@@ -253,6 +315,13 @@ export default function EarthquakeDashboard() {
                     autoFitBounds={shouldAutoFitBounds}
                   />
                 </div>
+              )}
+
+              {viewMode === "tsunami" && (
+                <TsunamiView
+                  tsunamiEvents={tsunamiEvents}
+                  onEventSelect={handleEarthquakeSelect}
+                />
               )}
             </div>
           )}

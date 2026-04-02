@@ -72,13 +72,18 @@ export function EarthquakeResultsTable({
       title="Earthquake Events"
       subtitle={`${earthquakes.length} ${earthquakes.length === 1 ? "event" : "events"}`}
       noPadding
+      className={constrainedHeight ? "flex flex-col" : ""}
     >
-      <div className="border-t border-border/30">
+      <div className="border-t border-border/30 flex flex-col flex-1">
         <div
           ref={containerRef}
           onScroll={onScroll}
-          className="overflow-y-auto overflow-x-hidden"
-          style={{ maxHeight: `${scrollHeight}px` }}
+          className="overflow-y-auto overflow-x-hidden flex-1"
+          style={
+            constrainedHeight
+              ? { height: `${scrollHeight}px` }
+              : { maxHeight: `${scrollHeight}px` }
+          }
         >
           <Table className="w-full table-fixed">
             <TableHeader className="sticky top-0 bg-card/95 backdrop-blur-sm z-10 border-b border-border/40">

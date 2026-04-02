@@ -119,6 +119,70 @@
     oklch(var(--foreground) / 0.16);
 }
 
+/* Tsunami shimmer animation */
+@keyframes tsunami-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-tsunami-shimmer {
+  animation: tsunami-shimmer 2.4s ease-in-out infinite;
+}
+
+/* Tsunami marker styles (Leaflet DivIcon) */
+.tsunami-marker-ring {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.tsunami-marker-ring::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 3px solid #ef4444;
+  animation: tsunami-ring-pulse 1.2s ease-out infinite;
+  opacity: 0;
+}
+
+.tsunami-marker-ring::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid #f97316;
+  animation: tsunami-ring-pulse 1.2s ease-out 0.4s infinite;
+  opacity: 0;
+}
+
+@keyframes tsunami-ring-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.tsunami-marker-dot {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fca5a5, #ef4444);
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7), 0 0 16px rgba(239, 68, 68, 0.4);
+}
+
 /* Leaflet z-index stacking with explicit tile-pane visibility */
 .leaflet-pane {
   z-index: auto;

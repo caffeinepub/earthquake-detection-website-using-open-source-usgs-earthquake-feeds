@@ -52,10 +52,24 @@ export function createEarthquakeMarker(
   lat: number,
   lon: number,
   magnitude: number | null,
+  isTsunami = false,
 ): LeafletMarker | null {
   if (!isLeafletLoaded()) return null;
 
   const L = window.L;
+
+  if (isTsunami) {
+    // Use DivIcon for tsunami markers to support CSS pulse ring
+    const radius =
+      magnitude !== null ? Math.max(6, Math.min(magnitude * 2.5, 24)) : 8;
+    const icon = L.divIcon({
+      className: "",
+      html: `<div class="tsunami-marker-ring" style="width:${radius * 2}px;height:${radius * 2}px;"><div class="tsunami-marker-dot"></div></div>`,
+      iconSize: [radius * 2, radius * 2],
+      iconAnchor: [radius, radius],
+    });
+    return L.marker([lat, lon], { icon });
+  }
 
   // Color based on magnitude
   let color = "#64748b"; // default gray
