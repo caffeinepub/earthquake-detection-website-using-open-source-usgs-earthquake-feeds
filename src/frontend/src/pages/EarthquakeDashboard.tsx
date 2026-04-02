@@ -297,6 +297,7 @@ export default function EarthquakeDashboard() {
                   earthquakes={filteredEarthquakes}
                   onMarkerClick={handleEarthquakeSelect}
                   autoFitBounds={shouldAutoFitBounds}
+                  selectedEarthquake={selectedEarthquake}
                 />
               )}
 
@@ -313,6 +314,7 @@ export default function EarthquakeDashboard() {
                     onMarkerClick={handleEarthquakeSelect}
                     constrainedHeight={600}
                     autoFitBounds={shouldAutoFitBounds}
+                    selectedEarthquake={selectedEarthquake}
                   />
                 </div>
               )}

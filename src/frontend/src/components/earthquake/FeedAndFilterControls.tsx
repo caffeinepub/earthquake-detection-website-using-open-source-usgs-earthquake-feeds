@@ -99,7 +99,7 @@ export function FeedAndFilterControls({
               <Slider
                 id="min-magnitude"
                 min={0}
-                max={9}
+                max={9.8}
                 step={0.1}
                 value={[minMagnitude]}
                 onValueChange={(values) => onMinMagnitudeChange(values[0])}

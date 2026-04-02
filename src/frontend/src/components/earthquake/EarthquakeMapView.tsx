@@ -17,6 +17,7 @@ interface EarthquakeMapViewProps {
   onMarkerClick?: (earthquake: UsgsFeature) => void;
   constrainedHeight?: number;
   autoFitBounds?: boolean;
+  selectedEarthquake?: UsgsFeature | null;
 }
 
 export function EarthquakeMapView({
@@ -24,6 +25,7 @@ export function EarthquakeMapView({
   onMarkerClick,
   constrainedHeight,
   autoFitBounds = false,
+  selectedEarthquake,
 }: EarthquakeMapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<LeafletMap | null>(null);
@@ -35,8 +37,17 @@ export function EarthquakeMapView({
   const fullscreenControlRef = useRef<HTMLButtonElement | null>(null);
   const tectonicToggleRef = useRef<HTMLButtonElement | null>(null);
   const terrainToggleRef = useRef<HTMLButtonElement | null>(null);
+  const shakemapToggleRef = useRef<HTMLButtonElement | null>(null);
+  const toggleShakemapRef = useRef<() => void>(() => {});
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const shakemapLayerRef = useRef<any | null>(null);
+  const shakemapDataRef = useRef<{
+    url: string;
+    bounds: [[number, number], [number, number]];
+  } | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [showShakemap, setShowShakemap] = useState(false);
+  const [shakemapAvailable, setShakemapAvailable] = useState(false);
   const [showTectonics, setShowTectonics] = useState(false);
   const [tectonicDataLoaded, setTectonicDataLoaded] = useState(false);
   const hasAutoFittedRef = useRef(false);
@@ -185,6 +196,182 @@ export function EarthquakeMapView({
       mapInstanceRef.current.removeLayer(tectonicLayerRef.current);
     }
   }, [showTectonics, tectonicDataLoaded, loadTectonicBoundaries]);
+
+  // Toggle shakemap visibility
+  const toggleShakemap = useCallback(() => {
+    setShowShakemap((prev) => {
+      const next = !prev;
+      if (next) {
+        if (shakemapDataRef.current) {
+          // apply in next tick so state is set
+          setTimeout(() => {
+            if (
+              !shakemapDataRef.current ||
+              !mapInstanceRef.current ||
+              !isLeafletLoaded()
+            )
+              return;
+            const L = window.L;
+            if (!L) return;
+            if (shakemapLayerRef.current) {
+              try {
+                mapInstanceRef.current.removeLayer(shakemapLayerRef.current);
+              } catch (_e) {
+                /* ignore */
+              }
+              shakemapLayerRef.current = null;
+            }
+            const { url, bounds } = shakemapDataRef.current;
+            const overlay = L.imageOverlay(url, bounds, {
+              opacity: 0.7,
+              zIndex: 500,
+              attribution: "\u00a9 USGS ShakeMap",
+            });
+            overlay.addTo(mapInstanceRef.current);
+            shakemapLayerRef.current = overlay;
+            mapInstanceRef.current.fitBounds(bounds, { padding: [20, 20] });
+          }, 0);
+        } else {
+          console.warn("No ShakeMap data available for this earthquake.");
+        }
+      } else {
+        if (shakemapLayerRef.current && mapInstanceRef.current) {
+          try {
+            mapInstanceRef.current.removeLayer(shakemapLayerRef.current);
+          } catch (_e) {
+            /* ignore */
+          }
+          shakemapLayerRef.current = null;
+        }
+      }
+      return next;
+    });
+  }, []);
+  toggleShakemapRef.current = toggleShakemap;
+
+  // Fetch ShakeMap data when selectedEarthquake changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: selectedEarthquake is the trigger
+  useEffect(() => {
+    if (!selectedEarthquake) {
+      shakemapDataRef.current = null;
+      setShakemapAvailable(false);
+      if (shakemapLayerRef.current && mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.removeLayer(shakemapLayerRef.current);
+        } catch (_e) {
+          /* ignore */
+        }
+        shakemapLayerRef.current = null;
+      }
+      setShowShakemap(false);
+      return;
+    }
+
+    const detailUrl = selectedEarthquake.properties.detail;
+    if (!detailUrl) {
+      shakemapDataRef.current = null;
+      setShakemapAvailable(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch(detailUrl)
+      .then((res) => res.json())
+      .then((eventDetail) => {
+        if (cancelled) return;
+        const shakemapProduct =
+          eventDetail?.properties?.products?.shakemap?.[0];
+        if (!shakemapProduct) {
+          shakemapDataRef.current = null;
+          setShakemapAvailable(false);
+          if (shakemapLayerRef.current && mapInstanceRef.current) {
+            try {
+              mapInstanceRef.current.removeLayer(shakemapLayerRef.current);
+            } catch (_e) {
+              /* ignore */
+            }
+            shakemapLayerRef.current = null;
+          }
+          setShowShakemap(false);
+          return;
+        }
+
+        const imageUrl = shakemapProduct.contents?.["intensity.jpg"]?.url;
+        const props = shakemapProduct.properties || {};
+        const minLat = Number.parseFloat(props["minimum-latitude"]);
+        const maxLat = Number.parseFloat(props["maximum-latitude"]);
+        const minLon = Number.parseFloat(props["minimum-longitude"]);
+        const maxLon = Number.parseFloat(props["maximum-longitude"]);
+
+        if (
+          !imageUrl ||
+          Number.isNaN(minLat) ||
+          Number.isNaN(maxLat) ||
+          Number.isNaN(minLon) ||
+          Number.isNaN(maxLon)
+        ) {
+          shakemapDataRef.current = null;
+          setShakemapAvailable(false);
+          if (shakemapLayerRef.current && mapInstanceRef.current) {
+            try {
+              mapInstanceRef.current.removeLayer(shakemapLayerRef.current);
+            } catch (_e) {
+              /* ignore */
+            }
+            shakemapLayerRef.current = null;
+          }
+          setShowShakemap(false);
+          return;
+        }
+
+        shakemapDataRef.current = {
+          url: imageUrl,
+          bounds: [
+            [minLat, minLon],
+            [maxLat, maxLon],
+          ],
+        };
+        setShakemapAvailable(true);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.warn("Failed to fetch ShakeMap data:", err);
+          shakemapDataRef.current = null;
+          setShakemapAvailable(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedEarthquake]);
+
+  // Update shakemap toggle button appearance
+  useEffect(() => {
+    if (!shakemapToggleRef.current) return;
+    const button = shakemapToggleRef.current;
+    if (!shakemapAvailable) {
+      button.style.opacity = "0.4";
+      button.style.cursor = "not-allowed";
+      button.title = "No ShakeMap available for this event";
+    } else {
+      button.style.opacity = "1";
+      button.style.cursor = "pointer";
+      button.title = "Toggle USGS ShakeMap overlay";
+    }
+    if (showShakemap && shakemapAvailable) {
+      button.classList.add("active");
+      button.style.backgroundColor = "#f59e0b";
+      button.style.color = "#fff";
+    } else {
+      button.classList.remove("active");
+      if (shakemapAvailable) {
+        button.style.backgroundColor = "";
+        button.style.color = "";
+      }
+    }
+  }, [showShakemap, shakemapAvailable]);
 
   // Switch tile layer based on terrain mode
   const switchTileLayer = useCallback((mode: "light" | "dark") => {
@@ -382,6 +569,41 @@ export function EarthquakeMapView({
     });
     map.addControl(new TectonicToggleControl());
 
+    // ShakeMap toggle control
+    const ShakemapToggleControl = L.Control.extend({
+      options: { position: "topleft" },
+      onAdd: () => {
+        const container = L.DomUtil.create(
+          "div",
+          "leaflet-bar leaflet-control",
+        );
+        const button = L.DomUtil.create(
+          "button",
+          "leaflet-control-shakemap-toggle",
+          container,
+        );
+        button.innerHTML = `<span style="font-size:11px;font-weight:bold;letter-spacing:-0.5px;">SM</span>`;
+        button.title = "Toggle USGS ShakeMap overlay";
+        button.setAttribute("aria-label", "Toggle ShakeMap overlay");
+        button.type = "button";
+        button.style.minWidth = "30px";
+        button.style.minHeight = "30px";
+        button.style.display = "flex";
+        button.style.alignItems = "center";
+        button.style.justifyContent = "center";
+        L.DomEvent.disableClickPropagation(button);
+        L.DomEvent.disableScrollPropagation(button);
+        L.DomEvent.on(button, "click", (e) => {
+          L.DomEvent.stopPropagation(e);
+          L.DomEvent.preventDefault(e);
+          toggleShakemapRef.current();
+        });
+        shakemapToggleRef.current = button;
+        return container;
+      },
+    });
+    map.addControl(new ShakemapToggleControl());
+
     // Fullscreen control
     const FullscreenControl = L.Control.extend({
       options: { position: "topright" },
@@ -475,6 +697,7 @@ export function EarthquakeMapView({
       markersLayerRef.current = null;
       tectonicLayerRef.current = null;
       tileLayerRef.current = null;
+      shakemapLayerRef.current = null;
     };
   }, [
     handleMapMoveEnd,
