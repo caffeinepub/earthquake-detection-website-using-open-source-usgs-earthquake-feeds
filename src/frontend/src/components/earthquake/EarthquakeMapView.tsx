@@ -1,53 +1,83 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
-import { PanelCard } from './PanelCard';
-import { UsgsFeature } from '../../lib/usgsTypes';
-import { formatMagnitude } from '../../lib/formatters';
-import { isLeafletLoaded, createEarthquakeMarker, LeafletMap, LeafletLayerGroup } from '../../lib/leafletTypes';
-import { filterEarthquakesInBounds } from '../../lib/earthquakeMapBounds';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useMapTerrainMode } from "../../hooks/useMapTerrainMode";
+import { filterEarthquakesInBounds } from "../../lib/earthquakeMapBounds";
+import { formatMagnitude } from "../../lib/formatters";
+import {
+  type LeafletLayerGroup,
+  type LeafletMap,
+  type LeafletTileLayer,
+  createEarthquakeMarker,
+  isLeafletLoaded,
+} from "../../lib/leafletTypes";
+import type { UsgsFeature } from "../../lib/usgsTypes";
+import { PanelCard } from "./PanelCard";
 
 interface EarthquakeMapViewProps {
   earthquakes: UsgsFeature[];
   onMarkerClick?: (earthquake: UsgsFeature) => void;
   constrainedHeight?: number;
+  autoFitBounds?: boolean;
 }
 
-export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeight }: EarthquakeMapViewProps) {
+export function EarthquakeMapView({
+  earthquakes,
+  onMarkerClick,
+  constrainedHeight,
+  autoFitBounds = false,
+}: EarthquakeMapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<LeafletMap | null>(null);
   const markersLayerRef = useRef<LeafletLayerGroup | null>(null);
+  const tectonicLayerRef = useRef<LeafletLayerGroup | null>(null);
+  const tileLayerRef = useRef<LeafletTileLayer | null>(null);
   const allEarthquakesRef = useRef<UsgsFeature[]>([]);
   const updateTimeoutRef = useRef<number | null>(null);
   const fullscreenControlRef = useRef<HTMLButtonElement | null>(null);
+  const tectonicToggleRef = useRef<HTMLButtonElement | null>(null);
+  const terrainToggleRef = useRef<HTMLButtonElement | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [showTectonics, setShowTectonics] = useState(false);
+  const [tectonicDataLoaded, setTectonicDataLoaded] = useState(false);
+  const hasAutoFittedRef = useRef(false);
+  const { terrainMode, toggleTerrainMode } = useMapTerrainMode();
 
   // Store all earthquakes for bounds filtering
   allEarthquakesRef.current = earthquakes;
 
   // Update visible markers based on current map bounds
   const updateVisibleMarkers = useCallback(() => {
-    if (!mapInstanceRef.current || !markersLayerRef.current || !isLeafletLoaded()) return;
+    if (
+      !mapInstanceRef.current ||
+      !markersLayerRef.current ||
+      !isLeafletLoaded()
+    )
+      return;
 
     const map = mapInstanceRef.current;
     const markersLayer = markersLayerRef.current;
 
     // Get current map bounds
     const bounds = map.getBounds();
-    
+
     // Filter earthquakes to visible bounds (with 10% padding)
     const visibleEarthquakes = filterEarthquakesInBounds(
       allEarthquakesRef.current,
       bounds,
-      0.1
+      0.1,
     );
 
     // Clear existing markers
     markersLayer.clearLayers();
 
     // Add markers only for visible earthquakes
-    visibleEarthquakes.forEach((earthquake) => {
+    for (const earthquake of visibleEarthquakes) {
       const [lon, lat] = earthquake.geometry.coordinates;
-      const marker = createEarthquakeMarker(lat, lon, earthquake.properties.mag);
+      const marker = createEarthquakeMarker(
+        lat,
+        lon,
+        earthquake.properties.mag,
+      );
 
       if (marker) {
         // Add popup with autoPan disabled to prevent map jumping
@@ -64,18 +94,16 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
         marker.bindPopup(popupContent, { autoPan: false });
 
         // Handle marker click - prevent default navigation behavior
-        marker.on('click', (e) => {
+        marker.on("click", (e) => {
           // Stop event propagation and prevent default behavior
           if (e.originalEvent) {
             e.originalEvent.preventDefault();
             e.originalEvent.stopPropagation();
           }
-          
+
           // Use Leaflet's DomEvent to stop propagation
-          if (window.L && window.L.DomEvent) {
-            window.L.DomEvent.stopPropagation(e);
-            window.L.DomEvent.preventDefault(e);
-          }
+          window.L?.DomEvent?.stopPropagation(e);
+          window.L?.DomEvent?.preventDefault(e);
 
           // Call the callback without triggering navigation
           if (onMarkerClick) {
@@ -85,7 +113,7 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
 
         markersLayer.addLayer(marker);
       }
-    });
+    }
   }, [onMarkerClick]);
 
   // Debounced update on map move/zoom
@@ -97,6 +125,148 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
       updateVisibleMarkers();
     }, 150);
   }, [updateVisibleMarkers]);
+
+  // Load tectonic boundaries GeoJSON
+  const loadTectonicBoundaries = useCallback(async () => {
+    if (
+      !mapInstanceRef.current ||
+      !tectonicLayerRef.current ||
+      !isLeafletLoaded() ||
+      tectonicDataLoaded
+    )
+      return;
+
+    const L = window.L;
+    if (!L) return;
+
+    try {
+      // Fetch tectonic boundaries from GitHub
+      const response = await fetch(
+        "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json",
+      );
+      const geojsonData = await response.json();
+
+      // Add GeoJSON layer with custom styling
+      L.geoJSON(geojsonData, {
+        style: {
+          color: "#ff6b35",
+          weight: 2,
+          opacity: 0.7,
+        },
+      }).addTo(tectonicLayerRef.current!);
+
+      setTectonicDataLoaded(true);
+    } catch (error) {
+      console.error("Failed to load tectonic boundaries:", error);
+    }
+  }, [tectonicDataLoaded]);
+
+  // Toggle tectonic boundaries visibility
+  const toggleTectonicBoundaries = useCallback(() => {
+    if (!mapInstanceRef.current || !tectonicLayerRef.current) return;
+
+    const newShowState = !showTectonics;
+    setShowTectonics(newShowState);
+
+    if (newShowState) {
+      // Show layer and load data if not already loaded
+      mapInstanceRef.current.addLayer(tectonicLayerRef.current);
+      if (!tectonicDataLoaded) {
+        loadTectonicBoundaries();
+      }
+    } else {
+      // Hide layer
+      mapInstanceRef.current.removeLayer(tectonicLayerRef.current);
+    }
+  }, [showTectonics, tectonicDataLoaded, loadTectonicBoundaries]);
+
+  // Switch tile layer based on terrain mode
+  const switchTileLayer = useCallback((mode: "light" | "dark") => {
+    if (!mapInstanceRef.current || !isLeafletLoaded()) return;
+
+    const L = window.L;
+    if (!L) return;
+
+    const map = mapInstanceRef.current;
+
+    // Remove existing tile layer
+    if (tileLayerRef.current) {
+      map.removeLayer(tileLayerRef.current);
+    }
+
+    // Create new tile layer based on mode
+    let newTileLayer: LeafletTileLayer;
+    if (mode === "dark") {
+      // Dark terrain tiles from CartoDB Dark Matter
+      newTileLayer = L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        {
+          attribution: "© OpenStreetMap contributors, © CARTO",
+          noWrap: false,
+          className: "dark-terrain-tiles",
+        },
+      );
+    } else {
+      // Light terrain tiles from OpenStreetMap
+      newTileLayer = L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          attribution: "© OpenStreetMap contributors",
+          noWrap: false,
+          className: "light-terrain-tiles",
+        },
+      );
+    }
+
+    // Add new tile layer to map
+    newTileLayer.addTo(map);
+    tileLayerRef.current = newTileLayer;
+  }, []);
+
+  // Handle terrain toggle
+  const handleTerrainToggle = useCallback(() => {
+    toggleTerrainMode();
+  }, [toggleTerrainMode]);
+
+  // Auto-fit bounds when earthquakes change and autoFitBounds is true
+  useEffect(() => {
+    if (
+      !mapInstanceRef.current ||
+      !isLeafletLoaded() ||
+      !autoFitBounds ||
+      earthquakes.length === 0
+    )
+      return;
+
+    const L = window.L;
+    if (!L) return;
+
+    // Only auto-fit once per dataset change
+    if (hasAutoFittedRef.current) return;
+
+    // Create bounds from all earthquake coordinates
+    const bounds = L.latLngBounds(
+      earthquakes.map((eq) => {
+        const [lon, lat] = eq.geometry.coordinates;
+        return L.latLng(lat, lon);
+      }),
+    );
+
+    // Fit map to bounds with padding
+    if (bounds.isValid()) {
+      mapInstanceRef.current.fitBounds(bounds, {
+        padding: [50, 50],
+        maxZoom: 8,
+      });
+      hasAutoFittedRef.current = true;
+    }
+  }, [earthquakes, autoFitBounds]);
+
+  // Reset auto-fit flag when autoFitBounds changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally react on autoFitBounds
+  useEffect(() => {
+    hasAutoFittedRef.current = false;
+  }, [autoFitBounds]);
 
   // Initialize map
   useEffect(() => {
@@ -112,17 +282,42 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
       minZoom: 2,
       maxZoom: 18,
       worldCopyJump: true,
-      maxBounds: [[-90, -180], [90, 180]],
+      maxBounds: [
+        [-90, -180],
+        [90, 180],
+      ],
       maxBoundsViscosity: 0.5,
     });
 
-    // Add tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      noWrap: false,
-    }).addTo(map);
+    // Add initial tile layer based on stored terrain mode
+    let initialTileLayer: LeafletTileLayer;
+    if (terrainMode === "dark") {
+      initialTileLayer = L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        {
+          attribution: "© OpenStreetMap contributors, © CARTO",
+          noWrap: false,
+          className: "dark-terrain-tiles",
+        },
+      );
+    } else {
+      initialTileLayer = L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          attribution: "© OpenStreetMap contributors",
+          noWrap: false,
+          className: "light-terrain-tiles",
+        },
+      );
+    }
+    initialTileLayer.addTo(map);
+    tileLayerRef.current = initialTileLayer;
 
-    // Create markers layer
+    // Create tectonic boundaries layer (initially not added to map)
+    const tectonicLayer = L.layerGroup();
+    tectonicLayerRef.current = tectonicLayer;
+
+    // Create markers layer (on top of tectonic layer)
     const markersLayer = L.layerGroup().addTo(map);
 
     // Store references
@@ -130,39 +325,141 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
     markersLayerRef.current = markersLayer;
 
     // Listen to map move/zoom events
-    map.on('moveend', handleMapMoveEnd);
-    map.on('zoomend', handleMapMoveEnd);
+    map.on("moveend", handleMapMoveEnd);
+    map.on("zoomend", handleMapMoveEnd);
+
+    // Create custom terrain toggle control
+    const TerrainToggleControl = L.Control.extend({
+      options: {
+        position: "topleft",
+      },
+      onAdd: () => {
+        const container = L.DomUtil.create(
+          "div",
+          "leaflet-bar leaflet-control",
+        );
+        const button = L.DomUtil.create(
+          "button",
+          "leaflet-control-terrain-toggle",
+          container,
+        );
+
+        button.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        `;
+        button.title = "Toggle map terrain style";
+        button.setAttribute("aria-label", "Toggle map terrain style");
+        button.type = "button";
+
+        // Prevent default anchor behavior and stop propagation
+        L.DomEvent.disableClickPropagation(button);
+        L.DomEvent.disableScrollPropagation(button);
+
+        L.DomEvent.on(button, "click", (e) => {
+          L.DomEvent.stopPropagation(e);
+          L.DomEvent.preventDefault(e);
+          handleTerrainToggle();
+        });
+
+        terrainToggleRef.current = button;
+        return container;
+      },
+    });
+
+    map.addControl(new TerrainToggleControl());
+
+    // Create custom tectonic boundaries toggle control
+    const TectonicToggleControl = L.Control.extend({
+      options: {
+        position: "topleft",
+      },
+      onAdd: () => {
+        const container = L.DomUtil.create(
+          "div",
+          "leaflet-bar leaflet-control",
+        );
+        const button = L.DomUtil.create(
+          "button",
+          "leaflet-control-tectonic-toggle",
+          container,
+        );
+
+        button.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        `;
+        button.title = "Toggle tectonic boundaries";
+        button.setAttribute("aria-label", "Toggle tectonic boundaries");
+        button.type = "button";
+
+        // Prevent default anchor behavior and stop propagation
+        L.DomEvent.disableClickPropagation(button);
+        L.DomEvent.disableScrollPropagation(button);
+
+        L.DomEvent.on(button, "click", (e) => {
+          L.DomEvent.stopPropagation(e);
+          L.DomEvent.preventDefault(e);
+          toggleTectonicBoundaries();
+        });
+
+        tectonicToggleRef.current = button;
+        return container;
+      },
+    });
+
+    map.addControl(new TectonicToggleControl());
 
     // Create custom fullscreen control
     const FullscreenControl = L.Control.extend({
       options: {
-        position: 'topright',
+        position: "topright",
       },
-      onAdd: function () {
-        const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-        const button = L.DomUtil.create('button', 'leaflet-control-fullscreen', container);
-        
+      onAdd: () => {
+        const container = L.DomUtil.create(
+          "div",
+          "leaflet-bar leaflet-control",
+        );
+        const button = L.DomUtil.create(
+          "button",
+          "leaflet-control-fullscreen",
+          container,
+        );
+
         button.innerHTML = `
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
           </svg>
         `;
-        button.title = 'Toggle fullscreen';
-        button.setAttribute('aria-label', 'Toggle fullscreen');
-        button.type = 'button';
+        button.title = "Toggle fullscreen";
+        button.setAttribute("aria-label", "Toggle fullscreen");
+        button.type = "button";
 
         // Prevent default anchor behavior and stop propagation
         L.DomEvent.disableClickPropagation(button);
         L.DomEvent.disableScrollPropagation(button);
-        
-        L.DomEvent.on(button, 'click', function (e) {
+
+        L.DomEvent.on(button, "click", (e) => {
           L.DomEvent.stopPropagation(e);
           L.DomEvent.preventDefault(e);
-          
+
           const mapContainer = mapRef.current;
           if (!mapContainer) return;
 
-          const isCurrentlyFullscreen = document.fullscreenElement === mapContainer;
+          const isCurrentlyFullscreen =
+            document.fullscreenElement === mapContainer;
 
           if (!isCurrentlyFullscreen) {
             // Enter fullscreen
@@ -201,36 +498,33 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
               <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
             </svg>
           `;
-          button.setAttribute('aria-label', 'Exit fullscreen');
+          button.setAttribute("aria-label", "Exit fullscreen");
         } else {
           button.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
             </svg>
           `;
-          button.setAttribute('aria-label', 'Toggle fullscreen');
+          button.setAttribute("aria-label", "Toggle fullscreen");
         }
       }
 
       // Force map to recalculate size after layout settles
       // Use requestAnimationFrame to ensure DOM has updated
-      requestAnimationFrame(() => {
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.invalidateSize();
-        }
-        // Second pass after a short delay to catch any late layout changes
+      // Multiple timed invalidateSize calls to handle CSS transitions
+      for (const delay of [50, 100, 200, 300, 500]) {
         setTimeout(() => {
           if (mapInstanceRef.current) {
             mapInstanceRef.current.invalidateSize();
           }
-        }, 100);
-      });
+        }, delay);
+      }
     };
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
 
     // Set up ResizeObserver to handle container size changes
-    if (typeof ResizeObserver !== 'undefined') {
+    if (typeof ResizeObserver !== "undefined") {
       resizeObserverRef.current = new ResizeObserver(() => {
         // Debounce resize invalidation
         requestAnimationFrame(() => {
@@ -247,7 +541,7 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
 
     // Cleanup
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect();
         resizeObserverRef.current = null;
@@ -256,21 +550,31 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
         window.clearTimeout(updateTimeoutRef.current);
       }
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.off('moveend', handleMapMoveEnd);
-        mapInstanceRef.current.off('zoomend', handleMapMoveEnd);
+        mapInstanceRef.current.off("moveend", handleMapMoveEnd);
+        mapInstanceRef.current.off("zoomend", handleMapMoveEnd);
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
       markersLayerRef.current = null;
+      tectonicLayerRef.current = null;
+      tileLayerRef.current = null;
     };
-  }, [handleMapMoveEnd, updateVisibleMarkers]);
+  }, [
+    handleMapMoveEnd,
+    updateVisibleMarkers,
+    toggleTectonicBoundaries,
+    handleTerrainToggle,
+    terrainMode,
+  ]);
 
   // Update markers when earthquakes change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: earthquakes triggers updateVisibleMarkers
   useEffect(() => {
     updateVisibleMarkers();
   }, [earthquakes, updateVisibleMarkers]);
 
   // Handle fullscreen state changes to ensure proper sizing
+  // biome-ignore lint/correctness/useExhaustiveDependencies: isFullScreen is the trigger dependency
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
@@ -284,21 +588,62 @@ export function EarthquakeMapView({ earthquakes, onMarkerClick, constrainedHeigh
     return () => clearTimeout(timer);
   }, [isFullScreen]);
 
+  // Update tectonic toggle button appearance
+  useEffect(() => {
+    if (!tectonicToggleRef.current) return;
+
+    const button = tectonicToggleRef.current;
+    if (showTectonics) {
+      button.classList.add("active");
+      button.style.backgroundColor = "oklch(var(--primary))";
+      button.style.color = "oklch(var(--primary-foreground))";
+    } else {
+      button.classList.remove("active");
+      button.style.backgroundColor = "";
+      button.style.color = "";
+    }
+  }, [showTectonics]);
+
+  // Update terrain toggle button appearance
+  useEffect(() => {
+    if (!terrainToggleRef.current) return;
+
+    const button = terrainToggleRef.current;
+    if (terrainMode === "dark") {
+      button.classList.add("active");
+      button.style.backgroundColor = "oklch(var(--accent))";
+      button.style.color = "oklch(var(--accent-foreground))";
+    } else {
+      button.classList.remove("active");
+      button.style.backgroundColor = "";
+      button.style.color = "";
+    }
+  }, [terrainMode]);
+
+  // Switch tile layer when terrain mode changes
+  useEffect(() => {
+    switchTileLayer(terrainMode);
+  }, [terrainMode, switchTileLayer]);
+
   const mapHeight = constrainedHeight || 600;
 
   return (
     <PanelCard
       title="Earthquake Map"
-      subtitle={`${earthquakes.length} ${earthquakes.length === 1 ? 'event' : 'events'}`}
+      subtitle={`${earthquakes.length} ${earthquakes.length === 1 ? "event" : "events"}`}
       noPadding
     >
       <div className="border-t border-border/30">
         <div
           ref={mapRef}
           className={`w-full transition-none ${
-            isFullScreen ? 'map-fullscreen' : ''
+            isFullScreen ? "map-fullscreen" : ""
           }`}
-          style={{ height: isFullScreen ? '100vh' : `${mapHeight}px` }}
+          id="leaflet-map"
+          style={{
+            height: isFullScreen ? "100vh" : `${mapHeight}px`,
+            backgroundColor: "#1a1a2e",
+          }}
         />
       </div>
     </PanelCard>

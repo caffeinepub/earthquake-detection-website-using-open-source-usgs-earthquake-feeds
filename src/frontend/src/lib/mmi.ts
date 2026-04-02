@@ -11,18 +11,18 @@ interface MMIBand {
 }
 
 const MMI_BANDS: MMIBand[] = [
-  { min: 1, max: 1.99, roman: 'I', label: 'Not felt' },
-  { min: 2, max: 2.99, roman: 'II', label: 'Weak' },
-  { min: 3, max: 3.99, roman: 'III', label: 'Weak' },
-  { min: 4, max: 4.99, roman: 'IV', label: 'Light' },
-  { min: 5, max: 5.99, roman: 'V', label: 'Moderate' },
-  { min: 6, max: 6.99, roman: 'VI', label: 'Strong' },
-  { min: 7, max: 7.99, roman: 'VII', label: 'Very strong' },
-  { min: 8, max: 8.99, roman: 'VIII', label: 'Severe' },
-  { min: 9, max: 9.99, roman: 'IX', label: 'Violent' },
-  { min: 10, max: 10.99, roman: 'X', label: 'Extreme' },
-  { min: 11, max: 11.99, roman: 'XI', label: 'Extreme' },
-  { min: 12, max: Infinity, roman: 'XII', label: 'Extreme' },
+  { min: 1, max: 1.99, roman: "I", label: "Not felt" },
+  { min: 2, max: 2.99, roman: "II", label: "Weak" },
+  { min: 3, max: 3.99, roman: "III", label: "Weak" },
+  { min: 4, max: 4.99, roman: "IV", label: "Light" },
+  { min: 5, max: 5.99, roman: "V", label: "Moderate" },
+  { min: 6, max: 6.99, roman: "VI", label: "Strong" },
+  { min: 7, max: 7.99, roman: "VII", label: "Very strong" },
+  { min: 8, max: 8.99, roman: "VIII", label: "Severe" },
+  { min: 9, max: 9.99, roman: "IX", label: "Violent" },
+  { min: 10, max: 10.99, roman: "X", label: "Extreme" },
+  { min: 11, max: 11.99, roman: "XI", label: "Extreme" },
+  { min: 12, max: Number.POSITIVE_INFINITY, roman: "XII", label: "Extreme" },
 ];
 
 /**
@@ -32,19 +32,19 @@ const MMI_BANDS: MMIBand[] = [
  */
 export function formatMMI(mmi: number | null | undefined): string {
   if (mmi === null || mmi === undefined) {
-    return 'Not reported';
+    return "Not reported";
   }
 
   // Handle out-of-range values
   if (mmi < 1) {
-    return 'Unknown';
+    return "Unknown";
   }
 
   // Find the appropriate band
   const band = MMI_BANDS.find((b) => mmi >= b.min && mmi <= b.max);
 
   if (!band) {
-    return 'Unknown';
+    return "Unknown";
   }
 
   // Format with one decimal place

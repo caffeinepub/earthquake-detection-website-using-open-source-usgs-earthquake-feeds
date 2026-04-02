@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { fetchJson } from '../lib/fetchJson';
-import { UsgsEventDetail } from '../lib/usgsEventDetailTypes';
+import { useQuery } from "@tanstack/react-query";
+import { fetchJson } from "../lib/fetchJson";
+import type { UsgsEventDetail } from "../lib/usgsEventDetailTypes";
 
 interface UseUsgsEventDetailOptions {
   detailUrl: string | null;
@@ -11,12 +11,15 @@ interface UseUsgsEventDetailOptions {
  * React Query hook for fetching USGS event detail JSON.
  * Caches the detail response by URL and only fetches when enabled.
  */
-export function useUsgsEventDetail({ detailUrl, enabled = true }: UseUsgsEventDetailOptions) {
+export function useUsgsEventDetail({
+  detailUrl,
+  enabled = true,
+}: UseUsgsEventDetailOptions) {
   return useQuery<UsgsEventDetail>({
-    queryKey: ['usgs-event-detail', detailUrl],
+    queryKey: ["usgs-event-detail", detailUrl],
     queryFn: async () => {
       if (!detailUrl) {
-        throw new Error('Detail URL is required');
+        throw new Error("Detail URL is required");
       }
       return fetchJson<UsgsEventDetail>(detailUrl);
     },

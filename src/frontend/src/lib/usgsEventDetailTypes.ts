@@ -12,16 +12,19 @@ export interface UsgsEventDetailProduct {
   status: string;
   properties: Record<string, string>;
   preferredWeight?: number;
-  contents?: Record<string, {
-    contentType: string;
-    lastModified: number;
-    length: number;
-    url: string;
-  }>;
+  contents?: Record<
+    string,
+    {
+      contentType: string;
+      lastModified: number;
+      length: number;
+      url: string;
+    }
+  >;
 }
 
 export interface UsgsEventDetail {
-  type: 'Feature';
+  type: "Feature";
   properties: {
     mag: number | null;
     place: string;
@@ -33,12 +36,12 @@ export interface UsgsEventDetail {
     tsunami: number;
     title: string;
     products?: {
-      'moment-tensor'?: UsgsEventDetailProduct[];
+      "moment-tensor"?: UsgsEventDetailProduct[];
       [key: string]: UsgsEventDetailProduct[] | undefined;
     };
   };
   geometry: {
-    type: 'Point';
+    type: "Point";
     coordinates: [number, number, number];
   };
   id: string;

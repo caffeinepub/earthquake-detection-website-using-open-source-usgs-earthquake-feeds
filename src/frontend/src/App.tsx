@@ -1,5 +1,5 @@
-import { ThemeProvider } from 'next-themes';
-import EarthquakeDashboard from './pages/EarthquakeDashboard';
+import { ThemeProvider } from "next-themes";
+import EarthquakeDashboard from "./pages/EarthquakeDashboard";
 
 function App() {
   return (

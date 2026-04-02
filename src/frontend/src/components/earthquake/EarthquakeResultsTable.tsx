@@ -1,4 +1,5 @@
-import { ExternalLink, AlertTriangle, Activity } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -6,14 +7,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { PanelCard } from './PanelCard';
-import { UsgsFeature } from '../../lib/usgsTypes';
-import { formatMagnitude, formatTimestamp } from '../../lib/formatters';
-import { getMagnitudeColor, getMagnitudeLabel } from '../../lib/usgsFeeds';
-import { useVirtualWindow } from '../../hooks/useVirtualWindow';
+} from "@/components/ui/table";
+import { Activity, AlertTriangle, ExternalLink } from "lucide-react";
+import { useVirtualWindow } from "../../hooks/useVirtualWindow";
+import { formatMagnitude, formatTimestamp } from "../../lib/formatters";
+import { getMagnitudeColor, getMagnitudeLabel } from "../../lib/usgsFeeds";
+import type { UsgsFeature } from "../../lib/usgsTypes";
+import { PanelCard } from "./PanelCard";
 
 interface EarthquakeResultsTableProps {
   earthquakes: UsgsFeature[];
@@ -28,8 +28,8 @@ interface EarthquakeResultsTableProps {
  */
 function hasMomentTensor(types: string): boolean {
   if (!types) return false;
-  const typesList = types.split(',').map(t => t.trim().toLowerCase());
-  return typesList.includes('moment-tensor');
+  const typesList = types.split(",").map((t) => t.trim().toLowerCase());
+  return typesList.includes("moment-tensor");
 }
 
 export function EarthquakeResultsTable({
@@ -72,18 +72,18 @@ export function EarthquakeResultsTable({
   // Get visible slice of earthquakes
   const visibleEarthquakes = earthquakes.slice(
     virtualWindow.startIndex,
-    virtualWindow.endIndex + 1
+    virtualWindow.endIndex + 1,
   );
 
   // Calculate scroll container height
-  const scrollHeight = constrainedHeight 
-    ? Math.min(constrainedHeight - 100, 520) 
+  const scrollHeight = constrainedHeight
+    ? Math.min(constrainedHeight - 100, 520)
     : 600;
 
   return (
     <PanelCard
       title="Earthquake Events"
-      subtitle={`${earthquakes.length} ${earthquakes.length === 1 ? 'event' : 'events'}`}
+      subtitle={`${earthquakes.length} ${earthquakes.length === 1 ? "event" : "events"}`}
       noPadding
     >
       <div className="border-t border-border/30">
@@ -96,20 +96,37 @@ export function EarthquakeResultsTable({
           <Table>
             <TableHeader className="sticky top-0 bg-card/95 backdrop-blur-sm z-10 border-b border-border/40">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="min-w-[120px] font-bold text-foreground">Magnitude</TableHead>
-                <TableHead className="min-w-[150px] font-bold text-foreground">Location</TableHead>
-                <TableHead className="hidden sm:table-cell min-w-[120px] font-bold text-foreground">Time</TableHead>
-                <TableHead className="hidden md:table-cell font-bold text-foreground">Depth</TableHead>
-                <TableHead className="hidden lg:table-cell font-bold text-foreground">Tsunami</TableHead>
-                <TableHead className="hidden lg:table-cell font-bold text-foreground">Moment Tensor</TableHead>
-                <TableHead className="text-right min-w-[80px] font-bold text-foreground">Actions</TableHead>
+                <TableHead className="min-w-[120px] font-bold text-foreground">
+                  Magnitude
+                </TableHead>
+                <TableHead className="min-w-[150px] font-bold text-foreground">
+                  Location
+                </TableHead>
+                <TableHead className="hidden sm:table-cell min-w-[120px] font-bold text-foreground">
+                  Time
+                </TableHead>
+                <TableHead className="hidden md:table-cell font-bold text-foreground">
+                  Depth
+                </TableHead>
+                <TableHead className="hidden lg:table-cell font-bold text-foreground">
+                  Tsunami
+                </TableHead>
+                <TableHead className="hidden lg:table-cell font-bold text-foreground">
+                  Moment Tensor
+                </TableHead>
+                <TableHead className="text-right min-w-[80px] font-bold text-foreground">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {/* Top spacer for virtualization */}
               {virtualWindow.offsetTop > 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} style={{ height: virtualWindow.offsetTop }} />
+                  <TableCell
+                    colSpan={7}
+                    style={{ height: virtualWindow.offsetTop }}
+                  />
                 </TableRow>
               )}
 
@@ -119,15 +136,17 @@ export function EarthquakeResultsTable({
                 const magColor = getMagnitudeColor(earthquake.properties.mag);
                 const magLabel = getMagnitudeLabel(earthquake.properties.mag);
                 const hasTsunami = earthquake.properties.tsunami === 1;
-                const hasMT = hasMomentTensor(earthquake.properties.types || '');
+                const hasMT = hasMomentTensor(
+                  earthquake.properties.types || "",
+                );
 
                 return (
                   <TableRow
                     key={earthquake.id}
                     className={`cursor-pointer transition-all duration-200 border-b border-border/20 ${
-                      isSelected 
-                        ? 'bg-primary/10 hover:bg-primary/15 shadow-soft' 
-                        : 'hover:bg-muted/50'
+                      isSelected
+                        ? "bg-primary/10 hover:bg-primary/15 shadow-soft"
+                        : "hover:bg-muted/50"
                     }`}
                     onClick={() => handleRowClick(earthquake)}
                   >
@@ -156,11 +175,15 @@ export function EarthquakeResultsTable({
                       {formatTimestamp(earthquake.properties.time)}
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm py-4 font-medium">
-                      {earthquake.geometry.coordinates[2]?.toFixed(1) ?? 'N/A'} km
+                      {earthquake.geometry.coordinates[2]?.toFixed(1) ?? "N/A"}{" "}
+                      km
                     </TableCell>
                     <TableCell className="hidden lg:table-cell py-4">
                       {hasTsunami && (
-                        <Badge variant="destructive" className="text-xs px-2.5 py-1 font-semibold shadow-sm">
+                        <Badge
+                          variant="destructive"
+                          className="text-xs px-2.5 py-1 font-semibold shadow-sm"
+                        >
                           <AlertTriangle className="h-3 w-3 mr-1" />
                           Tsunami
                         </Badge>
@@ -168,7 +191,10 @@ export function EarthquakeResultsTable({
                     </TableCell>
                     <TableCell className="hidden lg:table-cell py-4">
                       {hasMT && (
-                        <Badge variant="secondary" className="text-xs px-2.5 py-1 font-semibold shadow-sm">
+                        <Badge
+                          variant="secondary"
+                          className="text-xs px-2.5 py-1 font-semibold shadow-sm"
+                        >
                           Available
                         </Badge>
                       )}
@@ -198,7 +224,10 @@ export function EarthquakeResultsTable({
               {/* Bottom spacer for virtualization */}
               {virtualWindow.offsetBottom > 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} style={{ height: virtualWindow.offsetBottom }} />
+                  <TableCell
+                    colSpan={7}
+                    style={{ height: virtualWindow.offsetBottom }}
+                  />
                 </TableRow>
               )}
             </TableBody>

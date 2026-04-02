@@ -1,9 +1,9 @@
-import { Activity, AlertTriangle, TrendingUp } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { EarthquakeStats } from '../../lib/earthquakeStats';
-import { formatMagnitude } from '../../lib/formatters';
-import { getMagnitudeColor } from '../../lib/usgsFeeds';
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Activity, AlertTriangle, TrendingUp } from "lucide-react";
+import type { EarthquakeStats } from "../../lib/earthquakeStats";
+import { formatMagnitude } from "../../lib/formatters";
+import { getMagnitudeColor } from "../../lib/usgsFeeds";
 
 interface DashboardSummaryProps {
   stats: EarthquakeStats;
@@ -17,13 +17,17 @@ export function DashboardSummary({ stats, threshold }: DashboardSummaryProps) {
       <Card className="border-border/40 shadow-soft hover:shadow-medium transition-all duration-300 overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-3">
-          <CardTitle className="text-sm font-semibold text-muted-foreground">Total Events</CardTitle>
+          <CardTitle className="text-sm font-semibold text-muted-foreground">
+            Total Events
+          </CardTitle>
           <div className="p-2 rounded-lg bg-primary/10">
             <Activity className="h-5 w-5 text-primary" />
           </div>
         </CardHeader>
         <CardContent className="relative">
-          <div className="text-4xl font-bold tracking-tight mb-1">{stats.total}</div>
+          <div className="text-4xl font-bold tracking-tight mb-1">
+            {stats.total}
+          </div>
           <p className="text-sm text-muted-foreground font-medium">
             Detected earthquakes
           </p>
@@ -42,7 +46,9 @@ export function DashboardSummary({ stats, threshold }: DashboardSummaryProps) {
           </div>
         </CardHeader>
         <CardContent className="relative">
-          <div className="text-4xl font-bold tracking-tight mb-1">{stats.aboveThreshold}</div>
+          <div className="text-4xl font-bold tracking-tight mb-1">
+            {stats.aboveThreshold}
+          </div>
           <p className="text-sm text-muted-foreground font-medium">
             Significant events
           </p>
@@ -53,7 +59,9 @@ export function DashboardSummary({ stats, threshold }: DashboardSummaryProps) {
       <Card className="border-border/40 shadow-soft hover:shadow-medium transition-all duration-300 overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-3">
-          <CardTitle className="text-sm font-semibold text-muted-foreground">Largest Event</CardTitle>
+          <CardTitle className="text-sm font-semibold text-muted-foreground">
+            Largest Event
+          </CardTitle>
           <div className="p-2 rounded-lg bg-destructive/10">
             <TrendingUp className="h-5 w-5 text-destructive" />
           </div>
@@ -67,7 +75,9 @@ export function DashboardSummary({ stats, threshold }: DashboardSummaryProps) {
                 </div>
                 <Badge
                   variant={
-                    getMagnitudeColor(stats.largestMagnitude.properties.mag) as any
+                    getMagnitudeColor(
+                      stats.largestMagnitude.properties.mag,
+                    ) as any
                   }
                   className="magnitude-pulse font-mono font-semibold"
                 >
@@ -81,7 +91,9 @@ export function DashboardSummary({ stats, threshold }: DashboardSummaryProps) {
           ) : (
             <>
               <div className="text-4xl font-bold tracking-tight mb-1">N/A</div>
-              <p className="text-sm text-muted-foreground font-medium">No events</p>
+              <p className="text-sm text-muted-foreground font-medium">
+                No events
+              </p>
             </>
           )}
         </CardContent>

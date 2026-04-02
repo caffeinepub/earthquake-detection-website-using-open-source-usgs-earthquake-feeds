@@ -1,5 +1,5 @@
 export interface UsgsFeature {
-  type: 'Feature';
+  type: "Feature";
   properties: {
     mag: number | null;
     place: string;
@@ -29,14 +29,14 @@ export interface UsgsFeature {
     title: string;
   };
   geometry: {
-    type: 'Point';
+    type: "Point";
     coordinates: [number, number, number]; // [longitude, latitude, depth]
   };
   id: string;
 }
 
 export interface UsgsResponse {
-  type: 'FeatureCollection';
+  type: "FeatureCollection";
   metadata: {
     generated: number;
     url: string;
@@ -49,7 +49,7 @@ export interface UsgsResponse {
   bbox?: number[];
 }
 
-export type TimeWindow = 'hour' | 'day' | 'week' | 'month';
+export type TimeWindow = "hour" | "day" | "week" | "month";
 
 export interface EarthquakeFilters {
   timeWindow: TimeWindow;

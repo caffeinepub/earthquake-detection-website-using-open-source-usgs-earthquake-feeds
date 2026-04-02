@@ -1,27 +1,34 @@
-import { ExternalLink, MapPin, Clock, Layers, Activity, Info } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
   DialogOverlay,
   DialogPortal,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { UsgsFeature } from '../../lib/usgsTypes';
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import {
-  formatMagnitude,
-  formatFullTimestamp,
-  formatDepth,
+  Activity,
+  Clock,
+  ExternalLink,
+  Info,
+  Layers,
+  MapPin,
+} from "lucide-react";
+import { useUsgsEventDetail } from "../../hooks/useUsgsEventDetail";
+import {
   formatCoordinates,
-} from '../../lib/formatters';
-import { getMagnitudeColor, getMagnitudeLabel } from '../../lib/usgsFeeds';
-import { formatMMI } from '../../lib/mmi';
-import { useUsgsEventDetail } from '../../hooks/useUsgsEventDetail';
-import { UsgsEventDetailProduct } from '../../lib/usgsEventDetailTypes';
+  formatDepth,
+  formatFullTimestamp,
+  formatMagnitude,
+} from "../../lib/formatters";
+import { formatMMI } from "../../lib/mmi";
+import type { UsgsEventDetailProduct } from "../../lib/usgsEventDetailTypes";
+import { getMagnitudeColor, getMagnitudeLabel } from "../../lib/usgsFeeds";
+import type { UsgsFeature } from "../../lib/usgsTypes";
 
 interface EarthquakeDetailsDialogProps {
   earthquake: UsgsFeature | null;
@@ -45,12 +52,13 @@ function getMomentTensorInfo(products?: UsgsEventDetailProduct[]) {
   const props = preferredProduct.properties;
 
   return {
-    source: props.source || props['beachball-source'] || preferredProduct.source,
-    magnitude: props['derived-magnitude'] || null,
-    magnitudeType: props['derived-magnitude-type'] || null,
-    scalarMoment: props['scalar-moment'] || null,
-    depth: props['derived-depth'] || null,
-    percentDoubleCoup: props['percent-double-couple'] || null,
+    source:
+      props.source || props["beachball-source"] || preferredProduct.source,
+    magnitude: props["derived-magnitude"] || null,
+    magnitudeType: props["derived-magnitude-type"] || null,
+    scalarMoment: props["scalar-moment"] || null,
+    depth: props["derived-depth"] || null,
+    percentDoubleCoup: props["percent-double-couple"] || null,
   };
 }
 
@@ -60,7 +68,11 @@ export function EarthquakeDetailsDialog({
   onOpenChange,
 }: EarthquakeDetailsDialogProps) {
   // Fetch event detail when dialog is open
-  const { data: eventDetail, isLoading: isLoadingDetail, isError: isDetailError } = useUsgsEventDetail({
+  const {
+    data: eventDetail,
+    isLoading: isLoadingDetail,
+    isError: isDetailError,
+  } = useUsgsEventDetail({
     detailUrl: earthquake?.properties.detail || null,
     enabled: open && !!earthquake,
   });
@@ -71,9 +83,13 @@ export function EarthquakeDetailsDialog({
   const [lon, lat, depth] = geometry.coordinates;
 
   // Extract moment tensor data if available
-  const momentTensorProducts = eventDetail?.properties.products?.['moment-tensor'];
-  const momentTensorInfo = momentTensorProducts ? getMomentTensorInfo(momentTensorProducts) : null;
-  const showMomentTensor = !isLoadingDetail && !isDetailError && momentTensorInfo;
+  const momentTensorProducts =
+    eventDetail?.properties.products?.["moment-tensor"];
+  const momentTensorInfo = momentTensorProducts
+    ? getMomentTensorInfo(momentTensorProducts)
+    : null;
+  const showMomentTensor =
+    !isLoadingDetail && !isDetailError && momentTensorInfo;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -115,30 +131,44 @@ export function EarthquakeDetailsDialog({
                 <div className="space-y-2 p-4 rounded-lg bg-muted/30 border border-border/40">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <MapPin className="h-4 w-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wide">Location</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide">
+                      Location
+                    </span>
                   </div>
-                  <p className="text-sm font-medium">{formatCoordinates(lat, lon)}</p>
+                  <p className="text-sm font-medium">
+                    {formatCoordinates(lat, lon)}
+                  </p>
                 </div>
                 <div className="space-y-2 p-4 rounded-lg bg-muted/30 border border-border/40">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Clock className="h-4 w-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wide">Time</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide">
+                      Time
+                    </span>
                   </div>
-                  <p className="text-sm font-medium">{formatFullTimestamp(properties.time)}</p>
+                  <p className="text-sm font-medium">
+                    {formatFullTimestamp(properties.time)}
+                  </p>
                 </div>
                 <div className="space-y-2 p-4 rounded-lg bg-muted/30 border border-border/40">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Layers className="h-4 w-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wide">Depth</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide">
+                      Depth
+                    </span>
                   </div>
                   <p className="text-sm font-medium">{formatDepth(depth)}</p>
                 </div>
                 <div className="space-y-2 p-4 rounded-lg bg-muted/30 border border-border/40">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Activity className="h-4 w-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wide">Type</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide">
+                      Type
+                    </span>
                   </div>
-                  <p className="text-sm font-medium">{properties.type || 'Earthquake'}</p>
+                  <p className="text-sm font-medium">
+                    {properties.type || "Earthquake"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -153,8 +183,13 @@ export function EarthquakeDetailsDialog({
               <div className="grid gap-3">
                 {properties.mmi && (
                   <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
-                    <span className="text-sm font-semibold">Modified Mercalli Intensity</span>
-                    <Badge variant="secondary" className="font-mono font-semibold">
+                    <span className="text-sm font-semibold">
+                      Modified Mercalli Intensity
+                    </span>
+                    <Badge
+                      variant="secondary"
+                      className="font-mono font-semibold"
+                    >
                       {formatMMI(properties.mmi)}
                     </Badge>
                   </div>
@@ -190,27 +225,41 @@ export function EarthquakeDetailsDialog({
                     {momentTensorInfo.source && (
                       <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
                         <span className="text-sm font-semibold">Source</span>
-                        <span className="text-sm font-mono font-medium">{momentTensorInfo.source}</span>
+                        <span className="text-sm font-mono font-medium">
+                          {momentTensorInfo.source}
+                        </span>
                       </div>
                     )}
                     {momentTensorInfo.magnitude && (
                       <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
-                        <span className="text-sm font-semibold">Derived Magnitude</span>
-                        <Badge variant="outline" className="font-mono font-semibold">
+                        <span className="text-sm font-semibold">
+                          Derived Magnitude
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className="font-mono font-semibold"
+                        >
                           {momentTensorInfo.magnitude}
-                          {momentTensorInfo.magnitudeType && ` ${momentTensorInfo.magnitudeType}`}
+                          {momentTensorInfo.magnitudeType &&
+                            ` ${momentTensorInfo.magnitudeType}`}
                         </Badge>
                       </div>
                     )}
                     {momentTensorInfo.scalarMoment && (
                       <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
-                        <span className="text-sm font-semibold">Scalar Moment</span>
-                        <span className="text-sm font-mono font-medium">{momentTensorInfo.scalarMoment}</span>
+                        <span className="text-sm font-semibold">
+                          Scalar Moment
+                        </span>
+                        <span className="text-sm font-mono font-medium">
+                          {momentTensorInfo.scalarMoment}
+                        </span>
                       </div>
                     )}
                     {momentTensorInfo.percentDoubleCoup && (
                       <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
-                        <span className="text-sm font-semibold">Double Couple</span>
+                        <span className="text-sm font-semibold">
+                          Double Couple
+                        </span>
                         <Badge variant="secondary" className="font-semibold">
                           {momentTensorInfo.percentDoubleCoup}%
                         </Badge>

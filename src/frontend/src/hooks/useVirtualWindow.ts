@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseVirtualWindowOptions {
   itemCount: number;
@@ -34,16 +34,16 @@ export function useVirtualWindow({
   // Update container height on mount and resize
   useEffect(() => {
     if (!containerRef.current) return;
-    
+
     const updateHeight = () => {
       if (containerRef.current) {
         setContainerHeight(containerRef.current.clientHeight);
       }
     };
-    
+
     updateHeight();
-    window.addEventListener('resize', updateHeight);
-    return () => window.removeEventListener('resize', updateHeight);
+    window.addEventListener("resize", updateHeight);
+    return () => window.removeEventListener("resize", updateHeight);
   }, []);
 
   const onScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
@@ -52,10 +52,13 @@ export function useVirtualWindow({
 
   // Calculate visible window
   const totalHeight = itemCount * estimatedItemHeight;
-  const startIndex = Math.max(0, Math.floor(scrollTop / estimatedItemHeight) - overscan);
+  const startIndex = Math.max(
+    0,
+    Math.floor(scrollTop / estimatedItemHeight) - overscan,
+  );
   const endIndex = Math.min(
     itemCount - 1,
-    Math.ceil((scrollTop + containerHeight) / estimatedItemHeight) + overscan
+    Math.ceil((scrollTop + containerHeight) / estimatedItemHeight) + overscan,
   );
   const offsetTop = startIndex * estimatedItemHeight;
   const offsetBottom = totalHeight - (endIndex + 1) * estimatedItemHeight;

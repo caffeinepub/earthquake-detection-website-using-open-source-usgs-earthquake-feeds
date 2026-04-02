@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { ReactNode } from "react";
 
 interface PanelCardProps {
   title: string;
@@ -20,12 +20,14 @@ export function PanelCard({
   subtitle,
   headerAction,
   children,
-  className = '',
-  contentClassName = '',
+  className = "",
+  contentClassName = "",
   noPadding = false,
 }: PanelCardProps) {
   return (
-    <Card className={`border-border/40 shadow-soft overflow-hidden ${className}`}>
+    <Card
+      className={`border-border/40 shadow-soft overflow-hidden ${className}`}
+    >
       <CardHeader className="pb-4 space-y-0 bg-gradient-to-r from-card to-muted/20">
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1 min-w-0 flex-1">
@@ -33,15 +35,15 @@ export function PanelCard({
               {title}
             </CardTitle>
             {subtitle && (
-              <p className="text-sm text-muted-foreground font-medium">{subtitle}</p>
+              <p className="text-sm text-muted-foreground font-medium">
+                {subtitle}
+              </p>
             )}
           </div>
-          {headerAction && (
-            <div className="flex-shrink-0">{headerAction}</div>
-          )}
+          {headerAction && <div className="flex-shrink-0">{headerAction}</div>}
         </div>
       </CardHeader>
-      <CardContent className={noPadding ? 'p-0' : contentClassName}>
+      <CardContent className={noPadding ? "p-0" : contentClassName}>
         {children}
       </CardContent>
     </Card>
