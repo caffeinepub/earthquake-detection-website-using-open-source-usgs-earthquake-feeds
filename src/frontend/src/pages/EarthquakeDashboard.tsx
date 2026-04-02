@@ -1,7 +1,6 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
-  Activity,
   Columns,
   Map as MapIcon,
   Moon,
@@ -19,7 +18,6 @@ import { EarthquakeMapView } from "../components/earthquake/EarthquakeMapView";
 import { EarthquakeResultsTable } from "../components/earthquake/EarthquakeResultsTable";
 import { EewView } from "../components/earthquake/EewView";
 import { FeedAndFilterControls } from "../components/earthquake/FeedAndFilterControls";
-import { ShakeMapView } from "../components/earthquake/ShakeMapView";
 import { TsunamiAlertBanner } from "../components/earthquake/TsunamiAlertBanner";
 import { TsunamiView } from "../components/earthquake/TsunamiView";
 import { useUsgsEarthquakes } from "../hooks/useUsgsEarthquakes";
@@ -27,7 +25,7 @@ import { applyFilters } from "../lib/earthquakeFilters";
 import { computeStats } from "../lib/earthquakeStats";
 import type { TimeWindow, UsgsFeature } from "../lib/usgsTypes";
 
-type ViewMode = "table" | "map" | "split" | "tsunami" | "eew" | "shakemap";
+type ViewMode = "table" | "map" | "split" | "tsunami" | "eew";
 
 export default function EarthquakeDashboard() {
   const { theme, setTheme } = useTheme();
@@ -93,7 +91,6 @@ export default function EarthquakeDashboard() {
     split: "Split View",
     tsunami: "Tsunami Warnings",
     eew: "EEW Monitor",
-    shakemap: "ShakeMap Viewer",
   };
 
   return (
@@ -271,16 +268,6 @@ export default function EarthquakeDashboard() {
                   </span>
                 )}
               </Button>
-              <Button
-                variant={viewMode === "shakemap" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("shakemap")}
-                className="gap-2 transition-all duration-200"
-                data-ocid="shakemap.tab"
-              >
-                <Activity className="h-4 w-4" />
-                <span className="hidden sm:inline">ShakeMap</span>
-              </Button>
             </div>
           </div>
 
@@ -345,10 +332,6 @@ export default function EarthquakeDashboard() {
 
               {viewMode === "eew" && (
                 <EewView earthquakes={filteredEarthquakes} />
-              )}
-
-              {viewMode === "shakemap" && (
-                <ShakeMapView earthquakes={filteredEarthquakes} />
               )}
             </div>
           )}
