@@ -41,10 +41,20 @@ function formatDateTime(timestamp: number): string {
 }
 
 function getAlertColor(alert: string | null, mag: number | null): string {
-  if (alert === "red" || (mag !== null && mag >= 7)) return "#dc2626";
-  if (alert === "orange" || (mag !== null && mag >= 6)) return "#ea580c";
-  if (alert === "yellow" || (mag !== null && mag >= 5)) return "#f59e0b";
-  if (alert === "green" || (mag !== null && mag >= 4)) return "#22c55e";
+  // Prioritize USGS PAGER alert string first (exact match from API)
+  if (alert !== null) {
+    if (alert === "red") return "#dc2626";
+    if (alert === "orange") return "#ea580c";
+    if (alert === "yellow") return "#f59e0b";
+    if (alert === "green") return "#22c55e";
+  }
+  // Fallback to magnitude-based color only when no PAGER alert is available
+  if (mag !== null) {
+    if (mag >= 7) return "#dc2626";
+    if (mag >= 6) return "#ea580c";
+    if (mag >= 5) return "#f59e0b";
+    if (mag >= 4) return "#22c55e";
+  }
   return "#6b7280";
 }
 
