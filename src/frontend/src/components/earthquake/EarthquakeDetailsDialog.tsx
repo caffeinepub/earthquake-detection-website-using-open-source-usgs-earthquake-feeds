@@ -20,6 +20,7 @@ import {
   MapPin,
   Target,
 } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { useUsgsEventDetail } from "../../hooks/useUsgsEventDetail";
 import {
   formatCoordinates,
@@ -123,173 +124,104 @@ function getFocalMechanismInfo(
   };
 }
 
-// ---- Beach ball math helpers ----
-
-const DEG = Math.PI / 180;
+// ---- Canvas-based Beach Ball (seismologically correct) ----
 
 /**
- * Lambert equal-area (Schmidt net) lower hemisphere projection.
- * Flips to lower hemisphere if z < 0.
+ * Lambert azimuthal equal-area projection for lower hemisphere.
+ * Converts a canvas pixel to a 3D unit vector in (North, East, Up).
+ * Returns null if the pixel is outside the circle.
  */
-function lambertProject(ix: number, iy: number, iz: number): [number, number] {
-  let lx = ix;
-  let ly = iy;
-  let lz = iz;
-  if (lz < 0) {
-    lx = -lx;
-    ly = -ly;
-    lz = -lz;
-  }
-  const r = Math.sqrt(2 / (1 + lz + 1e-10));
-  return [lx * r, ly * r];
-}
-
-/**
- * Points along the nodal plane great circle in Lambert equal-area projection.
- * Only lower-hemisphere points are returned.
- */
-function nodalPlanePoints(
-  strikeDeg: number,
-  dipDeg: number,
-): Array<[number, number]> {
-  const s = strikeDeg * DEG;
-  const d = dipDeg * DEG;
-  const points: Array<[number, number]> = [];
-  // along-strike unit vector (x=East, y=North, z=down)
-  const ux = Math.sin(s);
-  const uy = Math.cos(s);
-  // down-dip unit vector in lower hemisphere (z positive down)
-  const wx = Math.cos(d) * Math.cos(s);
-  const wy = -Math.cos(d) * Math.sin(s);
-  const wz = Math.sin(d);
-
-  for (let t = 0; t <= 360; t += 2) {
-    const tr = t * DEG;
-    const vx = Math.cos(tr) * ux + Math.sin(tr) * wx;
-    const vy = Math.cos(tr) * uy + Math.sin(tr) * wy;
-    const vz = Math.sin(tr) * wz; // uz=0
-    if (vz >= 0) {
-      points.push(lambertProject(vx, vy, vz));
-    }
-  }
-  return points;
-}
-
-/** T-axis unit vector for a fault (strike, dip, rake). */
-function computeTAxis(
-  strikeDeg: number,
-  dipDeg: number,
-  rakeDeg: number,
-): [number, number, number] {
-  const s = strikeDeg * DEG;
-  const d = dipDeg * DEG;
-  const r = rakeDeg * DEG;
-  // slip vector
-  const slipX =
-    Math.cos(r) * Math.sin(s) + Math.sin(r) * (-Math.cos(d) * Math.cos(s));
-  const slipY =
-    Math.cos(r) * Math.cos(s) + Math.sin(r) * (Math.cos(d) * Math.sin(s));
-  const slipZ = Math.sin(r) * Math.sin(d);
-  // fault normal (z=up convention)
-  const nX = -Math.sin(d) * Math.cos(s);
-  const nY = Math.sin(d) * Math.sin(s);
-  const nZ = Math.cos(d);
-  // T-axis
-  const tx = slipX + nX;
-  const ty = slipY + nY;
-  const tz = slipZ + nZ;
-  const len = Math.sqrt(tx * tx + ty * ty + tz * tz) || 1;
-  return [tx / len, ty / len, tz / len];
-}
-
-function pointsToSvgPath(
-  pts: Array<[number, number]>,
+function pixelToLowerHemisphere(
+  px: number,
+  py: number,
   cx: number,
   cy: number,
   r: number,
-): string {
-  if (pts.length < 2) return "";
-  return `${pts
-    .map((p, i) => {
-      const x = cx + p[0] * r;
-      const y = cy - p[1] * r;
-      return `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`;
-    })
-    .join(" ")} Z`;
+): [number, number, number] | null {
+  const xNorm = (px - cx) / r;
+  const yNorm = (cy - py) / r; // flip: canvas y down → North up
+  const rho2 = xNorm * xNorm + yNorm * yNorm;
+  if (rho2 > 1) return null;
+
+  // Lambert equal-area lower hemisphere:
+  // z_down = 1 - 2*rho2, guaranteed >= -1
+  const zDown = 1 - 2 * rho2;
+  const sinTheta = Math.sqrt(Math.max(0, 1 - zDown * zDown));
+  const rho = Math.sqrt(rho2);
+  const eComp = rho > 1e-10 ? (xNorm / rho) * sinTheta : 0;
+  const nComp = rho > 1e-10 ? (yNorm / rho) * sinTheta : 0;
+  const uComp = -zDown; // Up = -Down
+
+  return [nComp, eComp, uComp]; // [North, East, Up]
 }
 
-function isPointInPolygon(
-  px: number,
-  py: number,
-  polygon: Array<[number, number]>,
+/**
+ * Determines if a ray direction (North, East, Up) is in the compressional
+ * quadrant for the given fault plane (Aki & Richards convention).
+ *
+ * Compressional if (fault_normal · ray) * (slip · ray) > 0
+ */
+function isCompressional(
+  nRay: number,
+  eRay: number,
+  uRay: number,
+  strikeDeg: number,
+  dipDeg: number,
+  rakeDeg: number,
 ): boolean {
-  let inside = false;
-  const n = polygon.length;
-  for (let i = 0, j = n - 1; i < n; j = i++) {
-    const xi = polygon[i][0];
-    const yi = polygon[i][1];
-    const xj = polygon[j][0];
-    const yj = polygon[j][1];
-    const intersect =
-      yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi;
-    if (intersect) inside = !inside;
-  }
-  return inside;
+  const s = (strikeDeg * Math.PI) / 180;
+  const d = (dipDeg * Math.PI) / 180;
+  const rk = (rakeDeg * Math.PI) / 180;
+
+  // Fault normal in N-E-U (Aki & Richards): n = (-sin(d)sin(s), sin(d)cos(s), cos(d))
+  const fnN = -Math.sin(d) * Math.sin(s);
+  const fnE = Math.sin(d) * Math.cos(s);
+  const fnU = Math.cos(d);
+
+  // Slip vector (hanging wall motion) in N-E-U:
+  // slip_N = cos(rk)*cos(s) + sin(rk)*cos(d)*sin(s)
+  // slip_E = cos(rk)*sin(s) - sin(rk)*cos(d)*cos(s)
+  // slip_U = -sin(rk)*sin(d)
+  const slN =
+    Math.cos(rk) * Math.cos(s) + Math.sin(rk) * Math.cos(d) * Math.sin(s);
+  const slE =
+    Math.cos(rk) * Math.sin(s) - Math.sin(rk) * Math.cos(d) * Math.cos(s);
+  const slU = -Math.sin(rk) * Math.sin(d);
+
+  const dot1 = fnN * nRay + fnE * eRay + fnU * uRay;
+  const dot2 = slN * nRay + slE * eRay + slU * uRay;
+
+  return dot1 * dot2 > 0;
 }
 
-function buildBeachBallPaths(
-  np1Strike: number,
-  np1Dip: number,
-  np1Rake: number,
-  np2Strike: number,
-  np2Dip: number,
-): { dark: string; np1Line: string; np2Line: string } {
-  const CX = 90;
-  const CY = 90;
-  const R = 78;
-
-  const arc1 = nodalPlanePoints(np1Strike, np1Dip);
-  const arc2 = nodalPlanePoints(np2Strike, np2Dip);
-
-  const tAxis = computeTAxis(np1Strike, np1Dip, np1Rake);
-  const tProj = lambertProject(tAxis[0], tAxis[1], Math.abs(tAxis[2]));
-  const tSvgX = CX + tProj[0] * R;
-  const tSvgY = CY - tProj[1] * R;
-
-  const combinedFwd: Array<[number, number]> = [
-    ...arc1,
-    ...arc2.slice().reverse(),
-  ];
-  const combinedRev: Array<[number, number]> = [
-    ...arc2,
-    ...arc1.slice().reverse(),
-  ];
-
-  const isInsideFwd = isPointInPolygon(
-    tSvgX,
-    tSvgY,
-    combinedFwd.map(([px, py]) => [CX + px * R, CY - py * R]),
-  );
-
-  const darkPath = isInsideFwd
-    ? pointsToSvgPath(combinedFwd, CX, CY, R)
-    : pointsToSvgPath(combinedRev, CX, CY, R);
-
-  const np1Line = arc1
-    .map(
-      (p, i) =>
-        `${i === 0 ? "M" : "L"}${(CX + p[0] * R).toFixed(2)},${(CY - p[1] * R).toFixed(2)}`,
-    )
-    .join(" ");
-
-  const np2Line = arc2
-    .map(
-      (p, i) =>
-        `${i === 0 ? "M" : "L"}${(CX + p[0] * R).toFixed(2)},${(CY - p[1] * R).toFixed(2)}`,
-    )
-    .join(" ");
-
-  return { dark: darkPath, np1Line, np2Line };
+/**
+ * Project a 3D unit vector (N, E, U) to canvas pixel using Lambert
+ * equal-area lower hemisphere projection.
+ */
+function projectToCanvas(
+  n: number,
+  e: number,
+  u: number,
+  cx: number,
+  cy: number,
+  r: number,
+): [number, number] {
+  // Flip to lower hemisphere if pointing up
+  let N = n;
+  let E = e;
+  let U = u;
+  if (U > 0) {
+    N = -N;
+    E = -E;
+    U = -U;
+  }
+  const zDown = -U;
+  const rho = Math.sqrt(Math.max(0, (1 - zDown) / 2));
+  const sinTheta = Math.sqrt(Math.max(0, 1 - zDown * zDown));
+  const scale = sinTheta > 1e-10 ? rho / sinTheta : 0;
+  const xNorm = E * scale;
+  const yNorm = N * scale;
+  return [cx + xNorm * r, cy - yNorm * r];
 }
 
 interface BeachBallProps {
@@ -306,151 +238,150 @@ function BeachBallDiagram({
   np1Strike,
   np1Dip,
   np1Rake,
-  np2Strike,
-  np2Dip,
   size = 160,
 }: BeachBallProps) {
-  const CX = 90;
-  const CY = 90;
-  const R = 78;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const {
-    dark: darkFill,
-    np1Line,
-    np2Line,
-  } = buildBeachBallPaths(np1Strike, np1Dip, np1Rake, np2Strike, np2Dip);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-  const tAxis = computeTAxis(np1Strike, np1Dip, np1Rake);
-  const tProj = lambertProject(tAxis[0], tAxis[1], Math.abs(tAxis[2]));
-  const tSvgX = CX + tProj[0] * R;
-  const tSvgY = CY - tProj[1] * R;
+    const S = canvas.width;
+    const cx = S / 2;
+    const cy = S / 2;
+    const r = S / 2 - 2;
 
-  const pAxis = computeTAxis(
-    (np1Strike + 180) % 360,
-    90 - np1Dip,
-    180 - np1Rake,
-  );
-  const pProj = lambertProject(pAxis[0], pAxis[1], Math.abs(pAxis[2]));
-  const pSvgX = CX + pProj[0] * R;
-  const pSvgY = CY - pProj[1] * R;
+    ctx.clearRect(0, 0, S, S);
 
-  const clipId = `bb-clip-${np1Strike}-${np1Dip}`;
-  const nodalLines = `${np1Line} ${np2Line}`;
+    // Pixel-by-pixel classification
+    const imageData = ctx.createImageData(S, S);
+
+    for (let px = 0; px < S; px++) {
+      for (let py = 0; py < S; py++) {
+        const vec = pixelToLowerHemisphere(px, py, cx, cy, r);
+        if (!vec) continue;
+        const [nComp, eComp, uComp] = vec;
+        const comp = isCompressional(
+          nComp,
+          eComp,
+          uComp,
+          np1Strike,
+          np1Dip,
+          np1Rake,
+        );
+        const idx = (py * S + px) * 4;
+        const val = comp ? 20 : 248;
+        imageData.data[idx] = val;
+        imageData.data[idx + 1] = val;
+        imageData.data[idx + 2] = val;
+        imageData.data[idx + 3] = 255;
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
+
+    // Clip to circle
+    ctx.globalCompositeOperation = "destination-in";
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalCompositeOperation = "source-over";
+
+    // Outer border
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Compute P and T axes from NP1
+    const s = (np1Strike * Math.PI) / 180;
+    const d = (np1Dip * Math.PI) / 180;
+    const rk = (np1Rake * Math.PI) / 180;
+
+    const fnN = -Math.sin(d) * Math.sin(s);
+    const fnE = Math.sin(d) * Math.cos(s);
+    const fnU = Math.cos(d);
+
+    const slN =
+      Math.cos(rk) * Math.cos(s) + Math.sin(rk) * Math.cos(d) * Math.sin(s);
+    const slE =
+      Math.cos(rk) * Math.sin(s) - Math.sin(rk) * Math.cos(d) * Math.cos(s);
+    const slU = -Math.sin(rk) * Math.sin(d);
+
+    // P-axis: normalize(n - slip)
+    const pRawN = fnN - slN;
+    const pRawE = fnE - slE;
+    const pRawU = fnU - slU;
+    const pLen = Math.sqrt(pRawN * pRawN + pRawE * pRawE + pRawU * pRawU) || 1;
+    const pN = pRawN / pLen;
+    const pE = pRawE / pLen;
+    const pU = pRawU / pLen;
+
+    // T-axis: normalize(n + slip)
+    const tRawN = fnN + slN;
+    const tRawE = fnE + slE;
+    const tRawU = fnU + slU;
+    const tLen = Math.sqrt(tRawN * tRawN + tRawE * tRawE + tRawU * tRawU) || 1;
+    const tN = tRawN / tLen;
+    const tE = tRawE / tLen;
+    const tU = tRawU / tLen;
+
+    const [pCx, pCy] = projectToCanvas(pN, pE, pU, cx, cy, r);
+    const [tCx, tCy] = projectToCanvas(tN, tE, tU, cx, cy, r);
+
+    // P marker (blue)
+    if (!Number.isNaN(pCx) && !Number.isNaN(pCy)) {
+      ctx.beginPath();
+      ctx.arc(pCx, pCy, 5, 0, Math.PI * 2);
+      ctx.fillStyle = "#3b82f6";
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = "#3b82f6";
+      ctx.font = "bold 9px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("P", pCx + 7, pCy + 4);
+    }
+
+    // T marker (amber)
+    if (!Number.isNaN(tCx) && !Number.isNaN(tCy)) {
+      ctx.beginPath();
+      ctx.arc(tCx, tCy, 5, 0, Math.PI * 2);
+      ctx.fillStyle = "#f59e0b";
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = "#f59e0b";
+      ctx.font = "bold 9px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("T", tCx + 7, tCy + 4);
+    }
+
+    // Cardinal labels
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "9px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("N", cx, 10);
+    ctx.fillText("S", cx, S - 2);
+    ctx.textAlign = "left";
+    ctx.fillText("E", S - 10, cy + 4);
+    ctx.textAlign = "right";
+    ctx.fillText("W", 10, cy + 4);
+  }, [np1Strike, np1Dip, np1Rake]);
 
   return (
-    <svg
-      viewBox="0 0 180 180"
+    <canvas
+      ref={canvasRef}
       width={size}
       height={size}
+      style={{ borderRadius: "50%" }}
       role="img"
       aria-label="Focal mechanism beach ball diagram"
-      className="drop-shadow-md"
-    >
-      <title>Focal mechanism beach ball diagram</title>
-      <defs>
-        <clipPath id={clipId}>
-          <circle cx={CX} cy={CY} r={R} />
-        </clipPath>
-      </defs>
-
-      {/* Background — dilatational (light) quadrant */}
-      <circle cx={CX} cy={CY} r={R} fill="#f1f5f9" />
-
-      {/* Compressional (dark) quadrant fill */}
-      {darkFill && (
-        <path
-          d={darkFill}
-          fill="#334155"
-          clipPath={`url(#${clipId})`}
-          opacity={0.92}
-        />
-      )}
-
-      {/* Nodal plane lines */}
-      <path
-        d={nodalLines}
-        stroke="#475569"
-        strokeWidth="2"
-        fill="none"
-        clipPath={`url(#${clipId})`}
-      />
-
-      {/* Outer border */}
-      <circle
-        cx={CX}
-        cy={CY}
-        r={R}
-        fill="none"
-        stroke="#64748b"
-        strokeWidth="2"
-      />
-
-      {/* Center cross-hair */}
-      <line
-        x1={CX - 6}
-        y1={CY}
-        x2={CX + 6}
-        y2={CY}
-        stroke="#94a3b8"
-        strokeWidth="1"
-        opacity={0.5}
-      />
-      <line
-        x1={CX}
-        y1={CY - 6}
-        x2={CX}
-        y2={CY + 6}
-        stroke="#94a3b8"
-        strokeWidth="1"
-        opacity={0.5}
-      />
-
-      {/* T-axis marker */}
-      {!Number.isNaN(tSvgX) && !Number.isNaN(tSvgY) && (
-        <>
-          <circle cx={tSvgX} cy={tSvgY} r={5} fill="#f59e0b" opacity={0.9} />
-          <text
-            x={tSvgX + 7}
-            y={tSvgY + 4}
-            fontSize="9"
-            fill="#f59e0b"
-            fontWeight="bold"
-          >
-            T
-          </text>
-        </>
-      )}
-
-      {/* P-axis marker */}
-      {!Number.isNaN(pSvgX) && !Number.isNaN(pSvgY) && (
-        <>
-          <circle cx={pSvgX} cy={pSvgY} r={5} fill="#60a5fa" opacity={0.9} />
-          <text
-            x={pSvgX + 7}
-            y={pSvgY + 4}
-            fontSize="9"
-            fill="#60a5fa"
-            fontWeight="bold"
-          >
-            P
-          </text>
-        </>
-      )}
-
-      {/* Cardinal labels */}
-      <text x={CX} y={10} textAnchor="middle" fontSize="9" fill="#94a3b8">
-        N
-      </text>
-      <text x={172} y={CY + 3} textAnchor="middle" fontSize="9" fill="#94a3b8">
-        E
-      </text>
-      <text x={CX} y={178} textAnchor="middle" fontSize="9" fill="#94a3b8">
-        S
-      </text>
-      <text x={8} y={CY + 3} textAnchor="middle" fontSize="9" fill="#94a3b8">
-        W
-      </text>
-    </svg>
+    />
   );
 }
 
@@ -702,7 +633,7 @@ export function EarthquakeDetailsDialog({
                           />
                           <div className="absolute -bottom-6 left-0 right-0 flex justify-center gap-4">
                             <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#60a5fa]" />
+                              <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
                               P (compressional)
                             </span>
                             <span className="flex items-center gap-1 text-xs text-muted-foreground">
