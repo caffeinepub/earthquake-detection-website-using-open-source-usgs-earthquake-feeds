@@ -296,11 +296,7 @@ export function EewView({ earthquakes }: EewViewProps) {
         await new Promise((resolve) => setTimeout(resolve, 300));
       }
 
-      if (Object.keys(result).length > 0) {
-        setCityLabels((prev) => ({ ...prev, [eq.id]: result }));
-      } else {
-        setCityLabels((prev) => ({ ...prev, [eq.id]: result }));
-      }
+      setCityLabels((prev) => ({ ...prev, [eq.id]: result }));
     },
     [cityLabels],
   );
@@ -321,6 +317,7 @@ export function EewView({ earthquakes }: EewViewProps) {
         maxZoom: 18,
         worldCopyJump: true,
         zoomControl: true,
+        preferCanvas: true, // Use canvas renderer for better performance with many circles
       });
 
       L.tileLayer(
@@ -389,7 +386,7 @@ export function EewView({ earthquakes }: EewViewProps) {
             box-shadow: 0 1px 4px rgba(0,0,0,0.8);
             text-align: center;
             min-width: 28px;
-          ">MMI ${mmiRounded}<br/><span style="font-size:9px;font-weight:normal;opacity:0.9">${station.name.length > 12 ? `${station.name.substring(0, 12)}…` : station.name}</span></div>`,
+          ">MMI ${mmiRounded}<br/><span style="font-size:9px;font-weight:normal;opacity:0.9">${station.name.length > 12 ? `${station.name.substring(0, 12)}\u2026` : station.name}</span></div>`,
         iconSize: undefined,
         iconAnchor: [14, 20],
       });
@@ -425,7 +422,8 @@ export function EewView({ earthquakes }: EewViewProps) {
     }
   }, []);
 
-  // Draw all MMI rings + city labels + epicenter for the selected earthquake
+  // Draw all MMI rings + city labels + epicenter for the selected earthquake.
+  // Does NOT draw wave rings (those are handled separately) and does NOT call setView.
   const updateMapForEarthquake = useCallback(
     (labelsForEq?: MmiCityMap) => {
       if (!mapInstanceRef.current || !isLeafletLoaded() || !selectedEq) return;
@@ -436,11 +434,9 @@ export function EewView({ earthquakes }: EewViewProps) {
       const mag = selectedEq.properties.mag ?? 0;
       const depthKm = typeof eqDepth === "number" && eqDepth > 0 ? eqDepth : 10;
 
+      // Only clear the static layer (epicenter/MMI rings). Wave layer handled separately.
       if (epicenterLayerRef.current) epicenterLayerRef.current.clearLayers();
-      if (waveLayerRef.current) waveLayerRef.current.clearLayers();
-      if (shakeMapLayerRef.current) shakeMapLayerRef.current.clearLayers();
-      pWaveCircleRef.current = null;
-      sWaveCircleRef.current = null;
+      // ShakeMap stations are drawn once when data arrives — do not clear here
 
       // MMI concentric filled zones (draw from outer/low to inner/high)
       for (const mmiLevel of [...MMI_LEVELS].reverse()) {
@@ -502,7 +498,7 @@ export function EewView({ earthquakes }: EewViewProps) {
                 font-family: monospace;
                 line-height: 1.4;
                 box-shadow: 0 1px 4px rgba(0,0,0,0.6);
-              ">MMI ${mmiLevel} · ${cityName}</div>`,
+              ">MMI ${mmiLevel} \u00b7 ${cityName}</div>`,
               iconSize: undefined,
               iconAnchor: [0, 10],
             });
@@ -517,36 +513,6 @@ export function EewView({ earthquakes }: EewViewProps) {
         }
       }
 
-      // P-wave ring
-      const pRadius = getPWaveRadiusKm(elapsedSeconds);
-      if (pRadius > 0 && elapsedSeconds < 600) {
-        const pCircle = L.circle([lat, lon], {
-          radius: pRadius * 1000,
-          color: "#60a5fa",
-          fill: false,
-          weight: 3,
-          opacity: 0.9,
-          dashArray: "8 4",
-        });
-        if (waveLayerRef.current) waveLayerRef.current.addLayer(pCircle);
-        pWaveCircleRef.current = pCircle;
-      }
-
-      // S-wave ring
-      const sRadius = getSWaveRadiusKm(elapsedSeconds);
-      if (sRadius > 0 && elapsedSeconds < 600) {
-        const sCircle = L.circle([lat, lon], {
-          radius: sRadius * 1000,
-          color: "#f97316",
-          fill: false,
-          weight: 3,
-          opacity: 0.9,
-          dashArray: "6 3",
-        });
-        if (waveLayerRef.current) waveLayerRef.current.addLayer(sCircle);
-        sWaveCircleRef.current = sCircle;
-      }
-
       // Epicenter pulsing marker
       const epicenterIcon = L.divIcon({
         className: "",
@@ -557,20 +523,12 @@ export function EewView({ earthquakes }: EewViewProps) {
       const epicenterMarker = L.marker([lat, lon], { icon: epicenterIcon });
       if (epicenterLayerRef.current)
         epicenterLayerRef.current.addLayer(epicenterMarker);
-
-      // Draw shakemap station markers if already fetched
-      const stations = shakeMapStations[selectedEq.id];
-      if (stations && stations.length > 0) {
-        drawShakeMapStations(stations);
-      }
-
-      const zoom = mag >= 6 ? 5 : mag >= 5 ? 6 : 7;
-      mapInstanceRef.current.setView([lat, lon], zoom);
     },
-    [selectedEq, elapsedSeconds, shakeMapStations, drawShakeMapStations],
+    // No elapsedSeconds dependency — this function only draws static elements
+    [selectedEq],
   );
 
-  // Update only wave rings on each tick
+  // Update only wave rings on each tick — never touches epicenterLayer or calls setView
   const updateWaveRings = useCallback(() => {
     if (!mapInstanceRef.current || !isLeafletLoaded() || !selectedEq) return;
     const L = window.L;
@@ -612,6 +570,16 @@ export function EewView({ earthquakes }: EewViewProps) {
     }
   }, [selectedEq, elapsedSeconds]);
 
+  // Fly to earthquake location ONLY when the selected earthquake changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: selectedEq.id is the trigger
+  useEffect(() => {
+    if (!selectedEq || !mapInstanceRef.current) return;
+    const [lon, lat] = selectedEq.geometry.coordinates;
+    const mag = selectedEq.properties.mag ?? 0;
+    const zoom = mag >= 6 ? 5 : mag >= 5 ? 6 : 7;
+    mapInstanceRef.current.setView([lat, lon], zoom);
+  }, [selectedEq?.id]);
+
   // Full map update when selected eq changes; also kick off label/shakemap fetching
   // biome-ignore lint/correctness/useExhaustiveDependencies: selectedEq.id triggers full map reset
   useEffect(() => {
@@ -621,15 +589,18 @@ export function EewView({ earthquakes }: EewViewProps) {
     fetchShakeMapForEq(selectedEq);
   }, [selectedEq?.id]);
 
-  // Re-render MMI rings + labels whenever city labels arrive for the current eq
+  // Re-render MMI rings + labels whenever city labels arrive for the CURRENT eq only
   // biome-ignore lint/correctness/useExhaustiveDependencies: only react to label changes for current eq
   useEffect(() => {
-    if (!selectedEq || !cityLabels[selectedEq.id]) return;
-    updateMapForEarthquake(cityLabels[selectedEq.id]);
-  }, [cityLabels]);
+    if (!selectedEq) return;
+    const labels = cityLabels[selectedEq.id];
+    if (!labels) return;
+    updateMapForEarthquake(labels);
+  }, [cityLabels[selectedEq?.id ?? ""], selectedEq?.id]);
 
-  // Re-draw ShakeMap station markers when station data arrives for current eq
-  // biome-ignore lint/correctness/useExhaustiveDependencies: react to shakeMapStations changes
+  // Re-draw ShakeMap station markers when station data first arrives for current eq.
+  // Only fires when the specific station data for the selected eq changes.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: react to shakeMapStations changes for current eq
   useEffect(() => {
     if (!selectedEq) return;
     const stations = shakeMapStations[selectedEq.id];
@@ -637,8 +608,9 @@ export function EewView({ earthquakes }: EewViewProps) {
     if (stations.length > 0) {
       drawShakeMapStations(stations);
     }
-  }, [shakeMapStations]);
+  }, [shakeMapStations[selectedEq?.id ?? ""], selectedEq?.id]);
 
+  // Update wave rings every second (the only per-second map operation)
   useEffect(() => {
     updateWaveRings();
   }, [updateWaveRings]);
@@ -1103,7 +1075,7 @@ export function EewView({ earthquakes }: EewViewProps) {
                                     }}
                                   />
                                   {s.name.length > 14
-                                    ? `${s.name.substring(0, 14)}…`
+                                    ? `${s.name.substring(0, 14)}\u2026`
                                     : s.name}
                                 </span>
                               ))}
