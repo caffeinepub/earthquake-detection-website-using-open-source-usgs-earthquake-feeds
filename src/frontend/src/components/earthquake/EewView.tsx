@@ -193,6 +193,12 @@ export function EewView({ earthquakes }: EewViewProps) {
   // Track which eq IDs we've already attempted to fetch shakemap for
   const shakeMapFetchedRef = useRef<Set<string>>(new Set());
 
+  // Toggle state for estimated MMI rings
+  const [showEstimatedRings, setShowEstimatedRings] = useState(true);
+
+  // Fullscreen state for the EEW map
+  const [isEewFullscreen, setIsEewFullscreen] = useState(false);
+
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any | null>(null);
   const epicenterLayerRef = useRef<any | null>(null);
@@ -353,6 +359,15 @@ export function EewView({ earthquakes }: EewViewProps) {
     };
   }, []);
 
+  // Invalidate map size when fullscreen state changes so Leaflet redraws correctly
+  // biome-ignore lint/correctness/useExhaustiveDependencies: isEewFullscreen is the trigger
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      mapInstanceRef.current?.invalidateSize();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [isEewFullscreen]);
+
   // Draw ShakeMap station markers on the map
   const drawShakeMapStations = useCallback((stations: ShakeMapStation[]) => {
     if (!mapInstanceRef.current || !isLeafletLoaded()) return;
@@ -424,8 +439,9 @@ export function EewView({ earthquakes }: EewViewProps) {
 
   // Draw all MMI rings + city labels + epicenter for the selected earthquake.
   // Does NOT draw wave rings (those are handled separately) and does NOT call setView.
+  // showRings controls whether MMI concentric circles and dashed rings are drawn.
   const updateMapForEarthquake = useCallback(
-    (labelsForEq?: MmiCityMap) => {
+    (labelsForEq?: MmiCityMap, showRings = true) => {
       if (!mapInstanceRef.current || !isLeafletLoaded() || !selectedEq) return;
       const L = window.L;
       if (!L) return;
@@ -438,82 +454,84 @@ export function EewView({ earthquakes }: EewViewProps) {
       if (epicenterLayerRef.current) epicenterLayerRef.current.clearLayers();
       // ShakeMap stations are drawn once when data arrives — do not clear here
 
-      // MMI concentric filled zones (draw from outer/low to inner/high)
-      for (const mmiLevel of [...MMI_LEVELS].reverse()) {
-        const radiusKm = getMmiRadiusKm(mag, mmiLevel, depthKm);
-        if (radiusKm > 0 && radiusKm < 20000) {
-          const color = getMmiColor(mmiLevel);
-          const circle = L.circle([lat, lon], {
-            radius: radiusKm * 1000,
-            color: color,
-            fillColor: color,
-            fillOpacity: 0.18,
-            weight: 1,
-            opacity: 0.5,
-          });
-          if (epicenterLayerRef.current)
-            epicenterLayerRef.current.addLayer(circle);
-        }
-      }
-
-      // MMI dashed boundary rings + city labels
-      for (const mmiLevel of MMI_LEVELS) {
-        const radiusKm = getMmiRadiusKm(mag, mmiLevel, depthKm);
-        if (radiusKm > 0 && radiusKm < 20000) {
-          const color = getMmiColor(mmiLevel);
-
-          // Dashed ring
-          const ring = L.circle([lat, lon], {
-            radius: radiusKm * 1000,
-            color: color,
-            fill: false,
-            weight: 2,
-            opacity: 0.9,
-            dashArray: "4 4",
-          });
-          if (epicenterLayerRef.current)
-            epicenterLayerRef.current.addLayer(ring);
-
-          // City label at East boundary
-          const cityName = labelsForEq?.[mmiLevel];
-          if (cityName) {
-            const [ptLat, ptLon] = getCircumferencePoint(
-              lat,
-              lon,
-              radiusKm,
-              90,
-            );
-            const labelIcon = L.divIcon({
-              className: "",
-              html: `<div style="
-                background: rgba(0,0,0,0.75);
-                border: 1px solid ${color};
-                border-radius: 4px;
-                padding: 2px 6px;
-                color: ${color};
-                font-size: 10px;
-                font-weight: bold;
-                white-space: nowrap;
-                pointer-events: none;
-                font-family: monospace;
-                line-height: 1.4;
-                box-shadow: 0 1px 4px rgba(0,0,0,0.6);
-              ">MMI ${mmiLevel} \u00b7 ${cityName}</div>`,
-              iconSize: undefined,
-              iconAnchor: [0, 10],
-            });
-            const labelMarker = L.marker([ptLat, ptLon], {
-              icon: labelIcon,
-              interactive: false,
-              keyboard: false,
+      if (showRings) {
+        // MMI concentric filled zones (draw from outer/low to inner/high)
+        for (const mmiLevel of [...MMI_LEVELS].reverse()) {
+          const radiusKm = getMmiRadiusKm(mag, mmiLevel, depthKm);
+          if (radiusKm > 0 && radiusKm < 20000) {
+            const color = getMmiColor(mmiLevel);
+            const circle = L.circle([lat, lon], {
+              radius: radiusKm * 1000,
+              color: color,
+              fillColor: color,
+              fillOpacity: 0.18,
+              weight: 1,
+              opacity: 0.5,
             });
             if (epicenterLayerRef.current)
-              epicenterLayerRef.current.addLayer(labelMarker);
+              epicenterLayerRef.current.addLayer(circle);
+          }
+        }
+
+        // MMI dashed boundary rings + city labels
+        for (const mmiLevel of MMI_LEVELS) {
+          const radiusKm = getMmiRadiusKm(mag, mmiLevel, depthKm);
+          if (radiusKm > 0 && radiusKm < 20000) {
+            const color = getMmiColor(mmiLevel);
+
+            // Dashed ring
+            const ring = L.circle([lat, lon], {
+              radius: radiusKm * 1000,
+              color: color,
+              fill: false,
+              weight: 2,
+              opacity: 0.9,
+              dashArray: "4 4",
+            });
+            if (epicenterLayerRef.current)
+              epicenterLayerRef.current.addLayer(ring);
+
+            // City label at East boundary
+            const cityName = labelsForEq?.[mmiLevel];
+            if (cityName) {
+              const [ptLat, ptLon] = getCircumferencePoint(
+                lat,
+                lon,
+                radiusKm,
+                90,
+              );
+              const labelIcon = L.divIcon({
+                className: "",
+                html: `<div style="
+                  background: rgba(0,0,0,0.75);
+                  border: 1px solid ${color};
+                  border-radius: 4px;
+                  padding: 2px 6px;
+                  color: ${color};
+                  font-size: 10px;
+                  font-weight: bold;
+                  white-space: nowrap;
+                  pointer-events: none;
+                  font-family: monospace;
+                  line-height: 1.4;
+                  box-shadow: 0 1px 4px rgba(0,0,0,0.6);
+                ">MMI ${mmiLevel} \u00b7 ${cityName}</div>`,
+                iconSize: undefined,
+                iconAnchor: [0, 10],
+              });
+              const labelMarker = L.marker([ptLat, ptLon], {
+                icon: labelIcon,
+                interactive: false,
+                keyboard: false,
+              });
+              if (epicenterLayerRef.current)
+                epicenterLayerRef.current.addLayer(labelMarker);
+            }
           }
         }
       }
 
-      // Epicenter pulsing marker
+      // Epicenter pulsing marker — always drawn regardless of showRings
       const epicenterIcon = L.divIcon({
         className: "",
         html: `<div class="eew-epicenter-pulse"></div>`,
@@ -584,7 +602,7 @@ export function EewView({ earthquakes }: EewViewProps) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: selectedEq.id triggers full map reset
   useEffect(() => {
     if (!selectedEq) return;
-    updateMapForEarthquake(cityLabels[selectedEq.id]);
+    updateMapForEarthquake(cityLabels[selectedEq.id], showEstimatedRings);
     fetchCityLabelsForEq(selectedEq);
     fetchShakeMapForEq(selectedEq);
   }, [selectedEq?.id]);
@@ -595,8 +613,15 @@ export function EewView({ earthquakes }: EewViewProps) {
     if (!selectedEq) return;
     const labels = cityLabels[selectedEq.id];
     if (!labels) return;
-    updateMapForEarthquake(labels);
+    updateMapForEarthquake(labels, showEstimatedRings);
   }, [cityLabels[selectedEq?.id ?? ""], selectedEq?.id]);
+
+  // Re-draw map when showEstimatedRings toggle changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: showEstimatedRings toggle redraw
+  useEffect(() => {
+    if (!selectedEq) return;
+    updateMapForEarthquake(cityLabels[selectedEq.id], showEstimatedRings);
+  }, [showEstimatedRings]);
 
   // Re-draw ShakeMap station markers when station data first arrives for current eq.
   // Only fires when the specific station data for the selected eq changes.
@@ -792,10 +817,67 @@ export function EewView({ earthquakes }: EewViewProps) {
 
         {/* Right: Map + Info */}
         <div className="flex flex-col gap-4 order-1 lg:order-2">
+          {/* Map container with fullscreen support */}
           <div
-            className="rounded-xl overflow-hidden border border-border/40 shadow-lg"
-            style={{ height: "460px", backgroundColor: "#0a0a1a" }}
+            className={`relative overflow-hidden border border-border/40 shadow-lg${
+              isEewFullscreen
+                ? " fixed inset-0 z-[9999] rounded-none border-0"
+                : " rounded-xl"
+            }`}
+            style={{
+              height: isEewFullscreen ? "100%" : "460px",
+              backgroundColor: "#0a0a1a",
+            }}
+            data-ocid="eew.map.panel"
           >
+            {/* Fullscreen toggle button */}
+            <button
+              type="button"
+              onClick={() => setIsEewFullscreen((prev) => !prev)}
+              className="absolute top-2 right-2 z-[1000] bg-black/60 hover:bg-black/80 text-white border border-white/20 rounded-md p-1.5 transition-all backdrop-blur-sm"
+              title={isEewFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              data-ocid="eew.map.toggle"
+            >
+              {isEewFullscreen ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-label="Exit fullscreen"
+                >
+                  <title>Exit fullscreen</title>
+                  <path d="M8 3v3a2 2 0 0 1-2 2H3" />
+                  <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+                  <path d="M3 16h3a2 2 0 0 1 2 2v3" />
+                  <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-label="Enter fullscreen"
+                >
+                  <title>Enter fullscreen</title>
+                  <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+                  <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                  <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+                  <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                </svg>
+              )}
+            </button>
             <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
           </div>
 
@@ -840,13 +922,33 @@ export function EewView({ earthquakes }: EewViewProps) {
               </div>
             )}
             {!hasUsgsShakeData && !isShakeMapLoading && selectedEq && (
-              <div className="flex items-center gap-1.5 ml-auto">
+              <button
+                type="button"
+                onClick={() => setShowEstimatedRings((prev) => !prev)}
+                className={`flex items-center gap-1.5 ml-auto px-2 py-1 rounded border transition-all cursor-pointer${
+                  showEstimatedRings
+                    ? " border-white/30 text-foreground/80 hover:border-white/50"
+                    : " border-white/10 text-foreground/40 opacity-50 hover:opacity-70"
+                }`}
+                title={
+                  showEstimatedRings
+                    ? "Hide estimated rings"
+                    : "Show estimated rings"
+                }
+                data-ocid="eew.estimated.toggle"
+              >
                 <span
-                  className="inline-block w-3 h-3 rounded-sm border border-white/30"
-                  style={{ background: "rgba(0,0,0,0.75)" }}
+                  className="inline-block w-3 h-3 rounded-sm border border-white/30 flex-shrink-0"
+                  style={{
+                    background: showEstimatedRings
+                      ? "rgba(0,0,0,0.75)"
+                      : "transparent",
+                  }}
                 />
-                <span>Estimated rings · City labels from Nominatim</span>
-              </div>
+                <span className="text-xs">
+                  Estimated rings · City labels from Nominatim
+                </span>
+              </button>
             )}
           </div>
 

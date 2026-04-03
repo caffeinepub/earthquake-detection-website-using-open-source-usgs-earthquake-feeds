@@ -37,6 +37,7 @@ export interface UsgsEventDetail {
     title: string;
     products?: {
       "moment-tensor"?: UsgsEventDetailProduct[];
+      "focal-mechanism"?: UsgsEventDetailProduct[];
       [key: string]: UsgsEventDetailProduct[] | undefined;
     };
   };

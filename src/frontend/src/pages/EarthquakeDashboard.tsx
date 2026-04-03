@@ -200,43 +200,64 @@ export default function EarthquakeDashboard() {
               )}
             </h3>
             <div className="flex flex-wrap gap-2 p-1 bg-muted/50 rounded-lg backdrop-blur-sm">
+              {/* Table button */}
               <Button
                 variant={viewMode === "table" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("table")}
-                className="gap-2 transition-all duration-200"
+                className={`gap-2 transition-all duration-200${
+                  viewMode !== "table"
+                    ? " text-foreground/80 hover:text-foreground"
+                    : ""
+                }`}
                 data-ocid="view.tab"
               >
                 <TableIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Table</span>
               </Button>
+
+              {/* Map button */}
               <Button
                 variant={viewMode === "map" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("map")}
-                className="gap-2 transition-all duration-200"
+                className={`gap-2 transition-all duration-200${
+                  viewMode !== "map"
+                    ? " text-foreground/80 hover:text-foreground"
+                    : ""
+                }`}
                 data-ocid="view.tab"
               >
                 <MapIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Map</span>
               </Button>
+
+              {/* Split button */}
               <Button
                 variant={viewMode === "split" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("split")}
-                className="gap-2 transition-all duration-200"
+                className={`gap-2 transition-all duration-200${
+                  viewMode !== "split"
+                    ? " text-foreground/80 hover:text-foreground"
+                    : ""
+                }`}
                 data-ocid="view.tab"
               >
                 <Columns className="h-4 w-4" />
                 <span className="hidden sm:inline">Split</span>
               </Button>
+
+              {/* Tsunami button — keep red text when there are active alerts */}
               <Button
                 variant={viewMode === "tsunami" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("tsunami")}
-                className={`gap-2 transition-all duration-200 relative ${
-                  viewMode !== "tsunami" && tsunamiEvents.length > 0
-                    ? "text-red-400 hover:text-red-300 border border-red-500/40 hover:border-red-500/70"
+                className={`gap-2 transition-all duration-200 relative${
+                  viewMode !== "tsunami"
+                    ? tsunamiEvents.length > 0
+                      ? " text-red-400 hover:text-red-300 border border-red-500/40 hover:border-red-500/70"
+                      : " text-foreground/80 hover:text-foreground"
                     : ""
                 }`}
                 data-ocid="tsunami.tab"
@@ -249,13 +270,15 @@ export default function EarthquakeDashboard() {
                   </span>
                 )}
               </Button>
+
+              {/* EEW button — keep orange intentionally as attention signal */}
               <Button
                 variant={viewMode === "eew" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("eew")}
-                className={`gap-2 transition-all duration-200 relative ${
+                className={`gap-2 transition-all duration-200 relative${
                   viewMode !== "eew"
-                    ? "text-orange-400 hover:text-orange-300 border border-orange-500/40 hover:border-orange-500/70"
+                    ? " text-orange-400 hover:text-orange-300 border border-orange-500/40 hover:border-orange-500/70"
                     : ""
                 }`}
                 data-ocid="eew.tab"

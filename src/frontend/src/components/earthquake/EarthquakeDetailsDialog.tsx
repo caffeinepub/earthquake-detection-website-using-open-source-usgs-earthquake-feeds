@@ -124,7 +124,44 @@ function getFocalMechanismInfo(
   };
 }
 
-// ---- Canvas-based Beach Ball (seismologically correct) ----
+/**
+ * Extract the beach ball PNG image URL from a USGS product's contents.
+ * Tries known standard keys first, then falls back to any .png file in contents.
+ */
+function getBeachBallImageUrl(
+  products?: UsgsEventDetailProduct[],
+): string | null {
+  if (!products || products.length === 0) return null;
+
+  const preferredProduct = products.reduce((prev, current) => {
+    const prevWeight = prev.preferredWeight ?? 0;
+    const currentWeight = current.preferredWeight ?? 0;
+    return currentWeight > prevWeight ? current : prev;
+  }, products[0]);
+
+  const contents = preferredProduct.contents ?? {};
+
+  // Try known standard keys first
+  const knownKeys = [
+    "download/moment_tensor.png",
+    "download/focal_mechanism.png",
+    "download/beachball.png",
+    "download/mt.png",
+  ];
+
+  for (const key of knownKeys) {
+    if (contents[key]?.url) return contents[key].url;
+  }
+
+  // Fallback: find any .png in contents
+  for (const [key, val] of Object.entries(contents)) {
+    if (key.endsWith(".png") && val?.url) return val.url;
+  }
+
+  return null;
+}
+
+// ---- Canvas-based Beach Ball (seismologically correct, used as fallback) ----
 
 /**
  * Lambert azimuthal equal-area projection for lower hemisphere.
@@ -417,8 +454,19 @@ export function EarthquakeDetailsDialog({
   const focalMechanismInfo =
     (focalMechProducts ? getFocalMechanismInfo(focalMechProducts) : null) ??
     (momentTensorProducts ? getFocalMechanismInfo(momentTensorProducts) : null);
+
+  // Try to get the real colored beach ball image from USGS
+  // Check both moment-tensor and focal-mechanism product contents for PNG images
+  const beachBallImageUrl =
+    getBeachBallImageUrl(eventDetail?.properties.products?.["moment-tensor"]) ??
+    getBeachBallImageUrl(eventDetail?.properties.products?.["focal-mechanism"]);
+
+  // Show focal mechanism section if loading, or if we have image OR nodal planes
   const showFocalMechanism =
-    !isDetailError && (isLoadingDetail || focalMechanismInfo !== null);
+    !isDetailError &&
+    (isLoadingDetail ||
+      focalMechanismInfo !== null ||
+      beachBallImageUrl !== null);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -617,145 +665,160 @@ export function EarthquakeDetailsDialog({
                         <Skeleton className="h-20 rounded-lg" />
                       </div>
                     </div>
-                  ) : focalMechanismInfo ? (
+                  ) : beachBallImageUrl || focalMechanismInfo ? (
                     <>
-                      {/* Beach ball diagram */}
+                      {/* Beach ball diagram — use USGS image if available, else canvas fallback */}
                       <div className="flex justify-center py-2">
                         <div className="relative">
-                          <BeachBallDiagram
-                            np1Strike={focalMechanismInfo.np1Strike}
-                            np1Dip={focalMechanismInfo.np1Dip}
-                            np1Rake={focalMechanismInfo.np1Rake}
-                            np2Strike={focalMechanismInfo.np2Strike}
-                            np2Dip={focalMechanismInfo.np2Dip}
-                            np2Rake={focalMechanismInfo.np2Rake}
-                            size={160}
-                          />
-                          <div className="absolute -bottom-6 left-0 right-0 flex justify-center gap-4">
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
-                              P (compressional)
-                            </span>
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
-                              T (tensional)
+                          {beachBallImageUrl ? (
+                            <img
+                              src={beachBallImageUrl}
+                              alt="Focal mechanism beach ball from USGS"
+                              width={160}
+                              height={160}
+                              className="rounded-full border border-border/40 shadow-md"
+                              style={{
+                                width: 160,
+                                height: 160,
+                                objectFit: "contain",
+                              }}
+                            />
+                          ) : focalMechanismInfo ? (
+                            <BeachBallDiagram
+                              np1Strike={focalMechanismInfo.np1Strike}
+                              np1Dip={focalMechanismInfo.np1Dip}
+                              np1Rake={focalMechanismInfo.np1Rake}
+                              np2Strike={focalMechanismInfo.np2Strike}
+                              np2Dip={focalMechanismInfo.np2Dip}
+                              np2Rake={focalMechanismInfo.np2Rake}
+                              size={160}
+                            />
+                          ) : null}
+                          <div className="absolute -bottom-6 left-0 right-0 text-center">
+                            <span className="text-[10px] text-muted-foreground/60">
+                              {beachBallImageUrl
+                                ? "Source: USGS"
+                                : "Computed from nodal planes"}
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Nodal plane data */}
-                      <div className="grid gap-3 sm:grid-cols-2 mt-8">
-                        <div className="p-3 rounded-lg bg-muted/20 border border-border/30 space-y-2">
-                          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                            Nodal Plane 1
-                          </p>
-                          <div className="grid grid-cols-3 gap-1">
-                            <div className="text-center">
-                              <p className="text-xs text-muted-foreground">
-                                Strike
-                              </p>
-                              <p className="text-sm font-mono font-semibold">
-                                {focalMechanismInfo.np1Strike}°
-                              </p>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-xs text-muted-foreground">
-                                Dip
-                              </p>
-                              <p className="text-sm font-mono font-semibold">
-                                {focalMechanismInfo.np1Dip}°
-                              </p>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-xs text-muted-foreground">
-                                Rake
-                              </p>
-                              <p className="text-sm font-mono font-semibold">
-                                {focalMechanismInfo.np1Rake}°
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="p-3 rounded-lg bg-muted/20 border border-border/30 space-y-2">
-                          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                            Nodal Plane 2
-                          </p>
-                          <div className="grid grid-cols-3 gap-1">
-                            <div className="text-center">
-                              <p className="text-xs text-muted-foreground">
-                                Strike
-                              </p>
-                              <p className="text-sm font-mono font-semibold">
-                                {focalMechanismInfo.np2Strike}°
-                              </p>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-xs text-muted-foreground">
-                                Dip
-                              </p>
-                              <p className="text-sm font-mono font-semibold">
-                                {focalMechanismInfo.np2Dip}°
-                              </p>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-xs text-muted-foreground">
-                                Rake
-                              </p>
-                              <p className="text-sm font-mono font-semibold">
-                                {focalMechanismInfo.np2Rake}°
-                              </p>
+                      {/* Nodal plane data — only show if we have the numbers */}
+                      {focalMechanismInfo && (
+                        <div className="grid gap-3 sm:grid-cols-2 mt-8">
+                          <div className="p-3 rounded-lg bg-muted/20 border border-border/30 space-y-2">
+                            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                              Nodal Plane 1
+                            </p>
+                            <div className="grid grid-cols-3 gap-1">
+                              <div className="text-center">
+                                <p className="text-xs text-muted-foreground">
+                                  Strike
+                                </p>
+                                <p className="text-sm font-mono font-semibold">
+                                  {focalMechanismInfo.np1Strike}&deg;
+                                </p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-xs text-muted-foreground">
+                                  Dip
+                                </p>
+                                <p className="text-sm font-mono font-semibold">
+                                  {focalMechanismInfo.np1Dip}&deg;
+                                </p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-xs text-muted-foreground">
+                                  Rake
+                                </p>
+                                <p className="text-sm font-mono font-semibold">
+                                  {focalMechanismInfo.np1Rake}&deg;
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-
-                      {/* Extra metadata */}
-                      {(focalMechanismInfo.stationCount ||
-                        focalMechanismInfo.azimuthalGap ||
-                        focalMechanismInfo.magnitudeType) && (
-                        <div className="grid gap-3">
-                          {focalMechanismInfo.stationCount && (
-                            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
-                              <span className="text-sm font-semibold">
-                                Station Count
-                              </span>
-                              <Badge
-                                variant="secondary"
-                                className="font-mono font-semibold"
-                              >
-                                {focalMechanismInfo.stationCount}
-                              </Badge>
+                          <div className="p-3 rounded-lg bg-muted/20 border border-border/30 space-y-2">
+                            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                              Nodal Plane 2
+                            </p>
+                            <div className="grid grid-cols-3 gap-1">
+                              <div className="text-center">
+                                <p className="text-xs text-muted-foreground">
+                                  Strike
+                                </p>
+                                <p className="text-sm font-mono font-semibold">
+                                  {focalMechanismInfo.np2Strike}&deg;
+                                </p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-xs text-muted-foreground">
+                                  Dip
+                                </p>
+                                <p className="text-sm font-mono font-semibold">
+                                  {focalMechanismInfo.np2Dip}&deg;
+                                </p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-xs text-muted-foreground">
+                                  Rake
+                                </p>
+                                <p className="text-sm font-mono font-semibold">
+                                  {focalMechanismInfo.np2Rake}&deg;
+                                </p>
+                              </div>
                             </div>
-                          )}
-                          {focalMechanismInfo.azimuthalGap && (
-                            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
-                              <span className="text-sm font-semibold">
-                                Azimuthal Gap
-                              </span>
-                              <Badge
-                                variant="secondary"
-                                className="font-mono font-semibold"
-                              >
-                                {focalMechanismInfo.azimuthalGap}°
-                              </Badge>
-                            </div>
-                          )}
-                          {focalMechanismInfo.magnitudeType && (
-                            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
-                              <span className="text-sm font-semibold">
-                                Magnitude Type
-                              </span>
-                              <Badge
-                                variant="outline"
-                                className="font-mono font-semibold"
-                              >
-                                {focalMechanismInfo.magnitudeType}
-                              </Badge>
-                            </div>
-                          )}
+                          </div>
                         </div>
                       )}
+
+                      {/* Extra metadata */}
+                      {focalMechanismInfo &&
+                        (focalMechanismInfo.stationCount ||
+                          focalMechanismInfo.azimuthalGap ||
+                          focalMechanismInfo.magnitudeType) && (
+                          <div className="grid gap-3">
+                            {focalMechanismInfo.stationCount && (
+                              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
+                                <span className="text-sm font-semibold">
+                                  Station Count
+                                </span>
+                                <Badge
+                                  variant="secondary"
+                                  className="font-mono font-semibold"
+                                >
+                                  {focalMechanismInfo.stationCount}
+                                </Badge>
+                              </div>
+                            )}
+                            {focalMechanismInfo.azimuthalGap && (
+                              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
+                                <span className="text-sm font-semibold">
+                                  Azimuthal Gap
+                                </span>
+                                <Badge
+                                  variant="secondary"
+                                  className="font-mono font-semibold"
+                                >
+                                  {focalMechanismInfo.azimuthalGap}&deg;
+                                </Badge>
+                              </div>
+                            )}
+                            {focalMechanismInfo.magnitudeType && (
+                              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
+                                <span className="text-sm font-semibold">
+                                  Magnitude Type
+                                </span>
+                                <Badge
+                                  variant="outline"
+                                  className="font-mono font-semibold"
+                                >
+                                  {focalMechanismInfo.magnitudeType}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        )}
                     </>
                   ) : null}
                 </div>
