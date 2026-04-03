@@ -41,14 +41,12 @@ function formatDateTime(timestamp: number): string {
 }
 
 function getAlertColor(alert: string | null, mag: number | null): string {
-  // Prioritize USGS PAGER alert string first (exact match from API)
   if (alert !== null) {
     if (alert === "red") return "#dc2626";
     if (alert === "orange") return "#ea580c";
     if (alert === "yellow") return "#f59e0b";
     if (alert === "green") return "#22c55e";
   }
-  // Fallback to magnitude-based color only when no PAGER alert is available
   if (mag !== null) {
     if (mag >= 7) return "#dc2626";
     if (mag >= 6) return "#ea580c";
@@ -73,6 +71,110 @@ const MMI_DESCRIPTIONS: Record<number, string> = {
 // Type alias: mmiLevel -> city/region name
 type MmiCityMap = Record<number, string>;
 
+// USGS ShakeMap station data
+interface ShakeMapStation {
+  name: string;
+  lat: number;
+  lon: number;
+  mmi: number; // observed/estimated MMI at this station
+  source: "observed" | "estimated"; // did station report shaking or is it estimated
+}
+
+/**
+ * Fetch USGS event detail JSON, then fetch stationlist.json from shakemap product.
+ * Returns an array of stations with MMI values, or [] if not available.
+ */
+async function fetchShakeMapStations(
+  detailUrl: string,
+): Promise<ShakeMapStation[]> {
+  try {
+    const detailRes = await fetch(detailUrl);
+    if (!detailRes.ok) return [];
+    const detail = await detailRes.json();
+
+    const shakemapProducts: any[] =
+      detail?.properties?.products?.shakemap ?? [];
+    if (shakemapProducts.length === 0) return [];
+
+    // Pick the preferred shakemap product (highest preferredWeight or first)
+    const product = shakemapProducts.reduce((best: any, cur: any) =>
+      (cur.preferredWeight ?? 0) >= (best.preferredWeight ?? 0) ? cur : best,
+    );
+
+    const contents: Record<string, { url: string }> = product?.contents ?? {};
+
+    // Try stationlist.json first (most detailed), fall back to grid.xml
+    const stationlistEntry =
+      contents["download/stationlist.json"] ??
+      contents["stationlist.json"] ??
+      null;
+
+    if (!stationlistEntry?.url) return [];
+
+    const stationRes = await fetch(stationlistEntry.url);
+    if (!stationRes.ok) return [];
+    const stationData = await stationRes.json();
+
+    // stationlist.json structure: { type: "FeatureCollection", features: [...] }
+    const features: any[] = stationData?.features ?? [];
+    const stations: ShakeMapStation[] = [];
+
+    for (const feature of features) {
+      const props = feature?.properties ?? {};
+      const coords = feature?.geometry?.coordinates;
+      if (!coords || coords.length < 2) continue;
+
+      const lon = coords[0];
+      const lat = coords[1];
+      const name: string =
+        props.name ||
+        props.station_name ||
+        props.stationcode ||
+        props.code ||
+        "";
+      if (!name) continue;
+
+      // MMI: prefer intensity (observed CDI/MMI), fallback to pgm
+      let mmiValue: number | null = null;
+      if (typeof props.intensity === "number" && props.intensity > 0) {
+        mmiValue = props.intensity;
+      } else if (typeof props.mmi === "number" && props.mmi > 0) {
+        mmiValue = props.mmi;
+      } else {
+        // Try to get from channel amplitudes — pgv or pga-based MMI estimate
+        const channels: any[] = props.channels ?? [];
+        for (const ch of channels) {
+          const amps: any[] = ch.amplitudes ?? [];
+          for (const amp of amps) {
+            if (amp.name === "mmi" && typeof amp.value === "number") {
+              mmiValue = amp.value;
+              break;
+            }
+          }
+          if (mmiValue !== null) break;
+        }
+      }
+
+      if (mmiValue === null || mmiValue < 1) continue;
+
+      const isObserved =
+        props.network !== undefined && props.network !== "DYFI";
+
+      stations.push({
+        name: name.trim(),
+        lat,
+        lon,
+        mmi: Math.min(10, Math.max(1, mmiValue)),
+        source: isObserved ? "observed" : "estimated",
+      });
+    }
+
+    return stations;
+  } catch {
+    return [];
+  }
+}
+
 export function EewView({ earthquakes }: EewViewProps) {
   const alerts = earthquakes
     .filter((eq) => (eq.properties.mag ?? 0) >= 2.5)
@@ -84,11 +186,18 @@ export function EewView({ earthquakes }: EewViewProps) {
   const [, forceUpdate] = useState(0);
   // cityLabels: eq.id -> { mmiLevel: cityName }
   const [cityLabels, setCityLabels] = useState<Record<string, MmiCityMap>>({});
+  // shakeMapStations: eq.id -> ShakeMapStation[]
+  const [shakeMapStations, setShakeMapStations] = useState<
+    Record<string, ShakeMapStation[]>
+  >({});
+  // Track which eq IDs we've already attempted to fetch shakemap for
+  const shakeMapFetchedRef = useRef<Set<string>>(new Set());
 
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any | null>(null);
   const epicenterLayerRef = useRef<any | null>(null);
   const waveLayerRef = useRef<any | null>(null);
+  const shakeMapLayerRef = useRef<any | null>(null);
   const pWaveCircleRef = useRef<any | null>(null);
   const sWaveCircleRef = useRef<any | null>(null);
 
@@ -124,6 +233,18 @@ export function EewView({ earthquakes }: EewViewProps) {
       setElapsedSeconds(diffSec);
     }
   }, [selectedEq?.id]);
+
+  // Fetch ShakeMap stations from USGS for the selected earthquake
+  const fetchShakeMapForEq = useCallback(async (eq: UsgsFeature) => {
+    if (shakeMapFetchedRef.current.has(eq.id)) return;
+    shakeMapFetchedRef.current.add(eq.id);
+
+    const detailUrl = eq.properties.detail;
+    if (!detailUrl) return;
+
+    const stations = await fetchShakeMapStations(detailUrl);
+    setShakeMapStations((prev) => ({ ...prev, [eq.id]: stations }));
+  }, []);
 
   // Fetch Nominatim city labels for each MMI ring boundary of an earthquake.
   // We fire one request per MMI level with a 300 ms gap to respect rate limits.
@@ -178,11 +299,9 @@ export function EewView({ earthquakes }: EewViewProps) {
       if (Object.keys(result).length > 0) {
         setCityLabels((prev) => ({ ...prev, [eq.id]: result }));
       } else {
-        // Still mark as fetched (empty) so we don't retry
         setCityLabels((prev) => ({ ...prev, [eq.id]: result }));
       }
     },
-    // cityLabels as dependency so the cache-check is always fresh
     [cityLabels],
   );
 
@@ -214,6 +333,7 @@ export function EewView({ earthquakes }: EewViewProps) {
 
       epicenterLayerRef.current = L.layerGroup().addTo(map);
       waveLayerRef.current = L.layerGroup().addTo(map);
+      shakeMapLayerRef.current = L.layerGroup().addTo(map);
       mapInstanceRef.current = map;
     }
 
@@ -229,10 +349,80 @@ export function EewView({ earthquakes }: EewViewProps) {
         mapInstanceRef.current = null;
         epicenterLayerRef.current = null;
         waveLayerRef.current = null;
+        shakeMapLayerRef.current = null;
         pWaveCircleRef.current = null;
         sWaveCircleRef.current = null;
       }
     };
+  }, []);
+
+  // Draw ShakeMap station markers on the map
+  const drawShakeMapStations = useCallback((stations: ShakeMapStation[]) => {
+    if (!mapInstanceRef.current || !isLeafletLoaded()) return;
+    const L = window.L;
+    if (!L || !shakeMapLayerRef.current) return;
+
+    shakeMapLayerRef.current.clearLayers();
+
+    if (stations.length === 0) return;
+
+    for (const station of stations) {
+      const color = getMmiColor(station.mmi);
+      const mmiRounded = Math.round(station.mmi);
+      // Determine text color for readability on the background
+      const textColor = station.mmi >= 5 ? "#000" : "#fff";
+
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="
+            background: ${color};
+            border: 2px solid rgba(255,255,255,0.8);
+            border-radius: 4px;
+            padding: 2px 5px;
+            color: ${textColor};
+            font-size: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+            pointer-events: none;
+            font-family: monospace;
+            line-height: 1.4;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.8);
+            text-align: center;
+            min-width: 28px;
+          ">MMI ${mmiRounded}<br/><span style="font-size:9px;font-weight:normal;opacity:0.9">${station.name.length > 12 ? `${station.name.substring(0, 12)}…` : station.name}</span></div>`,
+        iconSize: undefined,
+        iconAnchor: [14, 20],
+      });
+
+      const marker = L.marker([station.lat, station.lon], {
+        icon,
+        interactive: true,
+        keyboard: false,
+        zIndexOffset: 100,
+      });
+
+      // Popup with full station info
+      const observedLabel =
+        station.source === "observed" ? "Observed" : "Estimated";
+      const bgColor = station.source === "observed" ? "#22c55e" : "#f59e0b";
+      marker.bindPopup(
+        `<div style="font-family:monospace;font-size:12px;min-width:160px">
+            <div style="font-weight:bold;font-size:13px;margin-bottom:4px">${station.name}</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+              <div style="background:${color};color:${textColor};padding:2px 8px;border-radius:3px;font-weight:bold">
+                MMI ${mmiRounded} (${station.mmi.toFixed(1)})
+              </div>
+              <div style="background:${bgColor};color:#fff;padding:1px 5px;border-radius:3px;font-size:10px">
+                ${observedLabel}
+              </div>
+            </div>
+            <div style="color:#aaa;font-size:10px">${getMmiLabel(station.mmi)}</div>
+          </div>`,
+        { maxWidth: 220 },
+      );
+
+      shakeMapLayerRef.current.addLayer(marker);
+    }
   }, []);
 
   // Draw all MMI rings + city labels + epicenter for the selected earthquake
@@ -248,6 +438,7 @@ export function EewView({ earthquakes }: EewViewProps) {
 
       if (epicenterLayerRef.current) epicenterLayerRef.current.clearLayers();
       if (waveLayerRef.current) waveLayerRef.current.clearLayers();
+      if (shakeMapLayerRef.current) shakeMapLayerRef.current.clearLayers();
       pWaveCircleRef.current = null;
       sWaveCircleRef.current = null;
 
@@ -367,10 +558,16 @@ export function EewView({ earthquakes }: EewViewProps) {
       if (epicenterLayerRef.current)
         epicenterLayerRef.current.addLayer(epicenterMarker);
 
+      // Draw shakemap station markers if already fetched
+      const stations = shakeMapStations[selectedEq.id];
+      if (stations && stations.length > 0) {
+        drawShakeMapStations(stations);
+      }
+
       const zoom = mag >= 6 ? 5 : mag >= 5 ? 6 : 7;
       mapInstanceRef.current.setView([lat, lon], zoom);
     },
-    [selectedEq, elapsedSeconds],
+    [selectedEq, elapsedSeconds, shakeMapStations, drawShakeMapStations],
   );
 
   // Update only wave rings on each tick
@@ -415,14 +612,13 @@ export function EewView({ earthquakes }: EewViewProps) {
     }
   }, [selectedEq, elapsedSeconds]);
 
-  // Full map update when selected eq changes; also kick off label fetching
+  // Full map update when selected eq changes; also kick off label/shakemap fetching
   // biome-ignore lint/correctness/useExhaustiveDependencies: selectedEq.id triggers full map reset
   useEffect(() => {
     if (!selectedEq) return;
-    // Draw map immediately (labels may arrive later)
     updateMapForEarthquake(cityLabels[selectedEq.id]);
-    // Start fetching city labels in the background
     fetchCityLabelsForEq(selectedEq);
+    fetchShakeMapForEq(selectedEq);
   }, [selectedEq?.id]);
 
   // Re-render MMI rings + labels whenever city labels arrive for the current eq
@@ -431,6 +627,17 @@ export function EewView({ earthquakes }: EewViewProps) {
     if (!selectedEq || !cityLabels[selectedEq.id]) return;
     updateMapForEarthquake(cityLabels[selectedEq.id]);
   }, [cityLabels]);
+
+  // Re-draw ShakeMap station markers when station data arrives for current eq
+  // biome-ignore lint/correctness/useExhaustiveDependencies: react to shakeMapStations changes
+  useEffect(() => {
+    if (!selectedEq) return;
+    const stations = shakeMapStations[selectedEq.id];
+    if (stations === undefined) return; // not yet fetched
+    if (stations.length > 0) {
+      drawShakeMapStations(stations);
+    }
+  }, [shakeMapStations]);
 
   useEffect(() => {
     updateWaveRings();
@@ -452,6 +659,15 @@ export function EewView({ earthquakes }: EewViewProps) {
       (eq.properties.mag ?? 0) >= 5 &&
       Date.now() - eq.properties.time < 3600000,
   ).length;
+
+  // Determine if we have USGS ShakeMap data for the selected eq
+  const currentStations = selectedEq
+    ? (shakeMapStations[selectedEq.id] ?? null)
+    : null;
+  const hasUsgsShakeData =
+    currentStations !== null && currentStations.length > 0;
+  const isShakeMapLoading =
+    selectedEq && shakeMapStations[selectedEq.id] === undefined;
 
   return (
     <div className="space-y-6">
@@ -611,6 +827,7 @@ export function EewView({ earthquakes }: EewViewProps) {
             <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
           </div>
 
+          {/* Map legend */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground px-1 flex-wrap">
             <div className="flex items-center gap-1.5">
               <div
@@ -630,13 +847,35 @@ export function EewView({ earthquakes }: EewViewProps) {
               <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
               <span>Epicenter</span>
             </div>
-            <div className="flex items-center gap-1.5 ml-auto">
-              <span
-                className="inline-block w-3 h-3 rounded-sm border border-white/30"
-                style={{ background: "rgba(0,0,0,0.75)" }}
-              />
-              <span>City labels load after selection</span>
-            </div>
+            {hasUsgsShakeData && (
+              <div className="flex items-center gap-1.5">
+                <div
+                  className="w-4 h-4 rounded"
+                  style={{
+                    background: "#22c55e",
+                    border: "2px solid rgba(255,255,255,0.8)",
+                  }}
+                />
+                <span className="text-green-400 font-medium">
+                  USGS ShakeMap ({currentStations!.length} stations)
+                </span>
+              </div>
+            )}
+            {isShakeMapLoading && (
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full border-2 border-yellow-400 border-t-transparent animate-spin" />
+                <span className="text-yellow-400">Loading USGS data…</span>
+              </div>
+            )}
+            {!hasUsgsShakeData && !isShakeMapLoading && selectedEq && (
+              <div className="flex items-center gap-1.5 ml-auto">
+                <span
+                  className="inline-block w-3 h-3 rounded-sm border border-white/30"
+                  style={{ background: "rgba(0,0,0,0.75)" }}
+                />
+                <span>Estimated rings · City labels from Nominatim</span>
+              </div>
+            )}
           </div>
 
           {selectedEq && (
@@ -765,11 +1004,16 @@ export function EewView({ earthquakes }: EewViewProps) {
 
         <Card className="border-border/40" data-ocid="eew.impact.zones.card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm uppercase tracking-wide">
-              Estimated Impact Zones
+            <CardTitle className="text-sm uppercase tracking-wide flex items-center gap-2">
+              Impact Zones
               {selectedEq && (
-                <span className="ml-2 text-xs text-muted-foreground font-normal normal-case">
-                  for M{(selectedEq.properties.mag ?? 0).toFixed(1)}
+                <span className="ml-1 text-xs text-muted-foreground font-normal normal-case">
+                  M{(selectedEq.properties.mag ?? 0).toFixed(1)}
+                </span>
+              )}
+              {hasUsgsShakeData && (
+                <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded bg-green-500/20 text-green-400 border border-green-500/30 normal-case">
+                  USGS Data Available
                 </span>
               )}
             </CardTitle>
@@ -806,6 +1050,12 @@ export function EewView({ earthquakes }: EewViewProps) {
                       selectedEq && cityLabels[selectedEq.id]
                         ? cityLabels[selectedEq.id][mmiLevel]
                         : undefined;
+                    // Find USGS ShakeMap stations in this MMI band
+                    const bandStations = hasUsgsShakeData
+                      ? currentStations!.filter(
+                          (s) => Math.round(s.mmi) === mmiLevel,
+                        )
+                      : [];
                     return (
                       <tr
                         key={mmiLevel}
@@ -834,8 +1084,36 @@ export function EewView({ earthquakes }: EewViewProps) {
                             ? `~${Math.round(radiusKm)} km`
                             : "—"}
                         </td>
-                        <td className="px-4 py-1.5 text-muted-foreground max-w-[120px] truncate">
-                          {cityName ? (
+                        <td className="px-4 py-1.5 text-muted-foreground max-w-[160px]">
+                          {bandStations.length > 0 ? (
+                            <div className="flex flex-col gap-0.5">
+                              {bandStations.slice(0, 3).map((s) => (
+                                <span
+                                  key={s.name}
+                                  className="text-[10px] font-medium flex items-center gap-1"
+                                  style={{ color: getMmiColor(mmiLevel) }}
+                                >
+                                  <span
+                                    className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                    style={{
+                                      background:
+                                        s.source === "observed"
+                                          ? "#22c55e"
+                                          : "#f59e0b",
+                                    }}
+                                  />
+                                  {s.name.length > 14
+                                    ? `${s.name.substring(0, 14)}…`
+                                    : s.name}
+                                </span>
+                              ))}
+                              {bandStations.length > 3 && (
+                                <span className="text-[9px] text-muted-foreground/50">
+                                  +{bandStations.length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          ) : cityName ? (
                             <span
                               className="text-[10px] font-medium"
                               style={{ color: getMmiColor(mmiLevel) }}
@@ -858,6 +1136,21 @@ export function EewView({ earthquakes }: EewViewProps) {
                 </tbody>
               </table>
             </div>
+            {hasUsgsShakeData && (
+              <div className="px-4 py-2 border-t border-border/20 flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-[10px] text-muted-foreground">
+                  Observed (seismograph)
+                </span>
+                <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 ml-2" />
+                <span className="text-[10px] text-muted-foreground">
+                  Estimated
+                </span>
+                <span className="ml-auto text-[10px] text-muted-foreground/50">
+                  Source: USGS ShakeMap
+                </span>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
