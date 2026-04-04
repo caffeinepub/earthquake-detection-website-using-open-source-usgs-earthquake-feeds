@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import {
   Columns,
   Map as MapIcon,
+  MapPin,
+  MapPinOff,
   Moon,
   Sun,
   Table as TableIcon,
@@ -10,7 +12,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { DashboardSummary } from "../components/earthquake/DashboardSummary";
 import { EarthquakeDetailsDialog } from "../components/earthquake/EarthquakeDetailsDialog";
@@ -20,9 +22,15 @@ import { EewView } from "../components/earthquake/EewView";
 import { FeedAndFilterControls } from "../components/earthquake/FeedAndFilterControls";
 import { TsunamiAlertBanner } from "../components/earthquake/TsunamiAlertBanner";
 import { TsunamiView } from "../components/earthquake/TsunamiView";
+import { useUserLocation } from "../hooks/useUserLocation";
 import { useUsgsEarthquakes } from "../hooks/useUsgsEarthquakes";
 import { applyFilters } from "../lib/earthquakeFilters";
 import { computeStats } from "../lib/earthquakeStats";
+import {
+  distanceKm,
+  notifyNearbyEarthquakes,
+  requestNotificationPermission,
+} from "../lib/notificationService";
 import type { TimeWindow, UsgsFeature } from "../lib/usgsTypes";
 
 type ViewMode = "table" | "map" | "split" | "tsunami" | "eew";
@@ -42,6 +50,14 @@ export default function EarthquakeDashboard() {
   );
   const [tsunamiBannerDismissed, setTsunamiBannerDismissed] = useState(false);
   const prevTsunamiCountRef = useRef(0);
+  const prevEqIdsRef = useRef<Set<string>>(new Set());
+
+  const {
+    location: userLocation,
+    status: locationStatus,
+    requestLocation,
+    clearLocation,
+  } = useUserLocation();
 
   const { data, isLoading, isError, error, forceRefresh } =
     useUsgsEarthquakes(timeWindow);
@@ -66,6 +82,42 @@ export default function EarthquakeDashboard() {
   ).length;
 
   const stats = computeStats(filteredEarthquakes, 5.0);
+
+  // Handle notifications when new earthquakes arrive (only after location is granted)
+  useEffect(() => {
+    if (!userLocation || !data) return;
+
+    const currentIds = new Set(data.features.map((f) => f.id));
+
+    // On first run (empty set), just populate without sending notifications
+    if (prevEqIdsRef.current.size === 0) {
+      prevEqIdsRef.current = currentIds;
+      return;
+    }
+
+    const newEqs = data.features.filter((f) => !prevEqIdsRef.current.has(f.id));
+    prevEqIdsRef.current = currentIds;
+
+    if (newEqs.length === 0) return;
+
+    const eqsForNotify = newEqs.map((f) => ({
+      id: f.id,
+      lat: f.geometry.coordinates[1],
+      lng: f.geometry.coordinates[0],
+      mag: f.properties.mag,
+      place: f.properties.place || "Unknown location",
+      time: f.properties.time,
+    }));
+
+    notifyNearbyEarthquakes(eqsForNotify, userLocation.lat, userLocation.lng);
+  }, [data, userLocation]);
+
+  // Request notification permission when location is granted
+  useEffect(() => {
+    if (locationStatus === "granted") {
+      requestNotificationPermission();
+    }
+  }, [locationStatus]);
 
   const handleRefresh = async () => {
     setIsManualRefreshing(true);
@@ -120,7 +172,39 @@ export default function EarthquakeDashboard() {
                   </p>
                 </div>
               </div>
-              <div className="flex-shrink-0 pt-1">
+              <div className="flex-shrink-0 pt-1 flex items-center gap-1">
+                {/* Location button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={
+                    locationStatus === "granted"
+                      ? clearLocation
+                      : requestLocation
+                  }
+                  className="hover:bg-accent/50 transition-all duration-200 w-10 h-10"
+                  title={
+                    locationStatus === "granted"
+                      ? "Hapus lokasi"
+                      : "Aktifkan lokasi saya"
+                  }
+                  data-ocid="location.toggle"
+                >
+                  {locationStatus === "granted" ? (
+                    <MapPinOff className="h-5 w-5 text-blue-400" />
+                  ) : locationStatus === "requesting" ? (
+                    <MapPin className="h-5 w-5 text-muted-foreground animate-pulse" />
+                  ) : (
+                    <MapPin className="h-5 w-5 text-muted-foreground" />
+                  )}
+                  <span className="sr-only">
+                    {locationStatus === "granted"
+                      ? "Clear location"
+                      : "Enable my location"}
+                  </span>
+                </Button>
+
+                {/* Theme toggle */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -188,6 +272,61 @@ export default function EarthquakeDashboard() {
               />
             </div>
           )}
+
+          {/* Nearest earthquakes strip when location is known */}
+          {!isLoading &&
+            !isError &&
+            userLocation &&
+            (() => {
+              const sorted = [...filteredEarthquakes]
+                .map((eq) => ({
+                  eq,
+                  dist: distanceKm(
+                    userLocation.lat,
+                    userLocation.lng,
+                    eq.geometry.coordinates[1],
+                    eq.geometry.coordinates[0],
+                  ),
+                }))
+                .sort((a, b) => a.dist - b.dist)
+                .slice(0, 3);
+
+              return (
+                <div className="animate-fade-in" data-ocid="nearby.panel">
+                  <div className="border border-blue-500/30 rounded-lg p-4 bg-blue-500/5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <MapPin className="h-4 w-4 text-blue-400" />
+                      <span className="text-sm font-semibold text-blue-400">
+                        Gempa Terdekat dari Lokasi Anda
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {sorted.map(({ eq, dist }, idx) => (
+                        <button
+                          key={eq.id}
+                          type="button"
+                          onClick={() => handleEarthquakeSelect(eq)}
+                          className="text-left p-3 rounded-md bg-background/50 hover:bg-background/80 transition-colors border border-border/30"
+                          data-ocid={`nearby.item.${idx + 1}`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-bold text-sm">
+                              M{eq.properties.mag?.toFixed(1) ?? "?"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {Math.round(dist).toLocaleString()} km
+                            </span>
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {eq.properties.place}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
           {/* View Mode Toggle */}
           <div className="flex flex-wrap items-center justify-between gap-4 animate-fade-in">
@@ -326,6 +465,7 @@ export default function EarthquakeDashboard() {
                   earthquakes={filteredEarthquakes}
                   onMarkerClick={handleEarthquakeSelect}
                   autoFitBounds={shouldAutoFitBounds}
+                  userLocation={userLocation}
                 />
               )}
 
@@ -342,6 +482,7 @@ export default function EarthquakeDashboard() {
                     onMarkerClick={handleEarthquakeSelect}
                     constrainedHeight={600}
                     autoFitBounds={shouldAutoFitBounds}
+                    userLocation={userLocation}
                   />
                 </div>
               )}

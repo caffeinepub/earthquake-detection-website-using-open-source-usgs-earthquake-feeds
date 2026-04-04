@@ -56,9 +56,13 @@ function getAlertColor(alert: string | null, mag: number | null): string {
   return "#6b7280";
 }
 
-const MMI_LEVELS = [8, 7, 6, 5, 4, 3, 2] as const;
+const MMI_LEVELS = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2] as const;
 
 const MMI_DESCRIPTIONS: Record<number, string> = {
+  12: "Catastrophic — Maximum intensity",
+  11: "Extreme — Rarely observed",
+  10: "Extreme — Total destruction",
+  9: "Violent — Catastrophic damage",
   8: "Severe — Major damage to structures",
   7: "Very Strong — Widespread damage",
   6: "Strong — Felt by all, damage possible",

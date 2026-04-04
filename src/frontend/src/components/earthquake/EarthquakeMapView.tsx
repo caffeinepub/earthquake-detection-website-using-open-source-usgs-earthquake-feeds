@@ -17,6 +17,7 @@ interface EarthquakeMapViewProps {
   onMarkerClick?: (earthquake: UsgsFeature) => void;
   constrainedHeight?: number;
   autoFitBounds?: boolean;
+  userLocation?: { lat: number; lng: number } | null;
 }
 
 export function EarthquakeMapView({
@@ -24,6 +25,7 @@ export function EarthquakeMapView({
   onMarkerClick,
   constrainedHeight,
   autoFitBounds = false,
+  userLocation,
 }: EarthquakeMapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<LeafletMap | null>(null);
@@ -33,6 +35,7 @@ export function EarthquakeMapView({
   const allEarthquakesRef = useRef<UsgsFeature[]>([]);
   const updateTimeoutRef = useRef<number | null>(null);
   const fullscreenControlRef = useRef<HTMLButtonElement | null>(null);
+  const userMarkerRef = useRef<any | null>(null);
   const tectonicToggleRef = useRef<HTMLButtonElement | null>(null);
   const terrainToggleRef = useRef<HTMLButtonElement | null>(null);
   const toggleTectonicBoundariesRef = useRef<() => void>(() => {});
@@ -515,6 +518,37 @@ export function EarthquakeMapView({
   useEffect(() => {
     switchTileLayer(terrainMode);
   }, [terrainMode, switchTileLayer]);
+
+  // Add/update/remove user location marker
+  useEffect(() => {
+    if (!mapInstanceRef.current || !isLeafletLoaded()) return;
+    const L = window.L;
+    if (!L) return;
+
+    // Remove existing user marker
+    if (userMarkerRef.current) {
+      mapInstanceRef.current.removeLayer(userMarkerRef.current);
+      userMarkerRef.current = null;
+    }
+
+    if (!userLocation) return;
+
+    // Create a blue circle marker for user location
+    const userIcon = L.divIcon({
+      className: "",
+      html: `<div style="width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 0 3px rgba(59,130,246,0.4);"></div>`,
+      iconSize: [16, 16],
+      iconAnchor: [8, 8],
+    });
+
+    const marker = L.marker([userLocation.lat, userLocation.lng], {
+      icon: userIcon,
+      zIndexOffset: 1000,
+    });
+    marker.bindPopup("📍 Lokasi Anda", { autoPan: false });
+    marker.addTo(mapInstanceRef.current);
+    userMarkerRef.current = marker;
+  }, [userLocation]);
 
   const mapHeight = constrainedHeight || 600;
 

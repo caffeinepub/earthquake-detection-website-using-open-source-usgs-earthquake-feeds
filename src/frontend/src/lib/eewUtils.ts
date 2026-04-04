@@ -13,7 +13,7 @@ export function getMmiFromMagAndDistance(
   distanceKm: number,
 ): number {
   const mmi = 2.2 * mag - 1.91 * Math.log10(Math.max(distanceKm, 1)) - 1.4;
-  return Math.max(1, Math.min(10, mmi));
+  return Math.max(1, Math.min(12, mmi));
 }
 
 /**
@@ -69,7 +69,9 @@ export function getMmiColor(mmi: number): string {
   if (mmi < 8) return "#ff6600";
   if (mmi < 9) return "#ff2200";
   if (mmi < 10) return "#cc0000";
-  return "#800000";
+  if (mmi < 11) return "#990000";
+  if (mmi < 12) return "#660000";
+  return "#330000";
 }
 
 /**
@@ -84,7 +86,9 @@ export function getMmiLabel(mmi: number): string {
   if (mmi < 8) return "VII - Very Strong";
   if (mmi < 9) return "VIII - Severe";
   if (mmi < 10) return "IX - Violent";
-  return "X+ - Extreme";
+  if (mmi < 11) return "X - Extreme";
+  if (mmi < 12) return "XI - Extreme";
+  return "XII - Catastrophic";
 }
 
 /**
