@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getCircumferencePoint,
   getMmiColor,
@@ -180,10 +180,18 @@ async function fetchShakeMapStations(
 }
 
 export function EewView({ earthquakes }: EewViewProps) {
-  const alerts = earthquakes
-    .filter((eq) => (eq.properties.mag ?? 0) >= 2.5)
-    .sort((a, b) => b.properties.time - a.properties.time)
-    .slice(0, 20);
+  // Memoize alerts to avoid triggering effects on every parent re-render
+  const alerts = useMemo(
+    () =>
+      earthquakes
+        .filter((eq) => (eq.properties.mag ?? 0) >= 2.5)
+        .sort((a, b) => b.properties.time - a.properties.time)
+        .slice(0, 20),
+    [earthquakes],
+  );
+
+  // Stable string of IDs — used as effect dependency instead of the full array
+  const alertIds = alerts.map((e) => e.id).join(",");
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -200,8 +208,9 @@ export function EewView({ earthquakes }: EewViewProps) {
   // Toggle state for estimated MMI rings
   const [showEstimatedRings, setShowEstimatedRings] = useState(true);
 
-  // Fullscreen state for the EEW map
-  const [isEewFullscreen, setIsEewFullscreen] = useState(false);
+  // Refs for native fullscreen API
+  const fullscreenBtnRef = useRef<HTMLButtonElement | null>(null);
+  const eewMapContainerRef = useRef<HTMLDivElement | null>(null);
 
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any | null>(null);
@@ -211,10 +220,14 @@ export function EewView({ earthquakes }: EewViewProps) {
   const pWaveCircleRef = useRef<any | null>(null);
   const sWaveCircleRef = useRef<any | null>(null);
 
+  // Track previous alert IDs to detect new earthquakes
+  const prevAlertIdsRef = useRef<Set<string>>(new Set());
+
   const selectedEq =
     alerts.find((eq) => eq.id === selectedId) ?? alerts[0] ?? null;
 
-  // Auto-select first when list changes
+  // Auto-select first when list changes (only if currently selected ID disappears)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: alertIds is stable string dep
   useEffect(() => {
     if (
       alerts.length > 0 &&
@@ -222,7 +235,33 @@ export function EewView({ earthquakes }: EewViewProps) {
     ) {
       setSelectedId(alerts[0].id);
     }
-  }, [alerts, selectedId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alertIds]);
+
+  // Auto-select newest earthquake when a NEW one arrives
+  // biome-ignore lint/correctness/useExhaustiveDependencies: alertIds is stable string dep
+  useEffect(() => {
+    if (alerts.length === 0) return;
+
+    // First run — just populate without switching
+    if (prevAlertIdsRef.current.size === 0) {
+      prevAlertIdsRef.current = new Set(alerts.map((e) => e.id));
+      return;
+    }
+
+    // Find new earthquakes that weren't in the previous list
+    const newAlerts = alerts.filter((e) => !prevAlertIdsRef.current.has(e.id));
+    prevAlertIdsRef.current = new Set(alerts.map((e) => e.id));
+
+    if (newAlerts.length > 0) {
+      // Auto-select the newest earthquake
+      const newest = newAlerts.sort(
+        (a, b) => b.properties.time - a.properties.time,
+      )[0];
+      setSelectedId(newest.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alertIds]);
 
   // Tick every second
   useEffect(() => {
@@ -342,6 +381,33 @@ export function EewView({ earthquakes }: EewViewProps) {
       waveLayerRef.current = L.layerGroup().addTo(map);
       shakeMapLayerRef.current = L.layerGroup().addTo(map);
       mapInstanceRef.current = map;
+
+      // Native fullscreen change handler
+      function onFullscreenChange() {
+        const isFs = document.fullscreenElement === eewMapContainerRef.current;
+        // Update button icon
+        if (fullscreenBtnRef.current) {
+          fullscreenBtnRef.current.title = isFs
+            ? "Exit fullscreen"
+            : "Enter fullscreen";
+          fullscreenBtnRef.current.innerHTML = isFs
+            ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Exit fullscreen"><title>Exit fullscreen</title><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Enter fullscreen"><title>Enter fullscreen</title><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg>`;
+        }
+        // Invalidate map size at multiple delays for reliable resize
+        for (const delay of [50, 100, 200, 300, 500]) {
+          setTimeout(() => {
+            mapInstanceRef.current?.invalidateSize();
+          }, delay);
+        }
+      }
+
+      document.addEventListener("fullscreenchange", onFullscreenChange);
+
+      // Store cleanup reference
+      (map as any)._eewFullscreenCleanup = () => {
+        document.removeEventListener("fullscreenchange", onFullscreenChange);
+      };
     }
 
     if (!isLeafletLoaded()) {
@@ -352,6 +418,13 @@ export function EewView({ earthquakes }: EewViewProps) {
 
     return () => {
       if (mapInstanceRef.current) {
+        // Remove fullscreen listener
+        if (
+          typeof (mapInstanceRef.current as any)._eewFullscreenCleanup ===
+          "function"
+        ) {
+          (mapInstanceRef.current as any)._eewFullscreenCleanup();
+        }
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
         epicenterLayerRef.current = null;
@@ -362,15 +435,6 @@ export function EewView({ earthquakes }: EewViewProps) {
       }
     };
   }, []);
-
-  // Invalidate map size when fullscreen state changes so Leaflet redraws correctly
-  // biome-ignore lint/correctness/useExhaustiveDependencies: isEewFullscreen is the trigger
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      mapInstanceRef.current?.invalidateSize();
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [isEewFullscreen]);
 
   // Draw ShakeMap station markers on the map
   const drawShakeMapStations = useCallback((stations: ShakeMapStation[]) => {
@@ -563,6 +627,10 @@ export function EewView({ earthquakes }: EewViewProps) {
 
     if (elapsedSeconds >= 600) return;
 
+    // Use SVG renderer for both wave circles to ensure perfect circles
+    // (canvas renderer can distort at large radii due to map projection)
+    const svgRenderer = window.L.svg();
+
     const pRadius = getPWaveRadiusKm(elapsedSeconds);
     if (pRadius > 0) {
       const pCircle = L.circle([lat, lon], {
@@ -571,7 +639,9 @@ export function EewView({ earthquakes }: EewViewProps) {
         fill: false,
         weight: 3,
         opacity: 0.9,
-        dashArray: "8 4",
+        dashArray: "6 4",
+        smoothFactor: 1,
+        renderer: svgRenderer,
       });
       waveLayerRef.current.addLayer(pCircle);
       pWaveCircleRef.current = pCircle;
@@ -586,6 +656,8 @@ export function EewView({ earthquakes }: EewViewProps) {
         weight: 3,
         opacity: 0.9,
         dashArray: "6 3",
+        smoothFactor: 1,
+        renderer: svgRenderer,
       });
       waveLayerRef.current.addLayer(sCircle);
       sWaveCircleRef.current = sCircle;
@@ -821,66 +893,51 @@ export function EewView({ earthquakes }: EewViewProps) {
 
         {/* Right: Map + Info */}
         <div className="flex flex-col gap-4 order-1 lg:order-2">
-          {/* Map container with fullscreen support */}
+          {/* Map container — native browser fullscreen, no React state CSS trick */}
           <div
-            className={`relative overflow-hidden border border-border/40 shadow-lg${
-              isEewFullscreen
-                ? " fixed inset-0 z-[9999] rounded-none border-0"
-                : " rounded-xl"
-            }`}
+            ref={eewMapContainerRef}
+            className="relative rounded-xl overflow-hidden border border-border/40 shadow-lg"
             style={{
-              height: isEewFullscreen ? "100%" : "460px",
+              height: "460px",
               backgroundColor: "#0a0a1a",
             }}
             data-ocid="eew.map.panel"
           >
-            {/* Fullscreen toggle button */}
+            {/* Fullscreen toggle button — uses native Fullscreen API */}
             <button
+              ref={fullscreenBtnRef}
               type="button"
-              onClick={() => setIsEewFullscreen((prev) => !prev)}
+              onClick={() => {
+                const container = eewMapContainerRef.current;
+                if (!container) return;
+                if (document.fullscreenElement === container) {
+                  document.exitFullscreen();
+                } else {
+                  container.requestFullscreen();
+                }
+              }}
               className="absolute top-2 right-2 z-[1000] bg-black/60 hover:bg-black/80 text-white border border-white/20 rounded-md p-1.5 transition-all backdrop-blur-sm"
-              title={isEewFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              title="Enter fullscreen"
               data-ocid="eew.map.toggle"
             >
-              {isEewFullscreen ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-label="Exit fullscreen"
-                >
-                  <title>Exit fullscreen</title>
-                  <path d="M8 3v3a2 2 0 0 1-2 2H3" />
-                  <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
-                  <path d="M3 16h3a2 2 0 0 1 2 2v3" />
-                  <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-label="Enter fullscreen"
-                >
-                  <title>Enter fullscreen</title>
-                  <path d="M3 7V5a2 2 0 0 1 2-2h2" />
-                  <path d="M17 3h2a2 2 0 0 1 2 2v2" />
-                  <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
-                  <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
-                </svg>
-              )}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-label="Enter fullscreen"
+              >
+                <title>Enter fullscreen</title>
+                <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+                <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+                <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+              </svg>
             </button>
             <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
           </div>
