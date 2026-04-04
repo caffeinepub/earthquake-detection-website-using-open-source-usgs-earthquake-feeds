@@ -49,7 +49,7 @@ export interface UsgsResponse {
   bbox?: number[];
 }
 
-export type TimeWindow = "hour" | "day" | "week" | "month";
+export type TimeWindow = "hour" | "day" | "week" | "month" | "year";
 
 export interface EarthquakeFilters {
   timeWindow: TimeWindow;

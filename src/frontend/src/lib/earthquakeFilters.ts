@@ -9,10 +9,11 @@ export function filterByTimeWindow(
 ): UsgsFeature[] {
   const now = Date.now();
   const timeWindowMs: Record<TimeWindow, number> = {
-    hour: 60 * 60 * 1000, // 1 hour
-    day: 24 * 60 * 60 * 1000, // 24 hours
-    week: 7 * 24 * 60 * 60 * 1000, // 7 days
-    month: 30 * 24 * 60 * 60 * 1000, // 30 days
+    hour: 60 * 60 * 1000,
+    day: 24 * 60 * 60 * 1000,
+    week: 7 * 24 * 60 * 60 * 1000,
+    month: 30 * 24 * 60 * 60 * 1000,
+    year: 365 * 24 * 60 * 60 * 1000,
   };
 
   const cutoffTime = now - timeWindowMs[timeWindow];
@@ -34,7 +35,6 @@ export function filterByPlace(
   features: UsgsFeature[],
   searchQuery: string,
 ): UsgsFeature[] {
-  // Normalize whitespace: trim and treat whitespace-only as empty
   const normalizedQuery = searchQuery.trim();
   if (!normalizedQuery) return features;
 
@@ -58,13 +58,9 @@ export function applyFilters(
   searchQuery: string,
 ): UsgsFeature[] {
   let filtered = features;
-  // Apply time window restriction first
   filtered = filterByTimeWindow(filtered, timeWindow);
-  // Apply magnitude filter
   filtered = filterByMagnitude(filtered, minMagnitude);
-  // Apply place search filter
   filtered = filterByPlace(filtered, searchQuery);
-  // Sort by time descending (most recent first)
   filtered = sortByTimeDescending(filtered);
   return filtered;
 }
