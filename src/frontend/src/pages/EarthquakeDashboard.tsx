@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
+import { LanguageToggle } from "../components/LanguageToggle";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { DashboardSummary } from "../components/earthquake/DashboardSummary";
 import { EarthquakeDetailsDialog } from "../components/earthquake/EarthquakeDetailsDialog";
@@ -22,6 +23,7 @@ import { EewView } from "../components/earthquake/EewView";
 import { FeedAndFilterControls } from "../components/earthquake/FeedAndFilterControls";
 import { TsunamiAlertBanner } from "../components/earthquake/TsunamiAlertBanner";
 import { TsunamiView } from "../components/earthquake/TsunamiView";
+import { useLanguage } from "../contexts/LanguageContext";
 import { useUserLocation } from "../hooks/useUserLocation";
 import { useUsgsEarthquakes } from "../hooks/useUsgsEarthquakes";
 import { applyFilters } from "../lib/earthquakeFilters";
@@ -30,6 +32,7 @@ import {
   distanceKm,
   notifyNearbyEarthquakes,
   requestNotificationPermission,
+  resetNotificationCache,
 } from "../lib/notificationService";
 import type { TimeWindow, UsgsFeature } from "../lib/usgsTypes";
 
@@ -37,6 +40,7 @@ type ViewMode = "table" | "map" | "split" | "tsunami" | "eew";
 
 export default function EarthquakeDashboard() {
   const { theme, setTheme } = useTheme();
+  const { t } = useLanguage();
 
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("day");
   const [minMagnitude, setMinMagnitude] = useState(0);
@@ -83,6 +87,13 @@ export default function EarthquakeDashboard() {
 
   const stats = computeStats(filteredEarthquakes, 5.0);
 
+  // Reset notification cache when location changes so nearby quakes are re-evaluated
+  useEffect(() => {
+    if (userLocation) {
+      resetNotificationCache();
+    }
+  }, [userLocation]);
+
   // Handle notifications when new earthquakes arrive (only after location is granted)
   useEffect(() => {
     if (!userLocation || !data) return;
@@ -109,8 +120,14 @@ export default function EarthquakeDashboard() {
       time: f.properties.time,
     }));
 
-    notifyNearbyEarthquakes(eqsForNotify, userLocation.lat, userLocation.lng);
-  }, [data, userLocation]);
+    notifyNearbyEarthquakes(
+      eqsForNotify,
+      userLocation.lat,
+      userLocation.lng,
+      1000,
+      { nearbyQuake: t.nearbyQuake, nearbyQuakeBody: t.nearbyQuakeBody },
+    );
+  }, [data, userLocation, t]);
 
   // Request notification permission when location is granted
   useEffect(() => {
@@ -138,11 +155,11 @@ export default function EarthquakeDashboard() {
   const shouldAutoFitBounds = timeWindow === "hour";
 
   const viewTitle: Record<ViewMode, string> = {
-    table: "Table View",
-    map: "Map View",
-    split: "Split View",
-    tsunami: "Tsunami Warnings",
-    eew: "EEW Monitor",
+    table: t.tableView,
+    map: t.mapView,
+    split: t.splitView,
+    tsunami: t.tsunamiWarnings,
+    eew: t.eewMonitor,
   };
 
   return (
@@ -168,7 +185,7 @@ export default function EarthquakeDashboard() {
                     WhoFeelAnEarthquake
                   </h1>
                   <p className="text-xs sm:text-sm text-muted-foreground font-medium leading-relaxed mt-1 break-words">
-                    Real-time Earthquake Detection
+                    {t.appSubtitle}
                   </p>
                 </div>
               </div>
@@ -185,8 +202,8 @@ export default function EarthquakeDashboard() {
                   className="hover:bg-accent/50 transition-all duration-200 w-10 h-10"
                   title={
                     locationStatus === "granted"
-                      ? "Hapus lokasi"
-                      : "Aktifkan lokasi saya"
+                      ? t.clearLocation
+                      : t.enableMyLocation
                   }
                   data-ocid="location.toggle"
                 >
@@ -199,10 +216,13 @@ export default function EarthquakeDashboard() {
                   )}
                   <span className="sr-only">
                     {locationStatus === "granted"
-                      ? "Clear location"
-                      : "Enable my location"}
+                      ? t.clearLocation
+                      : t.enableMyLocation}
                   </span>
                 </Button>
+
+                {/* Language toggle */}
+                <LanguageToggle />
 
                 {/* Theme toggle */}
                 <Button
@@ -228,11 +248,11 @@ export default function EarthquakeDashboard() {
           {/* Title Section */}
           <section className="text-center space-y-4 py-4 sm:py-6">
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight px-4">
-              Recent Earthquake Around The World
+              {t.heroTitle}
             </h2>
             <div className="h-1 w-24 mx-auto bg-gradient-to-r from-primary/50 via-primary to-primary/50 rounded-full" />
             <p className="text-base sm:text-lg text-muted-foreground font-medium max-w-2xl mx-auto">
-              Latest real-time earthquake information around the world
+              {t.heroSubtitle}
             </p>
           </section>
 
@@ -297,7 +317,7 @@ export default function EarthquakeDashboard() {
                     <div className="flex items-center gap-2 mb-3">
                       <MapPin className="h-4 w-4 text-blue-400" />
                       <span className="text-sm font-semibold text-blue-400">
-                        Gempa Terdekat dari Lokasi Anda
+                        {t.nearbyEarthquakes}
                       </span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -352,7 +372,7 @@ export default function EarthquakeDashboard() {
                 data-ocid="view.tab"
               >
                 <TableIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Table</span>
+                <span className="hidden sm:inline">{t.tableView}</span>
               </Button>
 
               {/* Map button */}
@@ -368,7 +388,7 @@ export default function EarthquakeDashboard() {
                 data-ocid="view.tab"
               >
                 <MapIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Map</span>
+                <span className="hidden sm:inline">{t.mapView}</span>
               </Button>
 
               {/* Split button */}
@@ -384,10 +404,10 @@ export default function EarthquakeDashboard() {
                 data-ocid="view.tab"
               >
                 <Columns className="h-4 w-4" />
-                <span className="hidden sm:inline">Split</span>
+                <span className="hidden sm:inline">{t.splitView}</span>
               </Button>
 
-              {/* Tsunami button — keep red text when there are active alerts */}
+              {/* Tsunami button */}
               <Button
                 variant={viewMode === "tsunami" ? "default" : "ghost"}
                 size="sm"
@@ -402,7 +422,7 @@ export default function EarthquakeDashboard() {
                 data-ocid="tsunami.tab"
               >
                 <Waves className="h-4 w-4" />
-                <span className="hidden sm:inline">Tsunami</span>
+                <span className="hidden sm:inline">{t.tsunamiWarnings}</span>
                 {tsunamiEvents.length > 0 && viewMode !== "tsunami" && (
                   <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white animate-pulse">
                     {tsunamiEvents.length}
@@ -410,7 +430,7 @@ export default function EarthquakeDashboard() {
                 )}
               </Button>
 
-              {/* EEW button — keep orange intentionally as attention signal */}
+              {/* EEW button */}
               <Button
                 variant={viewMode === "eew" ? "default" : "ghost"}
                 size="sm"
@@ -423,7 +443,7 @@ export default function EarthquakeDashboard() {
                 data-ocid="eew.tab"
               >
                 <Zap className="h-4 w-4" />
-                <span className="hidden sm:inline">EEW</span>
+                <span className="hidden sm:inline">{t.eewMonitor}</span>
                 {eewAlertCount > 0 && viewMode !== "eew" && (
                   <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white animate-pulse">
                     {eewAlertCount}
@@ -440,11 +460,9 @@ export default function EarthquakeDashboard() {
               className="animate-fade-in"
               data-ocid="data.error_state"
             >
-              <AlertTitle>Error Loading Data</AlertTitle>
+              <AlertTitle>{t.errorLoadingData}</AlertTitle>
               <AlertDescription>
-                {error instanceof Error
-                  ? error.message
-                  : "Failed to fetch earthquake data. Please try again."}
+                {error instanceof Error ? error.message : t.errorFetchFailed}
               </AlertDescription>
             </Alert>
           )}
@@ -506,11 +524,11 @@ export default function EarthquakeDashboard() {
           <div className="container mx-auto px-4 sm:px-6 py-8">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-sm text-muted-foreground text-center sm:text-left">
-                &copy; {new Date().getFullYear()} WhoFeelAnEarthquake. Powered
-                by USGS.
+                &copy; {new Date().getFullYear()} WhoFeelAnEarthquake.{" "}
+                {t.poweredBy}
               </p>
               <p className="text-sm text-muted-foreground text-center sm:text-right">
-                Built with ❤️ using{" "}
+                {t.builtWith}{" "}
                 <a
                   href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(
                     typeof window !== "undefined"

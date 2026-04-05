@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Activity, AlertTriangle, ExternalLink } from "lucide-react";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { useVirtualWindow } from "../../hooks/useVirtualWindow";
 import { formatMagnitude, formatTimestamp } from "../../lib/formatters";
 import { getMagnitudeColor, getMagnitudeLabel } from "../../lib/usgsFeeds";
@@ -20,6 +21,8 @@ export function EarthquakeResultsTable({
   onEarthquakeSelect,
   constrainedHeight,
 }: EarthquakeResultsTableProps) {
+  const { t } = useLanguage();
+
   const handleRowClick = (earthquake: UsgsFeature) => {
     if (onEarthquakeSelect) {
       onEarthquakeSelect(earthquake);
@@ -34,16 +37,16 @@ export function EarthquakeResultsTable({
 
   if (earthquakes.length === 0) {
     return (
-      <PanelCard title="Earthquake Events" subtitle="No results">
+      <PanelCard title={t.earthquakeEvents} subtitle={t.noResults}>
         <div className="flex flex-col items-center justify-center py-16">
           <div className="p-4 rounded-full bg-muted/50 mb-4">
             <Activity className="h-8 w-8 text-muted-foreground" />
           </div>
           <p className="text-muted-foreground text-center font-medium">
-            No earthquakes found matching your filters.
+            {t.noResults}
           </p>
           <p className="text-sm text-muted-foreground text-center mt-2">
-            Try adjusting your time window or magnitude threshold.
+            {t.noResultsHint}
           </p>
         </div>
       </PanelCard>
@@ -108,7 +111,7 @@ export function EarthquakeResultsTable({
               className="text-[10px] px-1.5 py-0.5 font-semibold"
             >
               <AlertTriangle className="h-2.5 w-2.5 mr-1" />
-              Tsunami
+              {t.tsunami}
             </Badge>
           )}
         </td>
@@ -148,25 +151,29 @@ export function EarthquakeResultsTable({
   const headerRow = (
     <tr>
       <th className="py-2 px-3 text-left text-xs font-bold text-foreground uppercase tracking-wide">
-        Mag
+        {t.mag}
       </th>
       <th className="py-2 px-3 text-left text-xs font-bold text-foreground uppercase tracking-wide">
-        Location
+        {t.location}
       </th>
       <th className="hidden sm:table-cell py-2 px-3 text-left text-xs font-bold text-foreground uppercase tracking-wide">
-        Time
+        {t.time}
       </th>
       <th className="hidden md:table-cell py-2 px-3 text-left text-xs font-bold text-foreground uppercase tracking-wide">
-        Depth
+        {t.depth}
       </th>
       <th className="hidden lg:table-cell py-2 px-3 text-left text-xs font-bold text-foreground uppercase tracking-wide">
-        Tsunami
+        {t.tsunami}
       </th>
       <th className="hidden lg:table-cell py-2 px-3 text-right text-xs font-bold text-foreground uppercase tracking-wide">
         &nbsp;
       </th>
     </tr>
   );
+
+  const eventCountLabel = `${earthquakes.length} ${
+    earthquakes.length === 1 ? t.event : t.events
+  }`;
 
   // In split view: fixed height card with flex layout
   if (constrainedHeight) {
@@ -178,10 +185,10 @@ export function EarthquakeResultsTable({
         {/* Card header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 bg-card/95 backdrop-blur-sm flex-shrink-0">
           <span className="text-sm font-bold text-foreground">
-            Earthquake Events
+            {t.earthquakeEvents}
           </span>
           <span className="text-xs text-muted-foreground font-medium">
-            {earthquakes.length} {earthquakes.length === 1 ? "event" : "events"}
+            {eventCountLabel}
           </span>
         </div>
 
@@ -225,13 +232,7 @@ export function EarthquakeResultsTable({
 
   // Normal (non-constrained) table view
   return (
-    <PanelCard
-      title="Earthquake Events"
-      subtitle={`${earthquakes.length} ${
-        earthquakes.length === 1 ? "event" : "events"
-      }`}
-      noPadding
-    >
+    <PanelCard title={t.earthquakeEvents} subtitle={eventCountLabel} noPadding>
       {/* Sticky table header */}
       <div className="sticky top-0 z-10 border-t border-b border-border/40 bg-card/95 backdrop-blur-sm">
         <table className="w-full table-fixed">

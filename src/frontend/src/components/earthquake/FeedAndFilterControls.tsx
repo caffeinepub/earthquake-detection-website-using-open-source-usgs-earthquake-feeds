@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { RefreshCw, Search } from "lucide-react";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { TIME_WINDOW_OPTIONS } from "../../lib/usgsFeeds";
 import type { TimeWindow } from "../../lib/usgsTypes";
 
@@ -37,22 +38,29 @@ export function FeedAndFilterControls({
   isRefreshing,
   lastManualRefreshAt,
 }: FeedAndFilterControlsProps) {
+  const { t } = useLanguage();
+
   const formatRefreshTime = (date: Date) => {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffSecs = Math.floor(diffMs / 1000);
     const diffMins = Math.floor(diffSecs / 60);
 
-    if (diffSecs < 60) {
-      return "just now";
-    }
-    if (diffMins < 60) {
-      return `${diffMins} minute${diffMins !== 1 ? "s" : ""} ago`;
-    }
+    if (diffSecs < 60) return t.justNow;
+    if (diffMins < 60) return t.minutesAgo(diffMins);
     return date.toLocaleTimeString(undefined, {
       hour: "numeric",
       minute: "2-digit",
     });
+  };
+
+  // Map TIME_WINDOW_OPTIONS values to translated labels
+  const timeWindowLabels: Record<string, string> = {
+    hour: t.pastHour,
+    day: t.pastDay,
+    week: t.pastWeek,
+    month: t.pastMonth,
+    year: t.pastYear,
   };
 
   return (
@@ -65,7 +73,7 @@ export function FeedAndFilterControls({
               htmlFor="time-window"
               className="text-sm font-semibold text-foreground"
             >
-              Time Window
+              {t.timeWindow}
             </Label>
             <Select value={timeWindow} onValueChange={onTimeWindowChange}>
               <SelectTrigger
@@ -77,7 +85,7 @@ export function FeedAndFilterControls({
               <SelectContent className="z-[9999]">
                 {TIME_WINDOW_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {timeWindowLabels[option.value] ?? option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -90,7 +98,7 @@ export function FeedAndFilterControls({
               htmlFor="min-magnitude"
               className="text-sm font-semibold text-foreground"
             >
-              Min Magnitude:{" "}
+              {t.minMagnitude}:{" "}
               <span className="text-primary font-mono">
                 {minMagnitude.toFixed(1)}
               </span>
@@ -114,13 +122,13 @@ export function FeedAndFilterControls({
               htmlFor="search"
               className="text-sm font-semibold text-foreground"
             >
-              Search Location
+              {t.searchLocation}
             </Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none z-10" />
               <Input
                 id="search"
-                placeholder="e.g., California, Japan..."
+                placeholder={t.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => onSearchQueryChange(e.target.value)}
                 className="pl-10 h-11 border-border/60 hover:border-primary/50 focus:border-primary transition-colors relative z-10"
@@ -133,7 +141,7 @@ export function FeedAndFilterControls({
             <Label className="text-sm font-semibold text-foreground">
               {lastManualRefreshAt ? (
                 <span className="text-muted-foreground font-normal">
-                  Last refreshed: {formatRefreshTime(lastManualRefreshAt)}
+                  {t.lastRefreshed} {formatRefreshTime(lastManualRefreshAt)}
                 </span>
               ) : (
                 <span className="opacity-0 pointer-events-none">Actions</span>
@@ -148,7 +156,7 @@ export function FeedAndFilterControls({
               <RefreshCw
                 className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
               />
-              {isRefreshing ? "Refreshing..." : "Refresh Data"}
+              {isRefreshing ? t.refreshing : t.refresh}
             </Button>
           </div>
         </div>
