@@ -123,6 +123,39 @@ export interface Translations {
   // Errors
   errorLoadingData: string;
   errorFetchFailed: string;
+  // EEW tab
+  eewActiveAlerts: string;
+  eewNoEvents: string;
+  eewMagnitude: string;
+  eewDepth: string;
+  eewMaxMmi: string;
+  eewLocation: string;
+  eewEventTime: string;
+  eewElapsed: string;
+  eewPagerAlert: string;
+  eewPWave: string;
+  eewSWave: string;
+  eewEpicenter: string;
+  eewUsgsShakeMap: (n: number) => string;
+  eewLoadingUsgs: string;
+  eewEstimatedRings: string;
+  eewMmiLegend: string;
+  eewImpactZones: string;
+  eewEstRadius: string;
+  eewNearestArea: string;
+  eewShaking: string;
+  eewObserved: string;
+  eewEstimated: string;
+  eewSourceUsgsShakemap: string;
+  eewMmiDescriptions: Record<number, string>;
+  // Tsunami tab
+  tsunamiWarningEvents: string;
+  tsunamiNoActive: string;
+  tsunamiActiveWarnings: (n: number) => string;
+  tsunamiDepthLabel: (d: string) => string;
+  tsunamiViewUsgs: string;
+  tsunamiSafeTitle: string;
+  tsunamiSafeDesc: string;
 }
 
 type TranslationMap = Record<Language, Translations>;
@@ -194,6 +227,51 @@ export const translations: TranslationMap = {
     language: "Language",
     errorLoadingData: "Error Loading Data",
     errorFetchFailed: "Failed to fetch earthquake data. Please try again.",
+    eewActiveAlerts: "Active EEW Alerts",
+    eewNoEvents: "No events above M2.5",
+    eewMagnitude: "Magnitude",
+    eewDepth: "Depth",
+    eewMaxMmi: "Max MMI",
+    eewLocation: "Location",
+    eewEventTime: "Event Time",
+    eewElapsed: "Elapsed",
+    eewPagerAlert: "PAGER Alert",
+    eewPWave: "P-wave",
+    eewSWave: "S-wave",
+    eewEpicenter: "Epicenter",
+    eewUsgsShakeMap: (n) => `USGS ShakeMap (${n} stations)`,
+    eewLoadingUsgs: "Loading USGS data\u2026",
+    eewEstimatedRings: "Estimated rings \u00b7 City labels from Nominatim",
+    eewMmiLegend: "MMI Scale Legend",
+    eewImpactZones: "Impact Zones",
+    eewEstRadius: "Est. Radius",
+    eewNearestArea: "Nearest Area",
+    eewShaking: "Shaking",
+    eewObserved: "Observed (seismograph)",
+    eewEstimated: "Estimated",
+    eewSourceUsgsShakemap: "Source: USGS ShakeMap",
+    eewMmiDescriptions: {
+      12: "Catastrophic \u2014 Maximum intensity",
+      11: "Extreme \u2014 Rarely observed",
+      10: "Extreme \u2014 Total destruction",
+      9: "Violent \u2014 Catastrophic damage",
+      8: "Severe \u2014 Major damage to structures",
+      7: "Very Strong \u2014 Widespread damage",
+      6: "Strong \u2014 Felt by all, damage possible",
+      5: "Moderate \u2014 Felt widely, minor damage",
+      4: "Light \u2014 Felt indoors by many",
+      3: "Weak \u2014 Felt by few near epicenter",
+      2: "Not felt \u2014 Detected by instruments only",
+    },
+    tsunamiWarningEvents: "Tsunami Warning Events",
+    tsunamiNoActive: "No active warnings",
+    tsunamiActiveWarnings: (n) =>
+      `${n} active ${n === 1 ? "warning" : "warnings"} in current time window`,
+    tsunamiDepthLabel: (d) => `${d} km depth`,
+    tsunamiViewUsgs: "View on USGS",
+    tsunamiSafeTitle: "No Active Tsunami Warnings",
+    tsunamiSafeDesc:
+      "All clear. No tsunami threats detected in the current time window.",
   },
   id: {
     appSubtitle: "Deteksi Gempa Bumi Real-time",
@@ -261,6 +339,51 @@ export const translations: TranslationMap = {
     language: "Bahasa",
     errorLoadingData: "Gagal Memuat Data",
     errorFetchFailed: "Gagal mengambil data gempa. Silakan coba lagi.",
+    eewActiveAlerts: "Peringatan EEW Aktif",
+    eewNoEvents: "Tidak ada kejadian di atas M2.5",
+    eewMagnitude: "Magnitudo",
+    eewDepth: "Kedalaman",
+    eewMaxMmi: "MMI Maks",
+    eewLocation: "Lokasi",
+    eewEventTime: "Waktu Kejadian",
+    eewElapsed: "Berlalu",
+    eewPagerAlert: "Peringatan PAGER",
+    eewPWave: "Gelombang-P",
+    eewSWave: "Gelombang-S",
+    eewEpicenter: "Episenter",
+    eewUsgsShakeMap: (n) => `USGS ShakeMap (${n} stasiun)`,
+    eewLoadingUsgs: "Memuat data USGS\u2026",
+    eewEstimatedRings: "Ring estimasi \u00b7 Label kota dari Nominatim",
+    eewMmiLegend: "Legenda Skala MMI",
+    eewImpactZones: "Zona Dampak",
+    eewEstRadius: "Radius Est.",
+    eewNearestArea: "Area Terdekat",
+    eewShaking: "Guncangan",
+    eewObserved: "Teramati (seismograf)",
+    eewEstimated: "Estimasi",
+    eewSourceUsgsShakemap: "Sumber: USGS ShakeMap",
+    eewMmiDescriptions: {
+      12: "Katastrofik \u2014 Intensitas maksimum",
+      11: "Ekstrem \u2014 Sangat jarang teramati",
+      10: "Ekstrem \u2014 Kehancuran total",
+      9: "Sangat Kuat \u2014 Kerusakan katastrofik",
+      8: "Parah \u2014 Kerusakan besar pada struktur",
+      7: "Sangat Kuat \u2014 Kerusakan meluas",
+      6: "Kuat \u2014 Dirasakan semua, kerusakan mungkin",
+      5: "Sedang \u2014 Dirasakan luas, kerusakan minor",
+      4: "Ringan \u2014 Dirasakan di dalam ruangan",
+      3: "Lemah \u2014 Dirasakan sedikit orang",
+      2: "Tak terasa \u2014 Hanya terdeteksi instrumen",
+    },
+    tsunamiWarningEvents: "Peringatan Tsunami",
+    tsunamiNoActive: "Tidak ada peringatan aktif",
+    tsunamiActiveWarnings: (n) =>
+      `${n} peringatan aktif dalam jendela waktu ini`,
+    tsunamiDepthLabel: (d) => `Kedalaman ${d} km`,
+    tsunamiViewUsgs: "Lihat di USGS",
+    tsunamiSafeTitle: "Tidak Ada Peringatan Tsunami Aktif",
+    tsunamiSafeDesc:
+      "Aman. Tidak ada ancaman tsunami terdeteksi dalam jendela waktu saat ini.",
   },
   ja: {
     appSubtitle: "リアルタイム地震検知",
@@ -328,6 +451,55 @@ export const translations: TranslationMap = {
     language: "言語",
     errorLoadingData: "データ読み込みエラー",
     errorFetchFailed: "地震データの取得に失敗しました。再試行してください。",
+    eewActiveAlerts:
+      "EEW \u30a2\u30af\u30c6\u30a3\u30d6\u30a2\u30e9\u30fc\u30c8",
+    eewNoEvents: "M2.5\u4ee5\u4e0a\u306e\u30a4\u30d9\u30f3\u30c8\u306a\u3057",
+    eewMagnitude: "\u30de\u30b0\u30cb\u30c1\u30e5\u30fc\u30c9",
+    eewDepth: "\u6df1\u3055",
+    eewMaxMmi: "\u6700\u5927MMI",
+    eewLocation: "\u5834\u6240",
+    eewEventTime: "\u767a\u751f\u6642\u523b",
+    eewElapsed: "\u7d4c\u904e\u6642\u9593",
+    eewPagerAlert: "PAGER\u30a2\u30e9\u30fc\u30c8",
+    eewPWave: "P\u6ce2",
+    eewSWave: "S\u6ce2",
+    eewEpicenter: "\u9707\u592e",
+    eewUsgsShakeMap: (n) => `USGS ShakeMap (${n}\u89b3\u6e2c\u70b9)`,
+    eewLoadingUsgs:
+      "USGS\u30c7\u30fc\u30bf\u8aad\u307f\u8fbc\u307f\u4e2d\u2026",
+    eewEstimatedRings:
+      "\u63a8\u5b9a\u30ea\u30f3\u30b0 \u00b7 Nominatim\u306b\u3088\u308b\u5730\u540d",
+    eewMmiLegend: "MMI\u30b9\u30b1\u30fc\u30eb\u51e1\u4f8b",
+    eewImpactZones: "\u5f71\u97ff\u7bc4\u56f2",
+    eewEstRadius: "\u63a8\u5b9a\u534a\u5f84",
+    eewNearestArea: "\u6700\u5bc4\u308a\u5730\u57df",
+    eewShaking: "\u63fa\u308c",
+    eewObserved: "\u89b3\u6e2c\u5024\uff08\u5730\u9707\u8a08\uff09",
+    eewEstimated: "\u63a8\u5b9a\u5024",
+    eewSourceUsgsShakemap: "\u63d0\u4f9b: USGS ShakeMap",
+    eewMmiDescriptions: {
+      12: "\u58ca\u6ec5\u7684 \u2014 \u6700\u5927\u5f37\u5ea6",
+      11: "\u6975\u3081\u3066\u6fc0\u3057\u3044 \u2014 \u307b\u3068\u3093\u3069\u89b3\u6e2c\u3055\u308c\u306a\u3044",
+      10: "\u6975\u3081\u3066\u6fc0\u3057\u3044 \u2014 \u5168\u58ca",
+      9: "\u6fc0\u3057\u3044 \u2014 \u58ca\u6ec5\u7684\u88ab\u5bb3",
+      8: "\u975e\u5e38\u306b\u6fc0\u3057\u3044 \u2014 \u5efa\u7269\u306b\u5927\u88ab\u5bb3",
+      7: "\u975e\u5e38\u306b\u6fc0\u3057\u3044 \u2014 \u5e83\u7bc4\u56f2\u306b\u88ab\u5bb3",
+      6: "\u6fc0\u3057\u3044 \u2014 \u5168\u54e1\u304c\u611f\u3058\u308b\u3001\u88ab\u5bb3\u306e\u53ef\u80fd\u6027",
+      5: "\u4e2d\u7a0b\u5ea6 \u2014 \u5e83\u304f\u611f\u3058\u308b\u3001\u8efd\u5fae\u306a\u88ab\u5bb3",
+      4: "\u5f31\u3044 \u2014 \u5c4b\u5185\u306b\u3044\u308b\u591a\u304f\u306e\u4eba\u304c\u611f\u3058\u308b",
+      3: "\u975e\u5e38\u306b\u5f31\u3044 \u2014 \u9707\u592e\u4ed8\u8fd1\u306e\u5c11\u6570\u304c\u611f\u3058\u308b",
+      2: "\u611f\u3058\u306a\u3044 \u2014 \u8a08\u5668\u306e\u307f\u691c\u77e5",
+    },
+    tsunamiWarningEvents: "\u6d25\u6ce2\u8b66\u5831\u60c5\u5831",
+    tsunamiNoActive: "\u73fe\u5728\u8b66\u5831\u306a\u3057",
+    tsunamiActiveWarnings: (n) =>
+      `\u73fe\u5728\u306e\u6642\u9593\u67a0\u3067${n}\u4ef6\u306e\u6d25\u6ce2\u8b66\u5831\u304c\u767a\u4ee4\u4e2d`,
+    tsunamiDepthLabel: (d) => `\u6df1\u3055 ${d} km`,
+    tsunamiViewUsgs: "USGS\u3067\u898b\u308b",
+    tsunamiSafeTitle:
+      "\u73fe\u5728\u3001\u6d25\u6ce2\u8b66\u5831\u306f\u3042\u308a\u307e\u305b\u3093",
+    tsunamiSafeDesc:
+      "\u5b89\u5168\u3067\u3059\u3002\u73fe\u5728\u306e\u6642\u9593\u67a0\u3067\u6d25\u6ce2\u306e\u8105\u5a01\u306f\u691c\u51fa\u3055\u308c\u3066\u3044\u307e\u305b\u3093\u3002",
   },
   zh: {
     appSubtitle: "实时地震检测",
@@ -395,6 +567,52 @@ export const translations: TranslationMap = {
     language: "语言",
     errorLoadingData: "数据加载错误",
     errorFetchFailed: "获取地震数据失败，请重试。",
+    eewActiveAlerts: "\u5730\u9707\u9884\u8b66\u6d3b\u52a8\u8b66\u62a5",
+    eewNoEvents: "\u6ca1\u6709M2.5\u4ee5\u4e0a\u7684\u4e8b\u4ef6",
+    eewMagnitude: "\u9707\u7ea7",
+    eewDepth: "\u6df1\u5ea6",
+    eewMaxMmi: "\u6700\u5927\u70c8\u5ea6",
+    eewLocation: "\u4f4d\u7f6e",
+    eewEventTime: "\u53d1\u9707\u65f6\u523b",
+    eewElapsed: "\u5df2\u8fc7\u65f6\u95f4",
+    eewPagerAlert: "PAGER\u8b66\u62a5",
+    eewPWave: "\u7eb5\u6ce2(P\u6ce2)",
+    eewSWave: "\u6a2a\u6ce2(S\u6ce2)",
+    eewEpicenter: "\u9707\u4e2d",
+    eewUsgsShakeMap: (n) => `USGS\u70c8\u5ea6\u56fe (${n}\u53f0\u7ad9)`,
+    eewLoadingUsgs: "\u52a0\u8f7dUSGS\u6570\u636e\u4e2d\u2026",
+    eewEstimatedRings:
+      "\u4f30\u7b97\u5706\u73af \u00b7 \u6765\u81eaNominatim\u7684\u57ce\u5e02\u6807\u6ce8",
+    eewMmiLegend: "\u5730\u9707\u70c8\u5ea6\u56fe\u4f8b",
+    eewImpactZones: "\u5f71\u54cd\u533a\u57df",
+    eewEstRadius: "\u4f30\u7b97\u534a\u5f84",
+    eewNearestArea: "\u6700\u8fd1\u5730\u533a",
+    eewShaking: "\u9707\u52a8",
+    eewObserved: "\u5b9e\u6d4b\u5024\uff08\u5730\u9707\u4eea\uff09",
+    eewEstimated: "\u4f30\u7b97\u5024",
+    eewSourceUsgsShakemap: "\u6765\u6e90: USGS ShakeMap",
+    eewMmiDescriptions: {
+      12: "\u707e\u96be\u6027 \u2014 \u6700\u5927\u70c8\u5ea6",
+      11: "\u6781\u7aef \u2014 \u6781\u5c11\u89c2\u6d4b\u5230",
+      10: "\u6781\u7aef \u2014 \u5168\u9762\u6bc1\u574f",
+      9: "\u5f3a\u70c8 \u2014 \u707e\u96be\u6027\u7834\u574f",
+      8: "\u4e25\u91cd \u2014 \u5efa\u7b51\u5927\u89c4\u6a21\u635f\u574f",
+      7: "\u5f88\u5f3a \u2014 \u5927\u8303\u56f4\u635f\u574f",
+      6: "\u5f3a \u2014 \u6240\u6709\u4eba\u6709\u611f\uff0c\u53ef\u80fd\u53d7\u635f",
+      5: "\u4e2d\u7b49 \u2014 \u5e7f\u6cdb\u6709\u611f\uff0c\u8f7b\u5fae\u635f\u574f",
+      4: "\u5f31 \u2014 \u5ba4\u5185\u591a\u4eba\u6709\u611f",
+      3: "\u5f88\u5f31 \u2014 \u9707\u4e2d\u9644\u8fd1\u5c11\u6570\u4eba\u6709\u611f",
+      2: "\u65e0\u611f \u2014 \u4ec5\u4eea\u5668\u68c0\u6d4b\u5230",
+    },
+    tsunamiWarningEvents: "\u6d77\u554a\u8b66\u62a5\u4e8b\u4ef6",
+    tsunamiNoActive: "\u5f53\u524d\u65e0\u8b66\u62a5",
+    tsunamiActiveWarnings: (n) =>
+      `\u5f53\u524d\u65f6\u95f4\u7a97\u53e3\u5185\u6709${n}\u6761\u6d3b\u52a8\u6d77\u554a\u8b66\u62a5`,
+    tsunamiDepthLabel: (d) => `\u6df1\u5ea6 ${d} \u516c\u91cc`,
+    tsunamiViewUsgs: "\u5728USGS\u67e5\u770b",
+    tsunamiSafeTitle: "\u5f53\u524d\u65e0\u6d77\u554a\u8b66\u62a5",
+    tsunamiSafeDesc:
+      "\u4e00\u5207\u6b63\u5e38\u3002\u5f53\u524d\u65f6\u95f4\u7a97\u53e3\u672a\u68c0\u6d4b\u5230\u6d77\u554a\u5a01\u80c1\u3002",
   },
   ko: {
     appSubtitle: "실시간 지진 감지",
@@ -462,6 +680,53 @@ export const translations: TranslationMap = {
     language: "언어",
     errorLoadingData: "데이터 로드 오류",
     errorFetchFailed: "지진 데이터를 가져오지 못했습니다. 다시 시도하세요.",
+    eewActiveAlerts: "\ud65c\uc131 \uc9c0\uc9c4 \uc870\uae30 \uacbd\ubcf4",
+    eewNoEvents: "M2.5 \uc774\uc0c1 \uc774\ubca4\ud2b8 \uc5c6\uc74c",
+    eewMagnitude: "\uaddc\ubaa8",
+    eewDepth: "\uae4a\uc774",
+    eewMaxMmi: "\ucd5c\ub300 \uc9c4\ub3c4",
+    eewLocation: "\uc704\uce58",
+    eewEventTime: "\ubc1c\uc0dd \uc2dc\uac01",
+    eewElapsed: "\uacbd\uacfc \uc2dc\uac04",
+    eewPagerAlert: "PAGER \uacbd\ubcf4",
+    eewPWave: "P\ud30c",
+    eewSWave: "S\ud30c",
+    eewEpicenter: "\uc9c4\uc6d0\uc9c0",
+    eewUsgsShakeMap: (n) => `USGS ShakeMap (${n}\uac1c \uad00\uce21\uc18c)`,
+    eewLoadingUsgs:
+      "USGS \ub370\uc774\ud130 \ubd88\ub7ec\uc624\ub294 \uc911\u2026",
+    eewEstimatedRings: "\ucd94\uc815 \uc6d0 \u00b7 Nominatim \uc9c0\uba85",
+    eewMmiLegend: "\uc9c4\ub3c4 \ub4f1\uae09 \ubc94\ub840",
+    eewImpactZones: "\uc601\ud5a5 \uad6c\uc5ed",
+    eewEstRadius: "\uc608\uc0c1 \ubc18\uacbd",
+    eewNearestArea: "\uc778\uadfc \uc9c0\uc5ed",
+    eewShaking: "\uc9c4\ub3d9",
+    eewObserved: "\uad00\uce21\uac12 (\uc9c0\uc9c4\uacc4)",
+    eewEstimated: "\ucd94\uc815\uac12",
+    eewSourceUsgsShakemap: "\ucd9c\uccb4: USGS ShakeMap",
+    eewMmiDescriptions: {
+      12: "\ucd5c\uc545 \u2014 \ucd5c\ub300 \uc9c4\ub3c4",
+      11: "\uadf9\ub2e8 \u2014 \uac70\uc758 \uad00\uce21 \uc548 \ub428",
+      10: "\uadf9\ub2e8 \u2014 \uc644\uc804 \ud30c\uad34",
+      9: "\uaca9\ub82c \u2014 \uc7ac\ub09c\uc801 \ud53c\ud574",
+      8: "\uc2ec\uac01 \u2014 \uac74\ubb3c\uc5d0 \ub300\uaddc\ubaa8 \ud53c\ud574",
+      7: "\ub9e4\uc6b0 \uac15\ud568 \u2014 \uad11\ubc94\uc704\ud55c \ud53c\ud574",
+      6: "\uac15\ud568 \u2014 \ubaa8\ub4e0 \uc0ac\ub78c \uac10\uc9c0, \ud53c\ud574 \uac00\ub2a5",
+      5: "\ubcf4\ud1b5 \u2014 \uad11\ubc94\uc704\ud558\uac8c \uac10\uc9c0, \uacbd\ubbf8\ud55c \ud53c\ud574",
+      4: "\uc57d\ud568 \u2014 \uc2e4\ub0b4 \ub2e4\uc218 \uac10\uc9c0",
+      3: "\ub9e4\uc6b0 \uc57d\ud568 \u2014 \uc9c4\uc6d0 \uadfc\uccb4 \uc18c\uc218 \uac10\uc9c0",
+      2: "\ubb34\uac10 \u2014 \uacc4\uae30\ub9cc \uac10\uc9c0",
+    },
+    tsunamiWarningEvents: "\uc4f0\ub098\ubbf8 \uacbd\ubcf4 \uc774\ubca4\ud2b8",
+    tsunamiNoActive: "\ud65c\uc131 \uacbd\ubcf4 \uc5c6\uc74c",
+    tsunamiActiveWarnings: (n) =>
+      `\ud604\uc7ac \uc2dc\uac04 \ubc94\uc704\uc5d0 ${n}\uac74\uc758 \ud65c\uc131 \uc4f0\ub098\ubbf8 \uacbd\ubcf4`,
+    tsunamiDepthLabel: (d) => `\uc218\uc2ec ${d} km`,
+    tsunamiViewUsgs: "USGS\uc5d0\uc11c \ubcf4\uae30",
+    tsunamiSafeTitle:
+      "\ud65c\uc131 \uc4f0\ub098\ubbf8 \uacbd\ubcf4 \uc5c6\uc74c",
+    tsunamiSafeDesc:
+      "\uc774\uc0c1 \uc5c6\uc74c. \ud604\uc7ac \uc2dc\uac04 \ubc94\uc704\uc5d0\uc11c \uc4f0\ub098\ubbf8 \uc704\ud611\uc774 \uac10\uc9c0\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.",
   },
   es: {
     appSubtitle: "Detección de Terremotos en Tiempo Real",
@@ -531,6 +796,51 @@ export const translations: TranslationMap = {
     errorLoadingData: "Error al Cargar Datos",
     errorFetchFailed:
       "Error al obtener datos sísmicos. Por favor, inténtelo de nuevo.",
+    eewActiveAlerts: "Alertas EEW Activas",
+    eewNoEvents: "Sin eventos sobre M2.5",
+    eewMagnitude: "Magnitud",
+    eewDepth: "Profundidad",
+    eewMaxMmi: "MMI M\u00e1ximo",
+    eewLocation: "Ubicaci\u00f3n",
+    eewEventTime: "Hora del Evento",
+    eewElapsed: "Transcurrido",
+    eewPagerAlert: "Alerta PAGER",
+    eewPWave: "Onda P",
+    eewSWave: "Onda S",
+    eewEpicenter: "Epicentro",
+    eewUsgsShakeMap: (n) => `USGS ShakeMap (${n} estaciones)`,
+    eewLoadingUsgs: "Cargando datos de USGS\u2026",
+    eewEstimatedRings: "Anillos estimados \u00b7 Nombres de Nominatim",
+    eewMmiLegend: "Leyenda de Escala MMI",
+    eewImpactZones: "Zonas de Impacto",
+    eewEstRadius: "Radio Est.",
+    eewNearestArea: "\u00c1rea m\u00e1s Cercana",
+    eewShaking: "Sacudida",
+    eewObserved: "Observado (sism\u00f3grafo)",
+    eewEstimated: "Estimado",
+    eewSourceUsgsShakemap: "Fuente: USGS ShakeMap",
+    eewMmiDescriptions: {
+      12: "Catastr\u00f3fico \u2014 Intensidad m\u00e1xima",
+      11: "Extremo \u2014 Raramente observado",
+      10: "Extremo \u2014 Destrucci\u00f3n total",
+      9: "Violento \u2014 Da\u00f1o catastr\u00f3fico",
+      8: "Severo \u2014 Da\u00f1o mayor a estructuras",
+      7: "Muy Fuerte \u2014 Da\u00f1o generalizado",
+      6: "Fuerte \u2014 Sentido por todos, posible da\u00f1o",
+      5: "Moderado \u2014 Ampliamente sentido, da\u00f1o menor",
+      4: "Leve \u2014 Sentido en interiores",
+      3: "D\u00e9bil \u2014 Sentido por pocos cerca del epicentro",
+      2: "No sentido \u2014 Solo detectado por instrumentos",
+    },
+    tsunamiWarningEvents: "Eventos de Alerta de Tsunami",
+    tsunamiNoActive: "Sin alertas activas",
+    tsunamiActiveWarnings: (n) =>
+      `${n} alerta${n !== 1 ? "s" : ""} activa${n !== 1 ? "s" : ""} en la ventana actual`,
+    tsunamiDepthLabel: (d) => `Profundidad ${d} km`,
+    tsunamiViewUsgs: "Ver en USGS",
+    tsunamiSafeTitle: "Sin Alertas de Tsunami Activas",
+    tsunamiSafeDesc:
+      "Todo despejado. No se detectaron amenazas de tsunami en la ventana temporal actual.",
   },
   pt: {
     appSubtitle: "Detecção de Terremotos em Tempo Real",
@@ -598,6 +908,51 @@ export const translations: TranslationMap = {
     language: "Idioma",
     errorLoadingData: "Erro ao Carregar Dados",
     errorFetchFailed: "Falha ao buscar dados sísmicos. Tente novamente.",
+    eewActiveAlerts: "Alertas EEW Ativos",
+    eewNoEvents: "Sem eventos acima de M2.5",
+    eewMagnitude: "Magnitude",
+    eewDepth: "Profundidade",
+    eewMaxMmi: "MMI M\u00e1ximo",
+    eewLocation: "Local",
+    eewEventTime: "Hora do Evento",
+    eewElapsed: "Decorrido",
+    eewPagerAlert: "Alerta PAGER",
+    eewPWave: "Onda P",
+    eewSWave: "Onda S",
+    eewEpicenter: "Epicentro",
+    eewUsgsShakeMap: (n) => `USGS ShakeMap (${n} esta\u00e7\u00f5es)`,
+    eewLoadingUsgs: "Carregando dados USGS\u2026",
+    eewEstimatedRings: "An\u00e9is estimados \u00b7 Nomes de Nominatim",
+    eewMmiLegend: "Legenda da Escala MMI",
+    eewImpactZones: "Zonas de Impacto",
+    eewEstRadius: "Raio Est.",
+    eewNearestArea: "\u00c1rea mais Pr\u00f3xima",
+    eewShaking: "Tremor",
+    eewObserved: "Observado (sism\u00f3grafo)",
+    eewEstimated: "Estimado",
+    eewSourceUsgsShakemap: "Fonte: USGS ShakeMap",
+    eewMmiDescriptions: {
+      12: "Catastr\u00f3fico \u2014 Intensidade m\u00e1xima",
+      11: "Extremo \u2014 Raramente observado",
+      10: "Extremo \u2014 Destrui\u00e7\u00e3o total",
+      9: "Violento \u2014 Dano catastr\u00f3fico",
+      8: "Severo \u2014 Grande dano a estruturas",
+      7: "Muito Forte \u2014 Dano generalizado",
+      6: "Forte \u2014 Sentido por todos, dano poss\u00edvel",
+      5: "Moderado \u2014 Amplamente sentido, dano menor",
+      4: "Leve \u2014 Sentido em interiores por muitos",
+      3: "Fraco \u2014 Sentido por poucos perto do epicentro",
+      2: "N\u00e3o sentido \u2014 Detectado apenas por instrumentos",
+    },
+    tsunamiWarningEvents: "Eventos de Alerta de Tsunami",
+    tsunamiNoActive: "Sem alertas ativos",
+    tsunamiActiveWarnings: (n) =>
+      `${n} alerta${n !== 1 ? "s" : ""} ativo${n !== 1 ? "s" : ""} na janela atual`,
+    tsunamiDepthLabel: (d) => `Profundidade ${d} km`,
+    tsunamiViewUsgs: "Ver no USGS",
+    tsunamiSafeTitle: "Sem Alertas de Tsunami Ativos",
+    tsunamiSafeDesc:
+      "Tudo limpo. Nenhuma amea\u00e7a de tsunami detectada na janela de tempo atual.",
   },
   fr: {
     appSubtitle: "Détection des Séismes en Temps Réel",
@@ -667,6 +1022,51 @@ export const translations: TranslationMap = {
     errorLoadingData: "Erreur de Chargement des Données",
     errorFetchFailed:
       "Impossible de récupérer les données sismiques. Veuillez réessayer.",
+    eewActiveAlerts: "Alertes EEW Actives",
+    eewNoEvents: "Aucun \u00e9v\u00e9nement au-dessus de M2.5",
+    eewMagnitude: "Magnitude",
+    eewDepth: "Profondeur",
+    eewMaxMmi: "MMI Max",
+    eewLocation: "Lieu",
+    eewEventTime: "Heure de l'\u00c9v\u00e9nement",
+    eewElapsed: "\u00c9coul\u00e9",
+    eewPagerAlert: "Alerte PAGER",
+    eewPWave: "Onde P",
+    eewSWave: "Onde S",
+    eewEpicenter: "\u00c9picentre",
+    eewUsgsShakeMap: (n) => `USGS ShakeMap (${n} stations)`,
+    eewLoadingUsgs: "Chargement des donn\u00e9es USGS\u2026",
+    eewEstimatedRings: "Anneaux estim\u00e9s \u00b7 Noms de Nominatim",
+    eewMmiLegend: "L\u00e9gende de l'\u00c9chelle MMI",
+    eewImpactZones: "Zones d'Impact",
+    eewEstRadius: "Rayon Est.",
+    eewNearestArea: "Zone la Plus Proche",
+    eewShaking: "Secousse",
+    eewObserved: "Observ\u00e9 (sismographe)",
+    eewEstimated: "Estim\u00e9",
+    eewSourceUsgsShakemap: "Source: USGS ShakeMap",
+    eewMmiDescriptions: {
+      12: "Catastrophique \u2014 Intensit\u00e9 maximale",
+      11: "Extr\u00eame \u2014 Rarement observ\u00e9",
+      10: "Extr\u00eame \u2014 Destruction totale",
+      9: "Violent \u2014 Dommages catastrophiques",
+      8: "S\u00e9v\u00e8re \u2014 Dommages majeurs aux structures",
+      7: "Tr\u00e8s Fort \u2014 Dommages g\u00e9n\u00e9ralis\u00e9s",
+      6: "Fort \u2014 Ressenti par tous, dommages possibles",
+      5: "Mod\u00e9r\u00e9 \u2014 Largement ressenti, dommages mineurs",
+      4: "L\u00e9ger \u2014 Ressenti en int\u00e9rieur par beaucoup",
+      3: "Faible \u2014 Ressenti par peu pr\u00e8s de l'\u00e9picentre",
+      2: "Non ressenti \u2014 D\u00e9tect\u00e9 uniquement par instruments",
+    },
+    tsunamiWarningEvents: "\u00c9v\u00e9nements d'Alerte Tsunami",
+    tsunamiNoActive: "Aucune alerte active",
+    tsunamiActiveWarnings: (n) =>
+      `${n} alerte${n !== 1 ? "s" : ""} active${n !== 1 ? "s" : ""} dans la fen\u00eatre actuelle`,
+    tsunamiDepthLabel: (d) => `Profondeur ${d} km`,
+    tsunamiViewUsgs: "Voir sur USGS",
+    tsunamiSafeTitle: "Aucune Alerte Tsunami Active",
+    tsunamiSafeDesc:
+      "Tout est calme. Aucune menace de tsunami d\u00e9tect\u00e9e dans la fen\u00eatre temporelle actuelle.",
   },
   de: {
     appSubtitle: "Echtzeit-Erdbebenerfassung",
@@ -736,6 +1136,51 @@ export const translations: TranslationMap = {
     errorLoadingData: "Fehler beim Laden der Daten",
     errorFetchFailed:
       "Fehler beim Abrufen der Erdbebendaten. Bitte erneut versuchen.",
+    eewActiveAlerts: "Aktive EEW-Warnungen",
+    eewNoEvents: "Keine Ereignisse \u00fcber M2.5",
+    eewMagnitude: "Magnitude",
+    eewDepth: "Tiefe",
+    eewMaxMmi: "Max MMI",
+    eewLocation: "Ort",
+    eewEventTime: "Ereigniszeit",
+    eewElapsed: "Vergangen",
+    eewPagerAlert: "PAGER-Warnung",
+    eewPWave: "P-Welle",
+    eewSWave: "S-Welle",
+    eewEpicenter: "Epizentrum",
+    eewUsgsShakeMap: (n) => `USGS ShakeMap (${n} Stationen)`,
+    eewLoadingUsgs: "USGS-Daten werden geladen\u2026",
+    eewEstimatedRings: "Gesch\u00e4tzte Ringe \u00b7 Ortsnamen von Nominatim",
+    eewMmiLegend: "MMI-Skala Legende",
+    eewImpactZones: "Einwirkungsbereiche",
+    eewEstRadius: "Gesch. Radius",
+    eewNearestArea: "N\u00e4chster Bereich",
+    eewShaking: "Ersch\u00fctterung",
+    eewObserved: "Beobachtet (Seismograph)",
+    eewEstimated: "Gesch\u00e4tzt",
+    eewSourceUsgsShakemap: "Quelle: USGS ShakeMap",
+    eewMmiDescriptions: {
+      12: "Katastrophal \u2014 Maximale Intensit\u00e4t",
+      11: "Extrem \u2014 Selten beobachtet",
+      10: "Extrem \u2014 Totale Zerst\u00f6rung",
+      9: "Gewaltig \u2014 Katastrophale Sch\u00e4den",
+      8: "Schwer \u2014 Gro\u00dfe Sch\u00e4den an Bauwerken",
+      7: "Sehr Stark \u2014 Weitreichende Sch\u00e4den",
+      6: "Stark \u2014 Von allen gesp\u00fcrt, Sch\u00e4den m\u00f6glich",
+      5: "M\u00e4\u00dfig \u2014 Weit gesp\u00fcrt, leichte Sch\u00e4den",
+      4: "Leicht \u2014 In Innenr\u00e4umen von vielen gesp\u00fcrt",
+      3: "Schwach \u2014 Von wenigen nahe Epizentrum gesp\u00fcrt",
+      2: "Nicht gesp\u00fcrt \u2014 Nur von Instrumenten erfasst",
+    },
+    tsunamiWarningEvents: "Tsunami-Warnereignisse",
+    tsunamiNoActive: "Keine aktiven Warnungen",
+    tsunamiActiveWarnings: (n) =>
+      `${n} aktive Warnung${n !== 1 ? "en" : ""} im aktuellen Zeitfenster`,
+    tsunamiDepthLabel: (d) => `Tiefe ${d} km`,
+    tsunamiViewUsgs: "Auf USGS anzeigen",
+    tsunamiSafeTitle: "Keine Aktiven Tsunami-Warnungen",
+    tsunamiSafeDesc:
+      "Alles klar. Im aktuellen Zeitfenster wurden keine Tsunami-Bedrohungen erkannt.",
   },
   it: {
     appSubtitle: "Rilevamento Terremoti in Tempo Reale",
@@ -805,6 +1250,51 @@ export const translations: TranslationMap = {
     language: "Lingua",
     errorLoadingData: "Errore nel Caricamento dei Dati",
     errorFetchFailed: "Impossibile recuperare i dati sismici. Riprova.",
+    eewActiveAlerts: "Allerte EEW Attive",
+    eewNoEvents: "Nessun evento sopra M2.5",
+    eewMagnitude: "Magnitudo",
+    eewDepth: "Profondit\u00e0",
+    eewMaxMmi: "MMI Max",
+    eewLocation: "Posizione",
+    eewEventTime: "Ora dell'Evento",
+    eewElapsed: "Trascorso",
+    eewPagerAlert: "Allerta PAGER",
+    eewPWave: "Onda P",
+    eewSWave: "Onda S",
+    eewEpicenter: "Epicentro",
+    eewUsgsShakeMap: (n) => `USGS ShakeMap (${n} stazioni)`,
+    eewLoadingUsgs: "Caricamento dati USGS\u2026",
+    eewEstimatedRings: "Anelli stimati \u00b7 Nomi da Nominatim",
+    eewMmiLegend: "Legenda Scala MMI",
+    eewImpactZones: "Zone d'Impatto",
+    eewEstRadius: "Raggio St.",
+    eewNearestArea: "Area pi\u00f9 Vicina",
+    eewShaking: "Scossa",
+    eewObserved: "Osservato (sismografo)",
+    eewEstimated: "Stimato",
+    eewSourceUsgsShakemap: "Fonte: USGS ShakeMap",
+    eewMmiDescriptions: {
+      12: "Catastrofico \u2014 Intensit\u00e0 massima",
+      11: "Estremo \u2014 Raramente osservato",
+      10: "Estremo \u2014 Distruzione totale",
+      9: "Violento \u2014 Danno catastrofico",
+      8: "Severo \u2014 Gravi danni alle strutture",
+      7: "Molto Forte \u2014 Danni diffusi",
+      6: "Forte \u2014 Avvertito da tutti, danni possibili",
+      5: "Moderato \u2014 Ampiamente avvertito, danni minori",
+      4: "Leggero \u2014 Avvertito in interni da molti",
+      3: "Debole \u2014 Avvertito da pochi vicino all'epicentro",
+      2: "Non avvertito \u2014 Rilevato solo da strumenti",
+    },
+    tsunamiWarningEvents: "Eventi di Allerta Tsunami",
+    tsunamiNoActive: "Nessuna allerta attiva",
+    tsunamiActiveWarnings: (n) =>
+      `${n} allerta${n !== 1 ? "e" : ""} attiva${n !== 1 ? "e" : ""} nella finestra attuale`,
+    tsunamiDepthLabel: (d) => `Profondit\u00e0 ${d} km`,
+    tsunamiViewUsgs: "Vedi su USGS",
+    tsunamiSafeTitle: "Nessuna Allerta Tsunami Attiva",
+    tsunamiSafeDesc:
+      "Tutto tranquillo. Nessuna minaccia tsunami rilevata nella finestra temporale attuale.",
   },
   ru: {
     appSubtitle: "Обнаружение землетрясений в реальном времени",
@@ -875,6 +1365,69 @@ export const translations: TranslationMap = {
     errorLoadingData: "Ошибка загрузки данных",
     errorFetchFailed:
       "Не удалось получить данные о землетрясениях. Попробуйте снова.",
+    eewActiveAlerts:
+      "\u0410\u043a\u0442\u0438\u0432\u043d\u044b\u0435 \u043f\u0440\u0435\u0434\u0443\u043f\u0440\u0435\u0436\u0434\u0435\u043d\u0438\u044f EEW",
+    eewNoEvents:
+      "\u041d\u0435\u0442 \u0441\u043e\u0431\u044b\u0442\u0438\u0439 \u0432\u044b\u0448\u0435 M2.5",
+    eewMagnitude: "\u041c\u0430\u0433\u043d\u0438\u0442\u0443\u0434\u0430",
+    eewDepth: "\u0413\u043b\u0443\u0431\u0438\u043d\u0430",
+    eewMaxMmi: "\u041c\u0430\u043a\u0441. \u041c\u041c\u0418",
+    eewLocation: "\u041c\u0435\u0441\u0442\u043e",
+    eewEventTime:
+      "\u0412\u0440\u0435\u043c\u044f \u0441\u043e\u0431\u044b\u0442\u0438\u044f",
+    eewElapsed: "\u041f\u0440\u043e\u0448\u043b\u043e",
+    eewPagerAlert:
+      "\u041e\u043f\u043e\u0432\u0435\u0449\u0435\u043d\u0438\u0435 PAGER",
+    eewPWave: "P-\u0432\u043e\u043b\u043d\u0430",
+    eewSWave: "S-\u0432\u043e\u043b\u043d\u0430",
+    eewEpicenter: "\u042d\u043f\u0438\u0446\u0435\u043d\u0442\u0440",
+    eewUsgsShakeMap: (n) =>
+      `USGS ShakeMap (${n} \u0441\u0442\u0430\u043d\u0446\u0438\u0439)`,
+    eewLoadingUsgs:
+      "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430 \u0434\u0430\u043d\u043d\u044b\u0445 USGS\u2026",
+    eewEstimatedRings:
+      "\u0420\u0430\u0441\u0447\u0451\u0442\u043d\u044b\u0435 \u043a\u043e\u043b\u044c\u0446\u0430 \u00b7 \u041d\u0430\u0437\u0432\u0430\u043d\u0438\u044f \u043e\u0442 Nominatim",
+    eewMmiLegend:
+      "\u041b\u0435\u0433\u0435\u043d\u0434\u0430 \u0448\u043a\u0430\u043b\u044b \u041c\u041c\u0418",
+    eewImpactZones:
+      "\u0417\u043e\u043d\u044b \u0432\u043e\u0437\u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f",
+    eewEstRadius:
+      "\u0420\u0430\u0441\u0447. \u0440\u0430\u0434\u0438\u0443\u0441",
+    eewNearestArea:
+      "\u0411\u043b\u0438\u0436\u0430\u0439\u0448\u0438\u0439 \u0440\u0430\u0439\u043e\u043d",
+    eewShaking: "\u0421\u043e\u0442\u0440\u044f\u0441\u0435\u043d\u0438\u0435",
+    eewObserved:
+      "\u041d\u0430\u0431\u043b\u044e\u0434\u0430\u0435\u043c\u043e\u0435 (\u0441\u0435\u0439\u0441\u043c\u043e\u0433\u0440\u0430\u0444)",
+    eewEstimated: "\u0420\u0430\u0441\u0447\u0451\u0442\u043d\u043e\u0435",
+    eewSourceUsgsShakemap:
+      "\u0418\u0441\u0442\u043e\u0447\u043d\u0438\u043a: USGS ShakeMap",
+    eewMmiDescriptions: {
+      12: "\u041a\u0430\u0442\u0430\u0441\u0442\u0440\u043e\u0444\u0438\u0447\u0435\u0441\u043a\u043e\u0435 \u2014 \u041c\u0430\u043a\u0441\u0438\u043c\u0430\u043b\u044c\u043d\u0430\u044f \u0438\u043d\u0442\u0435\u043d\u0441\u0438\u0432\u043d\u043e\u0441\u0442\u044c",
+      11: "\u041a\u0440\u0430\u0439\u043d\u0435\u0435 \u2014 \u0420\u0435\u0434\u043a\u043e \u043d\u0430\u0431\u043b\u044e\u0434\u0430\u0435\u0442\u0441\u044f",
+      10: "\u041a\u0440\u0430\u0439\u043d\u0435\u0435 \u2014 \u041f\u043e\u043b\u043d\u043e\u0435 \u0440\u0430\u0437\u0440\u0443\u0448\u0435\u043d\u0438\u0435",
+      9: "\u041e\u0447\u0435\u043d\u044c \u0441\u0438\u043b\u044c\u043d\u043e\u0435 \u2014 \u041a\u0430\u0442\u0430\u0441\u0442\u0440\u043e\u0444\u0438\u0447\u0435\u0441\u043a\u0438\u0435 \u0440\u0430\u0437\u0440\u0443\u0448\u0435\u043d\u0438\u044f",
+      8: "\u0422\u044f\u0436\u0451\u043b\u043e\u0435 \u2014 \u041a\u0440\u0443\u043f\u043d\u044b\u0435 \u043f\u043e\u0432\u0440\u0435\u0436\u0434\u0435\u043d\u0438\u044f \u0437\u0434\u0430\u043d\u0438\u0439",
+      7: "\u041e\u0447\u0435\u043d\u044c \u0441\u0438\u043b\u044c\u043d\u043e\u0435 \u2014 \u0428\u0438\u0440\u043e\u043a\u0438\u0435 \u0440\u0430\u0437\u0440\u0443\u0448\u0435\u043d\u0438\u044f",
+      6: "\u0421\u0438\u043b\u044c\u043d\u043e\u0435 \u2014 \u041e\u0449\u0443\u0449\u0430\u0435\u0442\u0441\u044f \u0432\u0441\u0435\u043c\u0438, \u0432\u043e\u0437\u043c\u043e\u0436\u043d\u044b \u0440\u0430\u0437\u0440\u0443\u0448\u0435\u043d\u0438\u044f",
+      5: "\u0423\u043c\u0435\u0440\u0435\u043d\u043d\u043e\u0435 \u2014 \u0428\u0438\u0440\u043e\u043a\u043e \u043e\u0449\u0443\u0449\u0430\u0435\u0442\u0441\u044f, \u043c\u0430\u043b\u044b\u0435 \u0440\u0430\u0437\u0440\u0443\u0448\u0435\u043d\u0438\u044f",
+      4: "\u0421\u043b\u0430\u0431\u043e\u0435 \u2014 \u041e\u0449\u0443\u0449\u0430\u0435\u0442\u0441\u044f \u0432 \u043f\u043e\u043c\u0435\u0449\u0435\u043d\u0438\u044f\u0445 \u043c\u043d\u043e\u0433\u0438\u043c\u0438",
+      3: "\u041e\u0447\u0435\u043d\u044c \u0441\u043b\u0430\u0431\u043e\u0435 \u2014 \u041e\u0449\u0443\u0449\u0430\u0435\u0442\u0441\u044f \u043d\u0435\u043c\u043d\u043e\u0433\u0438\u043c\u0438 \u0432\u0431\u043b\u0438\u0437\u0438 \u044d\u043f\u0438\u0446\u0435\u043d\u0442\u0440\u0430",
+      2: "\u041d\u0435\u043e\u0449\u0443\u0442\u0438\u043c\u043e\u0435 \u2014 \u0422\u043e\u043b\u044c\u043a\u043e \u043f\u0440\u0438\u0431\u043e\u0440\u043d\u0430\u044f \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u044f",
+    },
+    tsunamiWarningEvents:
+      "\u041f\u0440\u0435\u0434\u0443\u043f\u0440\u0435\u0436\u0434\u0435\u043d\u0438\u044f \u043e \u0446\u0443\u043d\u0430\u043c\u0438",
+    tsunamiNoActive:
+      "\u041d\u0435\u0442 \u0430\u043a\u0442\u0438\u0432\u043d\u044b\u0445 \u043f\u0440\u0435\u0434\u0443\u043f\u0440\u0435\u0436\u0434\u0435\u043d\u0438\u0439",
+    tsunamiActiveWarnings: (n) =>
+      `${n} \u0430\u043a\u0442\u0438\u0432\u043d\u044b\u0445 \u043f\u0440\u0435\u0434\u0443\u043f\u0440\u0435\u0436\u0434\u0435\u043d\u0438\u0439 \u043e \u0446\u0443\u043d\u0430\u043c\u0438 \u0432 \u0442\u0435\u043a\u0443\u0449\u0435\u043c \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u0435`,
+    tsunamiDepthLabel: (d) =>
+      `\u0413\u043b\u0443\u0431\u0438\u043d\u0430 ${d} \u043a\u043c`,
+    tsunamiViewUsgs:
+      "\u041f\u0440\u043e\u0441\u043c\u043e\u0442\u0440 \u043d\u0430 USGS",
+    tsunamiSafeTitle:
+      "\u041d\u0435\u0442 \u0410\u043a\u0442\u0438\u0432\u043d\u044b\u0445 \u041f\u0440\u0435\u0434\u0443\u043f\u0440\u0435\u0436\u0434\u0435\u043d\u0438\u0439 \u043e \u0426\u0443\u043d\u0430\u043c\u0438",
+    tsunamiSafeDesc:
+      "\u0412\u0441\u0451 \u0441\u043f\u043e\u043a\u043e\u0439\u043d\u043e. \u0412 \u0442\u0435\u043a\u0443\u0449\u0435\u043c \u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e\u043c \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u0435 \u0443\u0433\u0440\u043e\u0437 \u0446\u0443\u043d\u0430\u043c\u0438 \u043d\u0435 \u043e\u0431\u043d\u0430\u0440\u0443\u0436\u0435\u043d\u043e.",
   },
   tr: {
     appSubtitle: "Gerçek Zamanlı Deprem Tespiti",
@@ -943,6 +1496,52 @@ export const translations: TranslationMap = {
     language: "Dil",
     errorLoadingData: "Veri Yükleme Hatası",
     errorFetchFailed: "Deprem verileri alınamadı. Lütfen tekrar deneyin.",
+    eewActiveAlerts: "Aktif EEW Uyar\u0131lar\u0131",
+    eewNoEvents: "M2.5 \u00fczerinde olay yok",
+    eewMagnitude: "B\u00fcy\u00fckl\u00fck",
+    eewDepth: "Derinlik",
+    eewMaxMmi: "Maks MMI",
+    eewLocation: "Konum",
+    eewEventTime: "Olay Zaman\u0131",
+    eewElapsed: "Ge\u00e7en S\u00fcre",
+    eewPagerAlert: "PAGER Uyar\u0131s\u0131",
+    eewPWave: "P Dalgas\u0131",
+    eewSWave: "S Dalgas\u0131",
+    eewEpicenter: "Merkez \u00dcss\u00fc",
+    eewUsgsShakeMap: (n) => `USGS ShakeMap (${n} istasyon)`,
+    eewLoadingUsgs: "USGS verisi y\u00fckleniyor\u2026",
+    eewEstimatedRings:
+      "Tahmini halkalar \u00b7 Nominatim \u015fehir etiketleri",
+    eewMmiLegend: "MMI \u00d6l\u00e7e\u011fi A\u00e7\u0131klamas\u0131",
+    eewImpactZones: "Etki B\u00f6lgeleri",
+    eewEstRadius: "Tahmini Yar\u0131\u00e7ap",
+    eewNearestArea: "En Yak\u0131n B\u00f6lge",
+    eewShaking: "Sars\u0131nt\u0131",
+    eewObserved: "G\u00f6zlemlendi (sismograf)",
+    eewEstimated: "Tahmini",
+    eewSourceUsgsShakemap: "Kaynak: USGS ShakeMap",
+    eewMmiDescriptions: {
+      12: "Y\u0131k\u0131c\u0131 \u2014 Maksimum \u015fiddet",
+      11: "A\u015f\u0131r\u0131 \u2014 Nadiren g\u00f6zlemlendi",
+      10: "A\u015f\u0131r\u0131 \u2014 Tam y\u0131k\u0131m",
+      9: "\u015eiddetli \u2014 Felaket boyutunda hasar",
+      8: "A\u011f\u0131r \u2014 Yap\u0131larda b\u00fcy\u00fck hasar",
+      7: "\u00c7ok G\u00fc\u00e7l\u00fc \u2014 Yayg\u0131n hasar",
+      6: "G\u00fc\u00e7l\u00fc \u2014 Herkes taraf\u0131ndan hissedildi, hasar olabilir",
+      5: "Orta \u2014 Yayg\u0131n hissedildi, hafif hasar",
+      4: "Hafif \u2014 Kapal\u0131 alanlarda \u00e7o\u011fu ki\u015fi hissetti",
+      3: "Zay\u0131f \u2014 Merkez \u00fcss\u00fc yak\u0131n\u0131nda az ki\u015fi hissetti",
+      2: "Hissedilmedi \u2014 Yaln\u0131zca aletlerle alg\u0131land\u0131",
+    },
+    tsunamiWarningEvents: "Tsunami Uyar\u0131 Olaylar\u0131",
+    tsunamiNoActive: "Aktif uyar\u0131 yok",
+    tsunamiActiveWarnings: (n) =>
+      `Mevcut zaman penceresinde ${n} aktif tsunami uyar\u0131s\u0131`,
+    tsunamiDepthLabel: (d) => `Derinlik ${d} km`,
+    tsunamiViewUsgs: "USGS'de G\u00f6r\u00fcnt\u00fcle",
+    tsunamiSafeTitle: "Aktif Tsunami Uyar\u0131s\u0131 Yok",
+    tsunamiSafeDesc:
+      "Her \u015fey normal. Mevcut zaman penceresinde tsunami tehlikesi tespit edilmedi.",
   },
   hi: {
     appSubtitle: "रियल-टाइम भूकंप डिटेक्शन",
@@ -1010,6 +1609,65 @@ export const translations: TranslationMap = {
     language: "भाषा",
     errorLoadingData: "डेटा लोड करने में त्रुटि",
     errorFetchFailed: "भूकंप डेटा लाने में विफल। कृपया पुनः प्रयास करें।",
+    eewActiveAlerts:
+      "\u0938\u0915\u094d\u0930\u093f\u092f EEW \u0905\u0932\u0930\u094d\u091f",
+    eewNoEvents:
+      "M2.5 \u0938\u0947 \u090a\u092a\u0930 \u0915\u094b\u0908 \u0918\u091f\u0928\u093e \u0928\u0939\u0940\u0902",
+    eewMagnitude: "\u092a\u0930\u093f\u092e\u093e\u0923",
+    eewDepth: "\u0917\u0939\u0930\u093e\u0908",
+    eewMaxMmi: "\u0905\u0927\u093f\u0915\u0924\u092e MMI",
+    eewLocation: "\u0938\u094d\u0925\u093e\u0928",
+    eewEventTime: "\u0918\u091f\u0928\u093e \u0915\u093e \u0938\u092e\u092f",
+    eewElapsed: "\u092c\u0940\u0924\u093e \u0938\u092e\u092f",
+    eewPagerAlert: "PAGER \u0905\u0932\u0930\u094d\u091f",
+    eewPWave: "P-\u0924\u0930\u0902\u0917",
+    eewSWave: "S-\u0924\u0930\u0902\u0917",
+    eewEpicenter: "\u0905\u0927\u093f\u0915\u0947\u0902\u0926\u094d\u0930",
+    eewUsgsShakeMap: (n) =>
+      `USGS ShakeMap (${n} \u0938\u094d\u091f\u0947\u0936\u0928)`,
+    eewLoadingUsgs:
+      "USGS \u0921\u0947\u091f\u093e \u0932\u094b\u0921 \u0939\u094b \u0930\u0939\u093e \u0939\u0948\u2026",
+    eewEstimatedRings:
+      "\u0905\u0928\u0941\u092e\u093e\u0928\u093f\u0924 \u0935\u0932\u092f \u00b7 Nominatim \u0936\u0939\u0930 \u0932\u0947\u092c\u0932",
+    eewMmiLegend:
+      "MMI \u092a\u0948\u092e\u093e\u0928\u093e \u0915\u093f\u0902\u0935\u0926\u0902\u0924\u0940",
+    eewImpactZones:
+      "\u092a\u094d\u0930\u092d\u093e\u0935 \u0915\u094d\u0937\u0947\u0924\u094d\u0930",
+    eewEstRadius:
+      "\u0905\u0928\u0941\u092e\u093e\u0928\u093f\u0924 \u0924\u094d\u0930\u093f\u091c\u094d\u092f\u093e",
+    eewNearestArea:
+      "\u0928\u093f\u0915\u091f\u0924\u092e \u0915\u094d\u0937\u0947\u0924\u094d\u0930",
+    eewShaking: "\u0915\u0902\u092a\u0928",
+    eewObserved:
+      "\u0905\u0935\u0932\u094b\u0915\u0928 (\u0938\u093f\u0938\u094d\u092e\u094b\u0917\u094d\u0930\u093e\u092b)",
+    eewEstimated: "\u0905\u0928\u0941\u092e\u093e\u0928\u093f\u0924",
+    eewSourceUsgsShakemap: "\u0938\u094d\u0930\u094b\u0924: USGS ShakeMap",
+    eewMmiDescriptions: {
+      12: "\u0935\u093f\u0928\u093e\u0936\u0915\u093e\u0930\u0940 \u2014 \u0905\u0927\u093f\u0915\u0924\u092e \u0924\u0940\u0935\u094d\u0930\u0924\u093e",
+      11: "\u0905\u0924\u094d\u092f\u0902\u0924 \u2014 \u0926\u0941\u0930\u094d\u0932\u092d \u0930\u0942\u092a \u0938\u0947 \u0926\u0947\u0916\u093e \u0917\u092f\u093e",
+      10: "\u0905\u0924\u094d\u092f\u0902\u0924 \u2014 \u092a\u0942\u0930\u094d\u0923 \u0935\u093f\u0928\u093e\u0936",
+      9: "\u092d\u0940\u0937\u0923 \u2014 \u0935\u093f\u0928\u093e\u0936\u0915\u093e\u0930\u0940 \u0915\u094d\u0937\u0924\u093f",
+      8: "\u0917\u0902\u092d\u0940\u0930 \u2014 \u0938\u0902\u0930\u091a\u0928\u093e\u0913\u0902 \u0915\u094b \u092c\u0921\u093c\u0940 \u0915\u094d\u0937\u0924\u093f",
+      7: "\u092c\u0939\u0941\u0924 \u0924\u0947\u091c \u2014 \u0935\u094d\u092f\u093e\u092a\u0915 \u0915\u094d\u0937\u0924\u093f",
+      6: "\u0924\u0947\u091c \u2014 \u0938\u092d\u0940 \u0915\u094b \u092e\u0939\u0938\u0942\u0938, \u0915\u094d\u0937\u0924\u093f \u0938\u0902\u092d\u0935",
+      5: "\u092e\u0927\u094d\u092f\u092e \u2014 \u0935\u094d\u092f\u093e\u092a\u0915 \u0930\u0942\u092a \u0938\u0947 \u092e\u0939\u0938\u0942\u0938, \u092e\u093e\u092e\u0942\u0932\u0940 \u0915\u094d\u0937\u0924\u093f",
+      4: "\u0939\u0932\u094d\u0915\u093e \u2014 \u0915\u092e\u0930\u0947 \u0915\u0947 \u0905\u0902\u0926\u0930 \u0915\u0908 \u0932\u094b\u0917\u094b\u0902 \u0915\u094b \u092e\u0939\u0938\u0942\u0938",
+      3: "\u0915\u092e\u091c\u094b\u0930 \u2014 \u0915\u0947\u0902\u0926\u094d\u0930 \u0915\u0947 \u092a\u093e\u0938 \u0915\u0941\u091b \u0932\u094b\u0917\u094b\u0902 \u0915\u094b \u092e\u0939\u0938\u0942\u0938",
+      2: "\u0928\u0939\u0940\u0902 \u092e\u0939\u0938\u0942\u0938 \u2014 \u0915\u0947\u0935\u0932 \u0909\u092a\u0915\u0930\u0923\u094b\u0902 \u0926\u094d\u0935\u093e\u0930\u093e \u092a\u0924\u093e \u0932\u0917\u093e\u092f\u093e",
+    },
+    tsunamiWarningEvents:
+      "\u0938\u0941\u0928\u093e\u092e\u0940 \u091a\u0947\u0924\u093e\u0935\u0928\u0940 \u0918\u091f\u0928\u093e\u090f\u0902",
+    tsunamiNoActive:
+      "\u0915\u094b\u0908 \u0938\u0915\u094d\u0930\u093f\u092f \u091a\u0947\u0924\u093e\u0935\u0928\u0940 \u0928\u0939\u0940\u0902",
+    tsunamiActiveWarnings: (n) =>
+      `\u0935\u0930\u094d\u0924\u092e\u093e\u0928 \u0938\u092e\u092f \u0938\u0940\u092e\u093e \u092e\u0947\u0902 ${n} \u0938\u0915\u094d\u0930\u093f\u092f \u0938\u0941\u0928\u093e\u092e\u0940 \u091a\u0947\u0924\u093e\u0935\u0928\u0940`,
+    tsunamiDepthLabel: (d) =>
+      `\u0917\u0939\u0930\u093e\u0908 ${d} \u0915\u093f\u092e\u0940`,
+    tsunamiViewUsgs: "USGS \u092a\u0930 \u0926\u0947\u0916\u0947\u0902",
+    tsunamiSafeTitle:
+      "\u0915\u094b\u0908 \u0938\u0915\u094d\u0930\u093f\u092f \u0938\u0941\u0928\u093e\u092e\u0940 \u091a\u0947\u0924\u093e\u0935\u0928\u0940 \u0928\u0939\u0940\u0902",
+    tsunamiSafeDesc:
+      "\u0938\u092c \u0920\u0940\u0915 \u0939\u0948\u0964 \u0935\u0930\u094d\u0924\u092e\u093e\u0928 \u0938\u092e\u092f \u0938\u0940\u092e\u093e \u092e\u0947\u0902 \u0915\u094b\u0908 \u0938\u0941\u0928\u093e\u092e\u0940 \u0916\u0924\u0930\u093e \u0928\u0939\u0940\u0902\u0964",
   },
   ar: {
     appSubtitle: "رصد الزلازل في الوقت الفعلي",
@@ -1077,5 +1735,66 @@ export const translations: TranslationMap = {
     language: "اللغة",
     errorLoadingData: "خطأ في تحميل البيانات",
     errorFetchFailed: "فشل في جلب بيانات الزلازل. يرجى المحاولة مرة أخرى.",
+    eewActiveAlerts:
+      "\u062a\u0646\u0628\u064a\u0647\u0627\u062a \u0646\u0638\u0627\u0645 \u0627\u0644\u0625\u0646\u0630\u0627\u0631 \u0627\u0644\u0645\u0628\u0643\u0631 \u0627\u0644\u0646\u0634\u0637\u0629",
+    eewNoEvents:
+      "\u0644\u0627 \u062a\u0648\u062c\u062f \u0623\u062d\u062f\u0627\u062b \u0641\u0648\u0642 M2.5",
+    eewMagnitude: "\u0627\u0644\u0642\u0648\u0629",
+    eewDepth: "\u0627\u0644\u0639\u0645\u0642",
+    eewMaxMmi: "\u0623\u0642\u0635\u0649 \u0634\u062f\u0629",
+    eewLocation: "\u0627\u0644\u0645\u0648\u0642\u0639",
+    eewEventTime: "\u0648\u0642\u062a \u0627\u0644\u062d\u062f\u062b",
+    eewElapsed:
+      "\u0627\u0644\u0648\u0642\u062a \u0627\u0644\u0645\u0646\u0642\u0636\u064a",
+    eewPagerAlert: "\u062a\u0646\u0628\u064a\u0647 PAGER",
+    eewPWave: "\u0645\u0648\u062c\u0629 P",
+    eewSWave: "\u0645\u0648\u062c\u0629 S",
+    eewEpicenter:
+      "\u0645\u0631\u0643\u0632 \u0627\u0644\u0632\u0644\u0632\u0627\u0644",
+    eewUsgsShakeMap: (n) =>
+      `\u062e\u0631\u064a\u0637\u0629 USGS \u0644\u0644\u0647\u0632\u0629 (${n} \u0645\u062d\u0637\u0627\u062a)`,
+    eewLoadingUsgs:
+      "\u062c\u0627\u0631\u0650 \u062a\u062d\u0645\u064a\u0644 \u0628\u064a\u0627\u0646\u0627\u062a USGS\u2026",
+    eewEstimatedRings:
+      "\u0627\u0644\u062d\u0644\u0642\u0627\u062a \u0627\u0644\u0645\u0642\u062f\u0651\u0631\u0629 \u00b7 \u0623\u0633\u0645\u0627\u0621 \u0627\u0644\u0645\u062f\u0646 \u0645\u0646 Nominatim",
+    eewMmiLegend:
+      "\u0645\u0641\u062a\u0627\u062d \u0645\u0642\u064a\u0627\u0633 \u0627\u0644\u0634\u062f\u0629",
+    eewImpactZones:
+      "\u0645\u0646\u0627\u0637\u0642 \u0627\u0644\u062a\u0623\u062b\u064a\u0631",
+    eewEstRadius:
+      "\u0627\u0644\u0646\u0637\u0627\u0642 \u0627\u0644\u0645\u0642\u062f\u064e\u0651\u0631",
+    eewNearestArea: "\u0623\u0642\u0631\u0628 \u0645\u0646\u0637\u0642\u0629",
+    eewShaking: "\u0627\u0644\u0627\u0647\u062a\u0632\u0627\u0632",
+    eewObserved:
+      "\u0645\u0631\u0635\u0648\u062f (\u0633\u064a\u0632\u0645\u0648\u062c\u0631\u0627\u0641)",
+    eewEstimated: "\u0645\u0642\u062f\u064e\u0651\u0631",
+    eewSourceUsgsShakemap:
+      "\u0627\u0644\u0645\u0635\u062f\u0631: USGS ShakeMap",
+    eewMmiDescriptions: {
+      12: "\u0643\u0627\u0631\u062b\u064a \u2014 \u0623\u0642\u0635\u0649 \u0634\u062f\u0629",
+      11: "\u0634\u062f\u064a\u062f \u062c\u062f\u0627\u064b \u2014 \u0646\u0627\u062f\u0631\u0627\u064b \u0645\u0627 \u064a\u064f\u0644\u0627\u062d\u0638",
+      10: "\u0634\u062f\u064a\u062f \u062c\u062f\u0627\u064b \u2014 \u062f\u0645\u0627\u0631 \u0634\u0627\u0645\u0644",
+      9: "\u0639\u0646\u064a\u0641 \u2014 \u0623\u0636\u0631\u0627\u0631 \u0643\u0627\u0631\u062b\u064a\u0629",
+      8: "\u062d\u0627\u062f \u2014 \u0623\u0636\u0631\u0627\u0631 \u062c\u0633\u064a\u0645\u0629 \u0644\u0644\u0645\u0628\u0627\u0646\u064a",
+      7: "\u0642\u0648\u064a \u062c\u062f\u0627\u064b \u2014 \u0623\u0636\u0631\u0627\u0631 \u0648\u0627\u0633\u0639\u0629",
+      6: "\u0642\u0648\u064a \u2014 \u064a\u0634\u0639\u0631 \u0628\u0647 \u0627\u0644\u062c\u0645\u064a\u0639\u060c \u0623\u0636\u0631\u0627\u0631 \u0645\u062d\u062a\u0645\u0644\u0629",
+      5: "\u0645\u062a\u0648\u0633\u0637 \u2014 \u064a\u0634\u0639\u0631 \u0628\u0647 \u0639\u0644\u0649 \u0646\u0637\u0627\u0642 \u0648\u0627\u0633\u0639\u060c \u0623\u0636\u0631\u0627\u0631 \u0637\u0641\u064a\u0641\u0629",
+      4: "\u062e\u0641\u064a\u0641 \u2014 \u064a\u0634\u0639\u0631 \u0628\u0647 \u0643\u062b\u064a\u0631\u0648\u0646 \u062f\u0627\u062e\u0644 \u0627\u0644\u0645\u0628\u0627\u0646\u064a",
+      3: "\u0636\u0639\u064a\u0641 \u2014 \u064a\u0634\u0639\u0631 \u0628\u0647 \u0642\u0644\u064a\u0644\u0648\u0646 \u0642\u0631\u0628 \u0627\u0644\u0645\u0631\u0643\u0632",
+      2: "\u063a\u064a\u0631 \u0645\u062d\u0633\u0648\u0633 \u2014 \u064a\u064f\u0643\u062a\u0634\u0641 \u0628\u0627\u0644\u0623\u062c\u0647\u0632\u0629 \u0641\u0642\u0637",
+    },
+    tsunamiWarningEvents:
+      "\u0623\u062d\u062f\u0627\u062b \u0627\u0644\u062a\u062d\u0630\u064a\u0631 \u0645\u0646 \u0627\u0644\u062a\u0633\u0648\u0646\u0627\u0645\u064a",
+    tsunamiNoActive:
+      "\u0644\u0627 \u062a\u0648\u062c\u062f \u062a\u062d\u0630\u064a\u0631\u0627\u062a \u0646\u0634\u0637\u0629",
+    tsunamiActiveWarnings: (n) =>
+      `${n} \u062a\u062d\u0630\u064a\u0631 \u0646\u0634\u0637 \u0645\u0646 \u0627\u0644\u062a\u0633\u0648\u0646\u0627\u0645\u064a \u0641\u064a \u0627\u0644\u0646\u0627\u0641\u0630\u0629 \u0627\u0644\u0632\u0645\u0646\u064a\u0629 \u0627\u0644\u062d\u0627\u0644\u064a\u0629`,
+    tsunamiDepthLabel: (d) =>
+      `\u0627\u0644\u0639\u0645\u0642 ${d} \u0643\u0645`,
+    tsunamiViewUsgs: "\u0639\u0631\u0636 \u0639\u0644\u0649 USGS",
+    tsunamiSafeTitle:
+      "\u0644\u0627 \u062a\u0648\u062c\u062f \u062a\u062d\u0630\u064a\u0631\u0627\u062a \u0646\u0634\u0637\u0629 \u0645\u0646 \u0627\u0644\u062a\u0633\u0648\u0646\u0627\u0645\u064a",
+    tsunamiSafeDesc:
+      "\u0627\u0644\u0623\u062c\u0648\u0627\u0621 \u0647\u0627\u062f\u0626\u0629. \u0644\u0645 \u064a\u064f\u0631\u0635\u062f \u0623\u064a \u062a\u0647\u062f\u064a\u062f \u0645\u0646 \u0627\u0644\u062a\u0633\u0648\u0646\u0627\u0645\u064a \u0641\u064a \u0627\u0644\u0646\u0627\u0641\u0630\u0629 \u0627\u0644\u0632\u0645\u0646\u064a\u0629 \u0627\u0644\u062d\u0627\u0644\u064a\u0629.",
   },
 };

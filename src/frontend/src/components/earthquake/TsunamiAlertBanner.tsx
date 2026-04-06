@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, CheckCircle2, Clock, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { formatMagnitude, formatTimestamp } from "../../lib/formatters";
 import type { UsgsFeature } from "../../lib/usgsTypes";
 
@@ -123,6 +124,8 @@ export function TsunamiAlertBanner({
 }
 
 export function TsunamiSafeState() {
+  const { t } = useLanguage();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -135,12 +138,9 @@ export function TsunamiSafeState() {
       </div>
       <div className="text-center space-y-2">
         <h3 className="text-xl font-bold text-green-400">
-          No Active Tsunami Warnings
+          {t.tsunamiSafeTitle}
         </h3>
-        <p className="text-muted-foreground max-w-sm">
-          No tsunami warnings are currently active in the selected time window.
-          All clear.
-        </p>
+        <p className="text-muted-foreground max-w-sm">{t.tsunamiSafeDesc}</p>
       </div>
     </motion.div>
   );

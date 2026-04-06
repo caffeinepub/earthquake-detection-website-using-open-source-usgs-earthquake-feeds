@@ -9,6 +9,7 @@ import {
   Navigation,
 } from "lucide-react";
 import { motion } from "motion/react";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { formatMagnitude, formatTimestamp } from "../../lib/formatters";
 import { getMagnitudeColor } from "../../lib/usgsFeeds";
 import type { UsgsFeature } from "../../lib/usgsTypes";
@@ -23,6 +24,8 @@ export function TsunamiView({
   tsunamiEvents,
   onEventSelect,
 }: TsunamiViewProps) {
+  const { t } = useLanguage();
+
   if (tsunamiEvents.length === 0) {
     return (
       <div className="rounded-xl border border-border/40 bg-card shadow-soft">
@@ -31,8 +34,8 @@ export function TsunamiView({
             <AlertTriangle className="h-5 w-5 text-red-400" />
           </div>
           <div>
-            <h3 className="font-bold text-base">Tsunami Warning Events</h3>
-            <p className="text-xs text-muted-foreground">No active warnings</p>
+            <h3 className="font-bold text-base">{t.tsunamiWarningEvents}</h3>
+            <p className="text-xs text-muted-foreground">{t.tsunamiNoActive}</p>
           </div>
         </div>
         <TsunamiSafeState />
@@ -53,12 +56,10 @@ export function TsunamiView({
           </div>
           <div>
             <h3 className="font-bold text-base text-red-300">
-              Tsunami Warning Events
+              {t.tsunamiWarningEvents}
             </h3>
             <p className="text-xs text-muted-foreground">
-              {tsunamiEvents.length} active{" "}
-              {tsunamiEvents.length === 1 ? "warning" : "warnings"} in current
-              time window
+              {t.tsunamiActiveWarnings(tsunamiEvents.length)}
             </p>
           </div>
         </div>
@@ -120,7 +121,7 @@ export function TsunamiView({
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Navigation className="h-3 w-3" />
-                        {depth?.toFixed(1) ?? "N/A"} km depth
+                        {t.tsunamiDepthLabel(depth?.toFixed(1) ?? "N/A")}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
@@ -143,7 +144,7 @@ export function TsunamiView({
                         rel="noopener noreferrer"
                       >
                         <ExternalLink className="h-3 w-3 mr-1.5" />
-                        View on USGS
+                        {t.tsunamiViewUsgs}
                       </a>
                     </Button>
                   </CardContent>

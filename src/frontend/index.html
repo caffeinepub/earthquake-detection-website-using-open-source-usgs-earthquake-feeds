@@ -37,9 +37,129 @@
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
           crossorigin=""></script>
+
+        <!-- Initial loading screen styles (shows immediately, before React hydrates) -->
+        <style>
+          #initial-loading {
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: hsl(224 71% 4%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            transition: opacity 0.4s ease;
+          }
+          #initial-loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+          }
+          .il-logo {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: hsl(224 71% 12%);
+            border: 2px solid hsl(217 91% 60% / 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: il-pulse 2s ease-in-out infinite;
+          }
+          @keyframes il-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 hsl(217 91% 60% / 0.4); }
+            50% { box-shadow: 0 0 0 16px hsl(217 91% 60% / 0); }
+          }
+          .il-logo-inner {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: radial-gradient(circle, hsl(217 91% 60%), hsl(224 71% 4%));
+            position: relative;
+          }
+          .il-logo-inner::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid hsl(217 91% 60% / 0.5);
+            animation: il-ring 1.5s ease-out infinite;
+          }
+          @keyframes il-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+          }
+          .il-title {
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: hsl(210 40% 98%);
+            letter-spacing: -0.02em;
+          }
+          .il-subtitle {
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 0.8rem;
+            color: hsl(215 20% 65%);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+          }
+          .il-dots {
+            display: flex;
+            gap: 6px;
+          }
+          .il-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: hsl(217 91% 60%);
+            animation: il-bounce 1.2s ease-in-out infinite;
+          }
+          .il-dot:nth-child(2) { animation-delay: 0.2s; }
+          .il-dot:nth-child(3) { animation-delay: 0.4s; }
+          @keyframes il-bounce {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+          }
+        </style>
     </head>
-    <body>
+    <body style="background: hsl(224 71% 4%); margin: 0;">
+        <!-- Instant loading screen — visible before React JS parses -->
+        <div id="initial-loading">
+          <div class="il-logo">
+            <div class="il-logo-inner"></div>
+          </div>
+          <div class="il-title">WhoFeelAnEarthquake</div>
+          <div class="il-subtitle">Loading seismic data&hellip;</div>
+          <div class="il-dots">
+            <div class="il-dot"></div>
+            <div class="il-dot"></div>
+            <div class="il-dot"></div>
+          </div>
+        </div>
+
         <div id='root'></div>
         <script type='module' src='/src/main.tsx'></script>
+
+        <!-- Hide initial loading screen once React has mounted -->
+        <script>
+          (function() {
+            var el = document.getElementById('initial-loading');
+            if (!el) return;
+            // Poll until #root has children (React has rendered)
+            var attempts = 0;
+            var timer = setInterval(function() {
+              attempts++;
+              var root = document.getElementById('root');
+              if ((root && root.children.length > 0) || attempts > 100) {
+                clearInterval(timer);
+                el.classList.add('hidden');
+                setTimeout(function() {
+                  if (el.parentNode) el.parentNode.removeChild(el);
+                }, 500);
+              }
+            }, 100);
+          })();
+        </script>
     </body>
 </html>

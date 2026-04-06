@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLanguage } from "../../contexts/LanguageContext";
 import {
   getCircumferencePoint,
   getMmiColor,
@@ -57,20 +58,6 @@ function getAlertColor(alert: string | null, mag: number | null): string {
 }
 
 const MMI_LEVELS = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2] as const;
-
-const MMI_DESCRIPTIONS: Record<number, string> = {
-  12: "Catastrophic — Maximum intensity",
-  11: "Extreme — Rarely observed",
-  10: "Extreme — Total destruction",
-  9: "Violent — Catastrophic damage",
-  8: "Severe — Major damage to structures",
-  7: "Very Strong — Widespread damage",
-  6: "Strong — Felt by all, damage possible",
-  5: "Moderate — Felt widely, minor damage",
-  4: "Light — Felt indoors by many",
-  3: "Weak — Felt by few near epicenter",
-  2: "Not felt — Detected by instruments only",
-};
 
 // Type alias: mmiLevel -> city/region name
 type MmiCityMap = Record<number, string>;
@@ -180,6 +167,8 @@ async function fetchShakeMapStations(
 }
 
 export function EewView({ earthquakes }: EewViewProps) {
+  const { t } = useLanguage();
+
   // Memoize alerts to avoid triggering effects on every parent re-render
   const alerts = useMemo(
     () =>
@@ -437,24 +426,25 @@ export function EewView({ earthquakes }: EewViewProps) {
   }, []);
 
   // Draw ShakeMap station markers on the map
-  const drawShakeMapStations = useCallback((stations: ShakeMapStation[]) => {
-    if (!mapInstanceRef.current || !isLeafletLoaded()) return;
-    const L = window.L;
-    if (!L || !shakeMapLayerRef.current) return;
+  const drawShakeMapStations = useCallback(
+    (stations: ShakeMapStation[]) => {
+      if (!mapInstanceRef.current || !isLeafletLoaded()) return;
+      const L = window.L;
+      if (!L || !shakeMapLayerRef.current) return;
 
-    shakeMapLayerRef.current.clearLayers();
+      shakeMapLayerRef.current.clearLayers();
 
-    if (stations.length === 0) return;
+      if (stations.length === 0) return;
 
-    for (const station of stations) {
-      const color = getMmiColor(station.mmi);
-      const mmiRounded = Math.round(station.mmi);
-      // Determine text color for readability on the background
-      const textColor = station.mmi >= 5 ? "#000" : "#fff";
+      for (const station of stations) {
+        const color = getMmiColor(station.mmi);
+        const mmiRounded = Math.round(station.mmi);
+        // Determine text color for readability on the background
+        const textColor = station.mmi >= 5 ? "#000" : "#fff";
 
-      const icon = L.divIcon({
-        className: "",
-        html: `<div style="
+        const icon = L.divIcon({
+          className: "",
+          html: `<div style="
             background: ${color};
             border: 2px solid rgba(255,255,255,0.8);
             border-radius: 4px;
@@ -470,23 +460,23 @@ export function EewView({ earthquakes }: EewViewProps) {
             text-align: center;
             min-width: 28px;
           ">MMI ${mmiRounded}<br/><span style="font-size:9px;font-weight:normal;opacity:0.9">${station.name.length > 12 ? `${station.name.substring(0, 12)}\u2026` : station.name}</span></div>`,
-        iconSize: undefined,
-        iconAnchor: [14, 20],
-      });
+          iconSize: undefined,
+          iconAnchor: [14, 20],
+        });
 
-      const marker = L.marker([station.lat, station.lon], {
-        icon,
-        interactive: true,
-        keyboard: false,
-        zIndexOffset: 100,
-      });
+        const marker = L.marker([station.lat, station.lon], {
+          icon,
+          interactive: true,
+          keyboard: false,
+          zIndexOffset: 100,
+        });
 
-      // Popup with full station info
-      const observedLabel =
-        station.source === "observed" ? "Observed" : "Estimated";
-      const bgColor = station.source === "observed" ? "#22c55e" : "#f59e0b";
-      marker.bindPopup(
-        `<div style="font-family:monospace;font-size:12px;min-width:160px">
+        // Popup with full station info
+        const observedLabel =
+          station.source === "observed" ? t.eewObserved : t.eewEstimated;
+        const bgColor = station.source === "observed" ? "#22c55e" : "#f59e0b";
+        marker.bindPopup(
+          `<div style="font-family:monospace;font-size:12px;min-width:160px">
             <div style="font-weight:bold;font-size:13px;margin-bottom:4px">${station.name}</div>
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
               <div style="background:${color};color:${textColor};padding:2px 8px;border-radius:3px;font-weight:bold">
@@ -498,12 +488,14 @@ export function EewView({ earthquakes }: EewViewProps) {
             </div>
             <div style="color:#aaa;font-size:10px">${getMmiLabel(station.mmi)}</div>
           </div>`,
-        { maxWidth: 220 },
-      );
+          { maxWidth: 220 },
+        );
 
-      shakeMapLayerRef.current.addLayer(marker);
-    }
-  }, []);
+        shakeMapLayerRef.current.addLayer(marker);
+      }
+    },
+    [t],
+  );
 
   // Draw all MMI rings + city labels + epicenter for the selected earthquake.
   // Does NOT draw wave rings (those are handled separately) and does NOT call setView.
@@ -794,7 +786,7 @@ export function EewView({ earthquakes }: EewViewProps) {
               <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600" />
             </div>
             <h3 className="text-base font-bold text-foreground tracking-wide uppercase">
-              Active EEW Alerts
+              {t.eewActiveAlerts}
             </h3>
             {significantCount > 0 && (
               <Badge
@@ -815,7 +807,7 @@ export function EewView({ earthquakes }: EewViewProps) {
                   data-ocid="eew.empty_state"
                 >
                   <span className="text-3xl mb-2">📡</span>
-                  <p className="text-sm">No events above M2.5</p>
+                  <p className="text-sm">{t.eewNoEvents}</p>
                 </div>
               ) : (
                 alerts.map((eq, idx) => {
@@ -949,18 +941,18 @@ export function EewView({ earthquakes }: EewViewProps) {
                 className="w-8"
                 style={{ borderTop: "2px dashed #60a5fa" }}
               />
-              <span>P-wave</span>
+              <span>{t.eewPWave}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div
                 className="w-8"
                 style={{ borderTop: "2px dashed #f97316" }}
               />
-              <span>S-wave</span>
+              <span>{t.eewSWave}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-              <span>Epicenter</span>
+              <span>{t.eewEpicenter}</span>
             </div>
             {hasUsgsShakeData && (
               <div className="flex items-center gap-1.5">
@@ -972,14 +964,14 @@ export function EewView({ earthquakes }: EewViewProps) {
                   }}
                 />
                 <span className="text-green-400 font-medium">
-                  USGS ShakeMap ({currentStations!.length} stations)
+                  {t.eewUsgsShakeMap(currentStations!.length)}
                 </span>
               </div>
             )}
             {isShakeMapLoading && (
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded-full border-2 border-yellow-400 border-t-transparent animate-spin" />
-                <span className="text-yellow-400">Loading USGS data…</span>
+                <span className="text-yellow-400">{t.eewLoadingUsgs}</span>
               </div>
             )}
             {!hasUsgsShakeData && !isShakeMapLoading && selectedEq && (
@@ -1006,9 +998,7 @@ export function EewView({ earthquakes }: EewViewProps) {
                       : "transparent",
                   }}
                 />
-                <span className="text-xs">
-                  Estimated rings · City labels from Nominatim
-                </span>
+                <span className="text-xs">{t.eewEstimatedRings}</span>
               </button>
             )}
           </div>
@@ -1022,7 +1012,7 @@ export function EewView({ earthquakes }: EewViewProps) {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                      Magnitude
+                      {t.eewMagnitude}
                     </p>
                     <p
                       className="text-2xl font-bold mt-0.5"
@@ -1033,7 +1023,7 @@ export function EewView({ earthquakes }: EewViewProps) {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                      Depth
+                      {t.eewDepth}
                     </p>
                     <p className="text-2xl font-bold mt-0.5">
                       {depth.toFixed(1)} km
@@ -1041,7 +1031,7 @@ export function EewView({ earthquakes }: EewViewProps) {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                      Max MMI
+                      {t.eewMaxMmi}
                     </p>
                     <p
                       className="text-2xl font-bold mt-0.5"
@@ -1052,7 +1042,7 @@ export function EewView({ earthquakes }: EewViewProps) {
                   </div>
                   <div className="col-span-2 sm:col-span-3">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                      Location
+                      {t.eewLocation}
                     </p>
                     <p className="text-sm font-medium mt-0.5 leading-snug">
                       {selectedEq.properties.place}
@@ -1060,7 +1050,7 @@ export function EewView({ earthquakes }: EewViewProps) {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                      Event Time
+                      {t.eewEventTime}
                     </p>
                     <p className="text-xs font-mono mt-0.5">
                       {formatDateTime(selectedEq.properties.time)}
@@ -1068,7 +1058,7 @@ export function EewView({ earthquakes }: EewViewProps) {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                      Elapsed
+                      {t.eewElapsed}
                     </p>
                     <p className="text-xs font-mono mt-0.5">
                       {Math.floor(elapsed / 3600) > 0 &&
@@ -1079,7 +1069,7 @@ export function EewView({ earthquakes }: EewViewProps) {
                   {alert && (
                     <div>
                       <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                        PAGER Alert
+                        {t.eewPagerAlert}
                       </p>
                       <Badge
                         className="mt-1 uppercase font-bold text-xs"
@@ -1104,7 +1094,7 @@ export function EewView({ earthquakes }: EewViewProps) {
         <Card className="border-border/40" data-ocid="eew.mmi.legend.card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm uppercase tracking-wide">
-              MMI Scale Legend
+              {t.eewMmiLegend}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -1140,7 +1130,7 @@ export function EewView({ earthquakes }: EewViewProps) {
         <Card className="border-border/40" data-ocid="eew.impact.zones.card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm uppercase tracking-wide flex items-center gap-2">
-              Impact Zones
+              {t.eewImpactZones}
               {selectedEq && (
                 <span className="ml-1 text-xs text-muted-foreground font-normal normal-case">
                   M{(selectedEq.properties.mag ?? 0).toFixed(1)}
@@ -1162,13 +1152,13 @@ export function EewView({ earthquakes }: EewViewProps) {
                       MMI
                     </th>
                     <th className="text-left px-4 py-2 text-muted-foreground font-medium">
-                      Shaking
+                      {t.eewShaking}
                     </th>
                     <th className="text-right px-4 py-2 text-muted-foreground font-medium">
-                      Est. Radius
+                      {t.eewEstRadius}
                     </th>
                     <th className="text-left px-4 py-2 text-muted-foreground font-medium">
-                      Nearest Area
+                      {t.eewNearestArea}
                     </th>
                   </tr>
                 </thead>
@@ -1212,7 +1202,7 @@ export function EewView({ earthquakes }: EewViewProps) {
                           </div>
                         </td>
                         <td className="px-4 py-1.5 text-muted-foreground">
-                          {MMI_DESCRIPTIONS[mmiLevel]}
+                          {t.eewMmiDescriptions[mmiLevel]}
                         </td>
                         <td className="px-4 py-1.5 text-right font-mono">
                           {radiusKm !== null && radiusKm < 20000
@@ -1275,14 +1265,14 @@ export function EewView({ earthquakes }: EewViewProps) {
               <div className="px-4 py-2 border-t border-border/20 flex items-center gap-2">
                 <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
                 <span className="text-[10px] text-muted-foreground">
-                  Observed (seismograph)
+                  {t.eewObserved}
                 </span>
                 <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 ml-2" />
                 <span className="text-[10px] text-muted-foreground">
-                  Estimated
+                  {t.eewEstimated}
                 </span>
                 <span className="ml-auto text-[10px] text-muted-foreground/50">
-                  Source: USGS ShakeMap
+                  {t.eewSourceUsgsShakemap}
                 </span>
               </div>
             )}
