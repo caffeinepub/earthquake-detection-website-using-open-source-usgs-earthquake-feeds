@@ -79,10 +79,13 @@ export default function EarthquakeDashboard() {
     (eq) => eq.properties.tsunami === 1,
   );
 
-  if (tsunamiEvents.length > prevTsunamiCountRef.current) {
-    setTsunamiBannerDismissed(false);
-  }
-  prevTsunamiCountRef.current = tsunamiEvents.length;
+  // Fix: move tsunami banner reset into a useEffect to avoid side effects in render
+  useEffect(() => {
+    if (tsunamiEvents.length > prevTsunamiCountRef.current) {
+      setTsunamiBannerDismissed(false);
+    }
+    prevTsunamiCountRef.current = tsunamiEvents.length;
+  }, [tsunamiEvents.length]);
 
   const eewAlertCount = filteredEarthquakes.filter(
     (eq) =>
@@ -163,7 +166,7 @@ export default function EarthquakeDashboard() {
     eew: t.eewMonitor,
   };
 
-  // Show skeleton loading only while initially loading
+  // Show skeleton loading overlay only while initially loading with no data yet
   const showLoading = isLoading && features.length === 0;
 
   return (
@@ -481,56 +484,54 @@ export default function EarthquakeDashboard() {
             </div>
           </div>
 
-          {/* Data Views — always render, even on error (show empty state) */}
-          {!isLoading && (
-            <div className="animate-fade-in relative z-10">
-              {viewMode === "table" && (
+          {/* Data Views — always rendered regardless of loading state */}
+          <div className="animate-fade-in relative z-10">
+            {viewMode === "table" && (
+              <EarthquakeResultsTable
+                earthquakes={filteredEarthquakes}
+                selectedEarthquake={selectedEarthquake}
+                onEarthquakeSelect={handleEarthquakeSelect}
+              />
+            )}
+
+            {viewMode === "map" && (
+              <EarthquakeMapView
+                earthquakes={filteredEarthquakes}
+                onMarkerClick={handleEarthquakeSelect}
+                autoFitBounds={shouldAutoFitBounds}
+                userLocation={userLocation}
+              />
+            )}
+
+            {viewMode === "split" && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <EarthquakeResultsTable
                   earthquakes={filteredEarthquakes}
                   selectedEarthquake={selectedEarthquake}
                   onEarthquakeSelect={handleEarthquakeSelect}
+                  constrainedHeight={600}
                 />
-              )}
-
-              {viewMode === "map" && (
                 <EarthquakeMapView
                   earthquakes={filteredEarthquakes}
                   onMarkerClick={handleEarthquakeSelect}
+                  constrainedHeight={600}
                   autoFitBounds={shouldAutoFitBounds}
                   userLocation={userLocation}
                 />
-              )}
+              </div>
+            )}
 
-              {viewMode === "split" && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <EarthquakeResultsTable
-                    earthquakes={filteredEarthquakes}
-                    selectedEarthquake={selectedEarthquake}
-                    onEarthquakeSelect={handleEarthquakeSelect}
-                    constrainedHeight={600}
-                  />
-                  <EarthquakeMapView
-                    earthquakes={filteredEarthquakes}
-                    onMarkerClick={handleEarthquakeSelect}
-                    constrainedHeight={600}
-                    autoFitBounds={shouldAutoFitBounds}
-                    userLocation={userLocation}
-                  />
-                </div>
-              )}
+            {viewMode === "tsunami" && (
+              <TsunamiView
+                tsunamiEvents={tsunamiEvents}
+                onEventSelect={handleEarthquakeSelect}
+              />
+            )}
 
-              {viewMode === "tsunami" && (
-                <TsunamiView
-                  tsunamiEvents={tsunamiEvents}
-                  onEventSelect={handleEarthquakeSelect}
-                />
-              )}
-
-              {viewMode === "eew" && (
-                <EewView earthquakes={filteredEarthquakes} />
-              )}
-            </div>
-          )}
+            {viewMode === "eew" && (
+              <EewView earthquakes={filteredEarthquakes} />
+            )}
+          </div>
         </main>
 
         {/* Footer */}
