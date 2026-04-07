@@ -1,0 +1,343 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Modern OKLCH color system - Light mode */
+    --background: 0% 0 0;
+    --foreground: 98% 0 0;
+
+    --card: 0% 0 0;
+    --card-foreground: 98% 0 0;
+
+    --popover: 0% 0 0;
+    --popover-foreground: 98% 0 0;
+
+    /* Vibrant purple-blue primary */
+    --primary: 60% 0.25 280;
+    --primary-foreground: 100% 0 0;
+
+    /* Complementary secondary */
+    --secondary: 95% 0.02 280;
+    --secondary-foreground: 30% 0.05 280;
+
+    --muted: 96% 0.01 280;
+    --muted-foreground: 50% 0.03 280;
+
+    /* Vibrant accent */
+    --accent: 70% 0.2 250;
+    --accent-foreground: 100% 0 0;
+
+    --destructive: 55% 0.22 25;
+    --destructive-foreground: 100% 0 0;
+
+    --success: 70% 0.18 145;
+    --success-foreground: 100% 0 0;
+
+    --warning: 75% 0.15 85;
+    --warning-foreground: 20% 0.02 85;
+
+    --border: 90% 0.01 280;
+    --input: 90% 0.01 280;
+    --ring: 60% 0.25 280;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Modern OKLCH color system - Dark mode */
+    --background: 15% 0.02 280;
+    --foreground: 98% 0.01 280;
+
+    --card: 18% 0.02 280;
+    --card-foreground: 98% 0.01 280;
+
+    --popover: 18% 0.02 280;
+    --popover-foreground: 98% 0.01 280;
+
+    /* Vibrant purple-blue primary */
+    --primary: 70% 0.22 280;
+    --primary-foreground: 15% 0.02 280;
+
+    /* Complementary secondary */
+    --secondary: 25% 0.03 280;
+    --secondary-foreground: 95% 0.01 280;
+
+    --muted: 25% 0.03 280;
+    --muted-foreground: 70% 0.03 280;
+
+    /* Vibrant accent */
+    --accent: 65% 0.18 250;
+    --accent-foreground: 15% 0.02 280;
+
+    --destructive: 60% 0.2 25;
+    --destructive-foreground: 98% 0.01 280;
+
+    --success: 65% 0.16 145;
+    --success-foreground: 98% 0.01 280;
+
+    --warning: 70% 0.14 85;
+    --warning-foreground: 15% 0.02 280;
+
+    --border: 30% 0.03 280;
+    --input: 30% 0.03 280;
+    --ring: 70% 0.22 280;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* ── Thin custom scrollbar (4px) ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(40% 0.03 280) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: oklch(40% 0.03 280);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: oklch(50% 0.05 280);
+}
+
+/* Glassmorphism effect */
+.glass-effect {
+  background: oklch(var(--background) / 0.8);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+}
+
+/* Enhanced shadows */
+.shadow-soft {
+  box-shadow: 0 2px 8px oklch(var(--foreground) / 0.04), 0 1px 3px
+    oklch(var(--foreground) / 0.08);
+}
+
+.shadow-medium {
+  box-shadow: 0 4px 16px oklch(var(--foreground) / 0.08), 0 2px 6px
+    oklch(var(--foreground) / 0.12);
+}
+
+.shadow-strong {
+  box-shadow: 0 8px 32px oklch(var(--foreground) / 0.12), 0 4px 12px
+    oklch(var(--foreground) / 0.16);
+}
+
+/* Tsunami shimmer animation */
+@keyframes tsunami-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-tsunami-shimmer {
+  animation: tsunami-shimmer 2.4s ease-in-out infinite;
+}
+
+/* Tsunami marker styles (Leaflet DivIcon) */
+.tsunami-marker-ring {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.tsunami-marker-ring::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 3px solid #ef4444;
+  animation: tsunami-ring-pulse 1.2s ease-out infinite;
+  opacity: 0;
+}
+
+.tsunami-marker-ring::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid #f97316;
+  animation: tsunami-ring-pulse 1.2s ease-out 0.4s infinite;
+  opacity: 0;
+}
+
+@keyframes tsunami-ring-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.tsunami-marker-dot {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fca5a5, #ef4444);
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7), 0 0 16px rgba(239, 68, 68, 0.4);
+}
+
+/* Leaflet z-index stacking with explicit tile-pane visibility */
+.leaflet-pane {
+  z-index: auto;
+}
+
+.leaflet-tile-pane {
+  z-index: 1 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.leaflet-overlay-pane {
+  z-index: 2 !important;
+}
+
+.leaflet-shadow-pane {
+  z-index: 3 !important;
+}
+
+.leaflet-marker-pane {
+  z-index: 4 !important;
+}
+
+.leaflet-tooltip-pane {
+  z-index: 5 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 6 !important;
+}
+
+.leaflet-control {
+  z-index: 7 !important;
+}
+
+/* Fullscreen control styling for both light and dark themes */
+.leaflet-control-fullscreen,
+.leaflet-control-tectonic-toggle,
+.leaflet-control-terrain-toggle {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  background: oklch(var(--background));
+  color: oklch(var(--foreground));
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.leaflet-control-fullscreen:hover,
+.leaflet-control-tectonic-toggle:hover,
+.leaflet-control-terrain-toggle:hover {
+  background: oklch(var(--accent) / 0.1);
+  color: oklch(var(--accent));
+}
+
+.leaflet-control-fullscreen:active,
+.leaflet-control-tectonic-toggle:active,
+.leaflet-control-terrain-toggle:active {
+  background: oklch(var(--accent) / 0.2);
+}
+
+.leaflet-control-tectonic-toggle.active {
+  background: oklch(var(--primary));
+  color: oklch(var(--primary-foreground));
+}
+
+.leaflet-control-tectonic-toggle.active:hover {
+  background: oklch(var(--primary) / 0.9);
+}
+
+.leaflet-control-terrain-toggle.active {
+  background: oklch(var(--accent));
+  color: oklch(var(--accent-foreground));
+}
+
+.leaflet-control-terrain-toggle.active:hover {
+  background: oklch(var(--accent) / 0.9);
+}
+
+/* Hardened fullscreen CSS - ensure Leaflet container and tile panes render reliably */
+.map-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 9999 !important;
+  background: oklch(var(--background)) !important;
+}
+
+.map-fullscreen .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  background: oklch(var(--background)) !important;
+}
+
+.map-fullscreen .leaflet-tile-pane {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+/* Ensure fullscreen mode works correctly */
+:fullscreen .leaflet-container,
+:-webkit-full-screen .leaflet-container,
+:-moz-full-screen .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  background: oklch(var(--background)) !important;
+}
+
+:fullscreen .leaflet-tile-pane,
+:-webkit-full-screen .leaflet-tile-pane,
+:-moz-full-screen .leaflet-tile-pane {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+/* Fix fullscreen map going black */
+:-webkit-full-screen #leaflet-map,
+:-moz-full-screen #leaflet-map,
+:fullscreen #leaflet-map {
+  height: 100vh !important;
+  width: 100vw !important;
+}
+
+.leaflet-container {
+  background: #1a1a2e;
+}

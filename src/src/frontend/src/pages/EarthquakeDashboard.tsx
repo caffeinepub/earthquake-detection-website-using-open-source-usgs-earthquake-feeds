@@ -6,7 +6,6 @@ import {
   MapPin,
   MapPinOff,
   Moon,
-  RefreshCw,
   Sun,
   Table as TableIcon,
   Waves,
@@ -64,16 +63,12 @@ export default function EarthquakeDashboard() {
     clearLocation,
   } = useUserLocation();
 
-  const { data, isLoading, isError, error, forceRefresh, refetch } =
+  const { data, isLoading, isError, error, forceRefresh } =
     useUsgsEarthquakes(timeWindow);
 
-  const features = data?.features ?? [];
-  const filteredEarthquakes = applyFilters(
-    features,
-    timeWindow,
-    minMagnitude,
-    searchQuery,
-  );
+  const filteredEarthquakes = data
+    ? applyFilters(data.features, timeWindow, minMagnitude, searchQuery)
+    : [];
 
   const tsunamiEvents = filteredEarthquakes.filter(
     (eq) => eq.properties.tsunami === 1,
@@ -92,17 +87,20 @@ export default function EarthquakeDashboard() {
 
   const stats = computeStats(filteredEarthquakes, 5.0);
 
+  // Reset notification cache when location changes so nearby quakes are re-evaluated
   useEffect(() => {
     if (userLocation) {
       resetNotificationCache();
     }
   }, [userLocation]);
 
+  // Handle notifications when new earthquakes arrive (only after location is granted)
   useEffect(() => {
     if (!userLocation || !data) return;
 
     const currentIds = new Set(data.features.map((f) => f.id));
 
+    // On first run (empty set), just populate without sending notifications
     if (prevEqIdsRef.current.size === 0) {
       prevEqIdsRef.current = currentIds;
       return;
@@ -131,6 +129,7 @@ export default function EarthquakeDashboard() {
     );
   }, [data, userLocation, t]);
 
+  // Request notification permission when location is granted
   useEffect(() => {
     if (locationStatus === "granted") {
       requestNotificationPermission();
@@ -163,12 +162,9 @@ export default function EarthquakeDashboard() {
     eew: t.eewMonitor,
   };
 
-  // Show skeleton loading only while initially loading
-  const showLoading = isLoading && features.length === 0;
-
   return (
     <>
-      {showLoading && <LoadingScreen />}
+      {isLoading && <LoadingScreen />}
 
       <div className="min-h-screen bg-background">
         {/* Header */}
@@ -275,33 +271,8 @@ export default function EarthquakeDashboard() {
             />
           </div>
 
-          {/* Error State — shown as a banner, NOT blank screen */}
-          {isError && (
-            <Alert
-              variant="destructive"
-              className="animate-fade-in"
-              data-ocid="data.error_state"
-            >
-              <AlertTitle>{t.errorLoadingData}</AlertTitle>
-              <AlertDescription className="flex items-center gap-3 flex-wrap">
-                <span>
-                  {error instanceof Error ? error.message : t.errorFetchFailed}
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => refetch()}
-                  className="gap-1.5"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  Retry
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Tsunami Alert Banner — always render when data available */}
-          {features.length > 0 && (
+          {/* Tsunami Alert Banner */}
+          {!isLoading && !isError && (
             <div className="animate-fade-in relative z-20">
               <TsunamiAlertBanner
                 tsunamiEvents={tsunamiEvents}
@@ -311,8 +282,8 @@ export default function EarthquakeDashboard() {
             </div>
           )}
 
-          {/* Summary Cards — show when data available */}
-          {features.length > 0 && (
+          {/* Summary Cards */}
+          {!isLoading && !isError && (
             <div className="animate-fade-in">
               <DashboardSummary
                 stats={stats}
@@ -323,7 +294,8 @@ export default function EarthquakeDashboard() {
           )}
 
           {/* Nearest earthquakes strip when location is known */}
-          {features.length > 0 &&
+          {!isLoading &&
+            !isError &&
             userLocation &&
             (() => {
               const sorted = [...filteredEarthquakes]
@@ -481,8 +453,22 @@ export default function EarthquakeDashboard() {
             </div>
           </div>
 
-          {/* Data Views — always render, even on error (show empty state) */}
-          {!isLoading && (
+          {/* Error State */}
+          {isError && (
+            <Alert
+              variant="destructive"
+              className="animate-fade-in"
+              data-ocid="data.error_state"
+            >
+              <AlertTitle>{t.errorLoadingData}</AlertTitle>
+              <AlertDescription>
+                {error instanceof Error ? error.message : t.errorFetchFailed}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Data Views */}
+          {!isLoading && !isError && (
             <div className="animate-fade-in relative z-10">
               {viewMode === "table" && (
                 <EarthquakeResultsTable

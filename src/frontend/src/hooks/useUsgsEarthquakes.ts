@@ -1,25 +1,44 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchJson } from "../lib/fetchJson";
 import { getUsgsFeedUrl } from "../lib/usgsFeeds";
 import type { TimeWindow, UsgsResponse } from "../lib/usgsTypes";
+
+async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
+  let lastError: unknown;
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url, { cache: "no-cache" });
+      if (res.ok) return res;
+      lastError = new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      lastError = err;
+      // wait a bit before retry
+      if (i < retries - 1)
+        await new Promise((r) => setTimeout(r, 1000 * (i + 1)));
+    }
+  }
+  throw lastError;
+}
+
+async function fetchUsgsData(url: string): Promise<UsgsResponse> {
+  const res = await fetchWithRetry(url);
+  const data = await res.json();
+  return data as UsgsResponse;
+}
 
 export function useUsgsEarthquakes(timeWindow: TimeWindow) {
   const queryClient = useQueryClient();
 
   const query = useQuery<UsgsResponse>({
     queryKey: ["earthquakes", timeWindow],
-    queryFn: async () => {
-      const url = getUsgsFeedUrl(timeWindow);
-      return fetchJson<UsgsResponse>(url);
-    },
-    staleTime: 60000, // 1 minute
-    refetchInterval: 60000, // Auto-refetch every 60 seconds
+    queryFn: () => fetchUsgsData(getUsgsFeedUrl(timeWindow)),
+    staleTime: 60000,
+    refetchInterval: 60000,
     refetchOnWindowFocus: true,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
   });
 
-  // Manual refresh function that forces a network fetch regardless of staleTime
   const forceRefresh = async () => {
-    // Invalidate the query to mark it as stale, then refetch
     await queryClient.invalidateQueries({
       queryKey: ["earthquakes", timeWindow],
       refetchType: "active",
